@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>役職設定 | LUNAGS 管理システム</title>
+    <link rel="stylesheet" href="../normalize.css">
+    <link rel="stylesheet" href="../common.css">
+    <link rel="stylesheet" href="login.css">
+</head>
+
+<body>
+
+    <div class="card">
+
+        <h2>役職の選択</h2>
+
+        <select id="role" style="margin-bottom: 20px;">
+            <option value="">役職を選択してください</option>
+            <option value="代表">代表</option>
+            <option value="マネージャー">マネージャー</option>
+            <option value="メンバー">メンバー</option>
+            <option value="ゲスト">ゲスト</option>
+            <option value="スタッフ">スタッフ</option>
+        </select>
+
+        <button id="saveBtn">
+            完了
+        </button>
+
+    </div>
+
+    <script type="module">
+
+        import { auth, db, withTimeout } from "../firebase-config.js";
+        import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+
+        const saveBtn = document.getElementById("saveBtn");
+        let currentUser = null;
+
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                window.location.href = "login.html";
+            } else {
+                currentUser = user;
+            }
+        });
+
+        saveBtn.addEventListener("click", async () => {
+            if (!currentUser) return;
+
+            const role = document.getElementById("role").value;
+            if (!role) {
+                alert("役職を選択してください。");
+                return;
+            }
+
+            const originalText = saveBtn.innerText;
+            saveBtn.disabled = true;
+            saveBtn.innerText = "保存中...";
+
+            try {
+                const mapSnap = await withTimeout(
+                    getDoc(doc(db, "uidMap", currentUser.uid))
+                );
+
+                if (!mapSnap.exists()) {
+                    throw new Error("uidMap が見つかりません");
+                }
+
+                const userId = mapSnap.data().userId;
+
+                await withTimeout(setDoc(doc(db, "users", userId),
+                    {
+                        role: document.getElementById("role").value
+                    },
+                    { merge: true }
+                ));
+
+                // マイページへ移動
+                location.href = "../My_page/profile.html";
+
+            } catch (error) {
+                console.error("Firestore save error:", error);
+                alert(`保存に失敗しました: ${error.message}`);
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerText = originalText;
+            }
+        });
+
+    </script>
+
+</body>
+
+</html>
