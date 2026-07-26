@@ -1,0 +1,121 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+
+    background-image: url("../images/hololiue-account_pc.jpg");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+body.home {
+    background: none;
+}
+
+.box {
+    background: #fff;
+    padding: 40px;
+    border-radius: 12px;
+    width: 360px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.box,
+.card {
+    background: #fff;
+    padding: 40px;
+    border-radius: 12px;
+    width: 360px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.card {
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.birthday-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 0;
+}
+
+.birthday-group select {
+    flex: 1;
+}
+
+h2 {
+    margin-top: 0;
+    text-align: center;
+}
+
+p {
+    font-size: 14px;
+    color: #555;
+    text-align: center;
+}
+
+select:invalid {
+    color: #555;
+}
+
+select,
+input,
+button {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px;
+    margin-top: 12px;
+    border-radius: 8px;
+    border: 1px solid #d9d9d9;
+    color: #333;
+    background-color: #fff;
+}
+
+select option {
+    color: #333;
+}
+
+select option[value=""] {
+    color: #666;
+}
+
+button {
+    border: none;
+    background: #00aaff;
+    color: #fff;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #35a4cc;
+}
+
+.secondary {
+    background: #eef2f7;
+    color: #333;
+}
+
+.secondary:hover {
+    background: #dde5ee;
+}
+
+.message {
+    min-height: 24px;
+    margin-top: 12px;
+    font-size: 14px;
+}
+
+.error {
+    color: #d93025;
+}
+
+.success {
+    color: #0b8043;
+}
