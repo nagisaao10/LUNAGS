@@ -1,0 +1,67 @@
+﻿[
+  {
+    "id": "Ito",
+    "name": "空奏イト",
+    "enName": "ITO SORAKANA",
+    "class": "ito",
+    "image": "images/メインビジュアル/メインビジュアル_空奏イト-2.png",
+    "desc": "ミクストガールズの歌うお姉ちゃん！\n空奏イトです"
+  },
+  {
+    "id": "San",
+    "name": "天吹サン",
+    "enName": "SAN AMABUKI",
+    "class": "san",
+    "image": "images/メインビジュアル/メインビジュアル_天吹サン-2.png",
+    "desc": "ミクストガールズのぽかぽか太陽\n天吹サンだよ～"
+  },
+  {
+    "id": "Myao",
+    "name": "成海ミャオ",
+    "enName": "MYAO NARUMI",
+    "class": "myao",
+    "image": "images/メインビジュアル/メインビジュアル_成海ミャオ-2.png",
+    "desc": "ミクストガールズの元気印！ギャルはマインド！\n成海ミャオで～す"
+  },
+  {
+    "id": "Shichi",
+    "name": "渚沢シチ",
+    "enName": "SHICHI NAGISAWA",
+    "class": "shichi",
+    "image": "images/メインビジュアル/メインビジュアル_渚沢シチ-2.png",
+    "desc": "ミクストガールズの歌が好き担当\n渚沢シチです"
+  },
+  {
+    "id": "Lian",
+    "name": "小鈴りあん",
+    "enName": "LIAN KOSUZU",
+    "class": "lian",
+    "image": "images/メインビジュアル/メインビジュアル_小鈴りあん-2.png",
+    "desc": "ミクストガールズのぱくぱくもんすたー！\n小鈴りあんなのだ"
+  },
+  {
+    "id": "Iori",
+    "name": "琴宮いおり",
+    "enName": "IORI KOTOMIYA",
+    "class": "iori",
+    "image": "images/メインビジュアル/メインビジュアル_琴宮いおり-2.png",
+    "desc": "ミクストガールズのお嬢様といえばわたし！\n琴宮いおりですわ"
+  },
+  {
+    "id": "Rimu",
+    "name": "星乃りむ",
+    "enName": "RIMU HOSHINO",
+    "class": "rimu",
+    "image": "images/メインビジュアル/メインビジュアル_星乃りむ-2.png",
+    "desc": "ミクストガールズの陰キャじゃないです！\n星乃りむです！"
+  },
+  {
+    "id": "Qalu",
+    "name": "雪白キャル",
+    "enName": "QALU YUKISHIRO",
+    "class": "qalu",
+    "image": "images/メインビジュアル/メインビジュアル_雪白キャル-2.png",
+    "desc": "ミクストガールズのふわふわわたあめ　かわいい代表\n雪白キャルだよ～"
+  }
+]
+

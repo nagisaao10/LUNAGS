@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>投稿管理</title>
+    <link rel="stylesheet" href="home.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+
+    <aside class="sidebar">
+
+        <div class="logo-area">
+            <img src="../images/logo_LUNAGS.png" alt="LUNAGS">
+        </div>
+
+        <nav>
+            <a href="home.html">
+                <i class=" fa-solid fa-house"></i>
+                <span>Dashboard</span>
+            </a>
+
+            <a href="calendar.html">
+                <i class="fa-solid fa-calendar-days"></i>
+                <span>Calendar</span>
+            </a>
+
+            <a href="posts.html">
+                <i class="fa-solid fa-photo-film"></i>
+                <span>Posts</span>
+            </a>
+
+            <a class="active">
+                <i class="fa-solid fa-list-check"></i>
+                <span>Tasks</span>
+            </a>
+
+            <a href="statistics.html">
+                <i class="fa-solid fa-chart-line"></i>
+                <span>Statistics</span>
+            </a>
+
+            <a href="settings.html">
+                <i class="fa-solid fa-gear"></i>
+                <span>Settings</span>
+            </a>
+
+        </nav>
+
+    </aside>
+
+    <main class="main">
+
+        <header class="topbar">
+            <h1>Tasks</h1>
+        </header>
+
+        <section class="content">
+
+            <div class="task-input">
+                <input id="taskText" type="text" placeholder="新しいタスクを追加...">
+                <button onclick="addTask()">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+            </div>
+
+            <ul id="taskList" class="task-list"></ul>
+
+        </section>
+
+    </main>
+
+    </div>
+
+    <script type="module">
+        import { db } from "../firebase-config.js";
+        import { doc, getDoc, onSnapshot, setDoc }
+            from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+
+        const taskInput = document.getElementById("taskText");
+        const taskList = document.getElementById("taskList");
+
+        let tasks = [];
+
+        async function addTask() {
+            const text = taskInput.value.trim();
+            if (!text) return;
+
+            tasks.push({
+                text,
+                done: false,
+                date,
+                id: Date.now()
+            });
+
+            taskInput.value = "";
+            await saveTasks();
+            draw();
+        }
+
+        async function toggleTask(id) {
+            const task = tasks.find(t => t.id === id);
+            if (!task) return;
+
+            task.done = !task.done;
+
+            await saveTasks();
+            draw();
+        }
+
+        async function deleteTask(id) {
+            tasks = tasks.filter(t => t.id !== id);
+
+            await saveTasks();
+            draw();
+        }
+
+        async function saveTasks() {
+            await setDoc(doc(db, "users", uid), {
+                tasks
+            }, { merge: true });
+        }
+
+        async function loadTasks() {
+            const snap = await getDoc(doc(db, "users", uid));
+
+            if (!snap.exists()) return;
+
+            const data = snap.data();
+            tasks = data.tasks || [];
+
+            draw();
+        }
+
+        function draw() {
+            taskList.innerHTML = "";
+
+            if (tasks.length === 0) {
+                taskList.innerHTML = "<li>タスクなし</li>";
+                return;
+            }
+
+            tasks.forEach(t => {
+                const li = document.createElement("li");
+                li.className = "task-item";
+
+                if (t.done) li.classList.add("done");
+
+                li.innerHTML = `
+    <div class="task-left">
+        <input type="checkbox" ${t.done ? "checked" : ""}>
+        <span>${t.text}</span>
+    </div>
+    <button class="delete-btn">🗑</button>
+    `;
+
+                li.querySelector("input")
+                    .addEventListener("change", () => toggleTask(t.id));
+
+                li.querySelector("button")
+                    .addEventListener("click", () => deleteTask(t.id));
+
+                taskList.appendChild(li);
+            });
+        }
+
+        onSnapshot(doc(db, "users", uid), (snap) => {
+            if (!snap.exists()) return;
+
+            const data = snap.data();
+            tasks = data.tasks || [];
+
+            draw();
+        });
+
+        window.addEventListener("DOMContentLoaded", loadTasks);
+
+        window.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") addTask();
+        });
+    </script>
+
+</body>
+
+</html>

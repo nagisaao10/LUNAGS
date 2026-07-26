@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>ホーム</title>
+    <link rel="stylesheet" href="home.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+
+    <aside class="sidebar">
+
+        <div class="logo-area">
+            <img src="../images/logo_LUNAGS.png" alt="LUNAGS">
+        </div>
+
+        <nav>
+            <a class="active">
+                <i class="fa-solid fa-house"></i>
+                <span>Dashboard</span>
+            </a>
+
+            <a href="calendar.html">
+                <i class="fa-solid fa-calendar-days"></i>
+                <span>Calendar</span>
+            </a>
+
+            <a href="posts.html">
+                <i class="fa-solid fa-photo-film"></i>
+                <span>Posts</span>
+            </a>
+
+            <a href="tasks.html">
+                <i class="fa-solid fa-list-check"></i>
+                <span>Tasks</span>
+            </a>
+
+            <a href="statistics.html">
+                <i class="fa-solid fa-chart-line"></i>
+                <span>Statistics</span>
+            </a>
+
+            <a href="settings.html">
+                <i class="fa-solid fa-gear"></i>
+                <span>Settings</span>
+            </a>
+
+        </nav>
+
+    </aside>
+
+    <main class="main">
+
+        <header class="header">
+
+            <div class="welcome">
+                <h1>ようこそ</h1>
+                <p>LUNAGS Management System</p>
+            </div>
+
+            <div class="header-right">
+
+                <div class="search">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" placeholder="検索">
+                </div>
+
+                <button class="icon-btn">
+                    <i class="fa-solid fa-bell"></i>
+                </button>
+
+                <button class="icon-btn">
+                    <i class="fa-solid fa-user"></i>
+                </button>
+
+            </div>
+
+        </header>
+
+        <section class="cards">
+
+            <div class="card">
+                <h3>今日の予定</h3>
+                <h2>8件</h2>
+                <p>+2 昨日より</p>
+            </div>
+
+            <div class="card">
+                <h3>投稿数</h3>
+                <h2>132</h2>
+                <p>今月</p>
+            </div>
+
+            <div class="card">
+                <h3>達成率</h3>
+                <h2>91%</h2>
+                <p>Excellent</p>
+            </div>
+
+            <div class="card">
+                <h3>未完了</h3>
+                <h2>14</h2>
+                <p>確認してください</p>
+            </div>
+
+        </section>
+
+        <section class="content">
+
+            <div class="left">
+
+                <div class="panel">
+
+                    <div class="panel-title">
+                        <h2>今日のスケジュール</h2>
+                    </div>
+
+                    <ul>
+                        <li>09:00　配信準備</li>
+                        <li>11:00　動画編集</li>
+                        <li>15:00　サムネ作成</li>
+                        <li>19:00　YouTube投稿</li>
+                    </ul>
+
+                </div>
+
+                <div class="panel">
+
+                    <div class="panel-title">
+                        <h2>最近の投稿</h2>
+                    </div>
+
+                    <table>
+                        <thead>
+
+                            <tr>
+                                <th>タイトル</th>
+                                <th>媒体</th>
+                                <th>状態</th>
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            <tr>
+                                <td>雑談配信</td>
+                                <td>YouTube</td>
+                                <td>公開済み</td>
+                            </tr>
+
+                            <tr>
+                                <td>切り抜き</td>
+                                <td>X</td>
+                                <td>予約済み</td>
+                            </tr>
+
+                            <tr>
+                                <td>ショート動画</td>
+                                <td>Shorts</td>
+                                <td>編集中</td>
+                            </tr>
+
+                        </tbody>
+                    </table>
+
+                </div>
+
+            </div>
+
+            <div class="right">
+
+                <div class="panel">
+
+                    <div class="panel-title">
+                        <h2>クイックアクション</h2>
+                    </div>
+
+                    <button>＋ 投稿を追加</button>
+                    <button>＋ タスク追加</button>
+                    <button>＋ カレンダー追加</button>
+
+                </div>
+
+                <div class="panel">
+
+                    <div class="panel-title">
+                        <h2>お知らせ</h2>
+                    </div>
+
+                    <ul>
+                        <li>新しい投稿予定があります。</li>
+                        <li>今週の達成率は91%</li>
+                        <li>アップデート予定</li>
+                    </ul>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <script type="module">
+        import { db } from "../firebase-config.js";
+        import { doc, getDoc, onSnapshot }
+            from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+
+        async function loadDashboard() {
+            const snap = await getDoc(doc(db, "users", uid));
+
+            if (!snap.exists()) return;
+
+            const data = snap.data();
+
+            const tasks = data.tasks || [];
+            const calendar = data.calendar || {};
+
+            oday = new Date();
+            const key = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
+
+            const todaySchedule = calendar[key] || [];
+
+            const scheduleList = document.querySelector(".panel ul");
+
+            if (scheduleList && scheduleList.closest(".left")) {
+                scheduleList.innerHTML =
+                    todaySchedule.length > 0
+                        ? todaySchedule.map(v => `<li>${v}</li>`).join("")
+                        : "<li>予定なし</li>";
+            }
+
+            const notDone = tasks.filter(t => !t.done).length;
+
+            const taskCard = document.querySelectorAll(".card h2")[3];
+            if (taskCard) {
+                taskCard.textContent = `${notDone}件`;
+            }
+
+            const todayCard = document.querySelectorAll(".card h2")[0];
+            if (todayCard) {
+                todayCard.textContent = `${todaySchedule.length}件`;
+            }
+        }
+
+        onSnapshot(doc(db, "users", uid), (snap) => {
+            if (!snap.exists()) return;
+            loadDashboard();
+        });
+
+        window.addEventListener("DOMContentLoaded", loadDashboard);
+
+        const quickButtons = document.querySelectorAll(".panel button");
+
+        quickButtons[0].addEventListener("click", () => {
+            alert("投稿画面へ移動（未実装）");
+        });
+
+        quickButtons[1].addEventListener("click", () => {
+            window.location.href = "tasks.html";
+        });
+
+        quickButtons[2].addEventListener("click", () => {
+            window.location.href = "calendar.html";
+        });
+
+        const menuItems = document.querySelectorAll(".sidebar nav a");
+
+        menuItems.forEach(item => {
+            item.addEventListener("click", () => {
+                menuItems.forEach(nav => nav.classList.remove("active"));
+                item.classList.add("active");
+            });
+        });
+
+        const cards = document.querySelectorAll(".card");
+
+        cards.forEach(card => {
+            card.addEventListener("mouseenter", () => {
+                card.style.transform = "translateY(-8px) scale(1.02)";
+            });
+
+            card.addEventListener("mouseleave", () => {
+                card.style.transform = "";
+            });
+        });
+
+        const searchInput = document.querySelector(".search input");
+
+        searchInput.addEventListener("keydown", e => {
+            if (e.key === "Enter") {
+                alert("検索 : " + searchInput.value);
+            }
+        });
+
+        document.querySelectorAll(".icon-btn")[0]
+            .addEventListener("click", () => alert("通知はありません"));
+
+        document.querySelectorAll(".icon-btn")[1]
+            .addEventListener("click", () => alert("プロフィール準備中"));
+
+        document.addEventListener("DOMContentLoaded", () => {
+            document.body.style.opacity = "0";
+
+            requestAnimationFrame(() => {
+                document.body.style.transition = ".35s";
+                document.body.style.opacity = "1";
+            });
+        });
+    </script>
+
+</body>
+
+</html>

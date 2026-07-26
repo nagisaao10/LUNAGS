@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>投稿管理</title>
+    <link rel="stylesheet" href="home.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+
+    <aside class="sidebar">
+
+        <div class="logo-area">
+            <img src="../images/logo_LUNAGS.png" alt="LUNAGS">
+        </div>
+
+        <nav>
+            <a href="home.html">
+                <i class=" fa-solid fa-house"></i>
+                <span>Dashboard</span>
+            </a>
+
+            <a href="calendar.html">
+                <i class="fa-solid fa-calendar-days"></i>
+                <span>Calendar</span>
+            </a>
+
+            <a class="active">
+                <i class="fa-solid fa-photo-film"></i>
+                <span>Posts</span>
+            </a>
+
+            <a href="tasks.html">
+                <i class="fa-solid fa-list-check"></i>
+                <span>Tasks</span>
+            </a>
+
+            <a href="statistics.html">
+                <i class="fa-solid fa-chart-line"></i>
+                <span>Statistics</span>
+            </a>
+
+            <a href="settings.html">
+                <i class="fa-solid fa-gear"></i>
+                <span>Settings</span>
+            </a>
+
+        </nav>
+
+    </aside>
+
+    <main class="main">
+        <header class="header">
+
+            <div class="welcome">
+                <h1>投稿管理</h1>
+                <p>投稿・配信・ショート・SNSを一括管理</p>
+            </div>
+
+            <div class="header-right">
+
+                <div class="search">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input id="searchInput" placeholder="タイトルを検索">
+                </div>
+
+                <button class="icon-btn" id="newPost">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+
+            </div>
+
+        </header>
+
+        <section class="panel">
+
+            <div class="space-between">
+
+                <div style="display:flex;gap:15px;">
+
+                    <select id="platformFilter">
+                        <option>すべての媒体</option>
+                        <option>YouTube</option>
+                        <option>Shorts</option>
+                        <option>X</option>
+                        <option>Discord</option>
+                    </select>
+
+                    <select id="statusFilter">
+                        <option>すべての状態</option>
+                        <option>企画中</option>
+                        <option>編集中</option>
+                        <option>予約済み</option>
+                        <option>公開済み</option>
+                    </select>
+
+                </div>
+
+            </div>
+
+        </section>
+
+        <section class="panel">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+                        <th width="35%">タイトル</th>
+                        <th>媒体</th>
+                        <th>投稿日</th>
+                        <th>時間</th>
+                        <th>状態</th>
+                        <th>担当</th>
+                        <th width="80"></th>
+                    </tr>
+
+                </thead>
+
+                <tbody id="postsTable"></tbody>
+
+            </table>
+
+        </section>
+
+    </main>
+
+    <div class="modal hidden" id="postModal">
+
+        <div class="modal-box">
+
+            <h2>新しい投稿</h2>
+
+            <input id="title" placeholder="タイトル">
+
+            <select id="platform">
+                <option>YouTube</option>
+                <option>Shorts</option>
+                <option>X</option>
+                <option>Discord</option>
+            </select>
+
+            <input type="date" id="date">
+
+            <input type="time" id="time">
+
+            <select id="status">
+                <option>企画中</option>
+                <option>編集中</option>
+                <option>予約済み</option>
+                <option>公開済み</option>
+            </select>
+
+            <input id="owner" placeholder="担当">
+
+            <textarea id="memo" placeholder="メモ"></textarea>
+
+            <div style="display:flex;gap:15px;margin-top:20px;">
+                <button id="savePost">保存</button>
+                <button id="closeModal">閉じる</button>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "../firebase-config.js";
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot }
+            from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let posts = [];
+
+        const tbody = document.getElementById("postsTable");
+
+        function draw() {
+            tbody.innerHTML = "";
+
+            if (posts.length === 0) {
+                tbody.innerHTML = `
+    <tr>
+        <td colspan="7">投稿がありません</td>
+    </tr>
+    `;
+                return;
+            }
+
+            posts.forEach(post => {
+                tbody.innerHTML += `
+    <tr>
+        <td>${post.title}</td>
+        <td>${post.platform}</td>
+        <td>${post.date}</td>
+        <td>${post.time}</td>
+        <td>${post.status}</td>
+        <td>${post.owner}</td>
+        <td>
+            <i class="fa-solid fa-pen"></i>
+        </td>
+    </tr>
+    `;
+            });
+        }
+
+        async function savePosts() {
+            await setDoc(doc(db, "users", uid), {
+                posts
+            }, { merge: true });
+        }
+
+        async function loadPosts() {
+            const snap = await getDoc(doc(db, "users", uid));
+
+            if (!snap.exists()) return;
+
+            const data = snap.data();
+            posts = data.posts || [];
+
+            draw();
+        }
+
+        onSnapshot(doc(db, "users", uid), (snap) => {
+            if (!snap.exists()) return;
+
+            const data = snap.data();
+            posts = data.posts || [];
+
+            draw();
+        });
+
+        const modal = document.getElementById("postModal");
+
+        document.getElementById("newPost").onclick = () => {
+            modal.classList.remove("hidden");
+        };
+
+        document.getElementById("closeModal").onclick = () => {
+            modal.classList.add("hidden");
+        };
+
+        window.addEventListener("DOMContentLoaded", loadPosts);
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>カレンダー</title>
+    <link rel="stylesheet" href="home.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+
+    <aside class="sidebar">
+
+        <div class="logo-area">
+            <img src="../images/logo_LUNAGS.png" alt="LUNAGS">
+        </div>
+
+        <nav>
+            <a href="home.html">
+                <i class="fa-solid fa-house"></i>
+                <span>Dashboard</span>
+            </a>
+
+            <a class="active">
+                <i class="fa-solid fa-calendar-days"></i>
+                <span>Calendar</span>
+            </a>
+
+            <a href="posts.html">
+                <i class="fa-solid fa-photo-film"></i>
+                <span>Posts</span>
+            </a>
+
+            <a href="tasks.html">
+                <i class="fa-solid fa-list-check"></i>
+                <span>Tasks</span>
+            </a>
+
+            <a href="statistics.html">
+                <i class="fa-solid fa-chart-line"></i>
+                <span>Statistics</span>
+            </a>
+
+            <a href="settings.html">
+                <i class="fa-solid fa-gear"></i>
+                <span>Settings</span>
+            </a>
+
+        </nav>
+
+    </aside>
+
+    <div class="app">
+
+        <main class="main">
+
+            <div class="header">
+
+                <div class="calendar-header">
+                    <button onclick="changeMonth(-1)">←</button>
+                    <h2 id="title"></h2>
+                    <button onclick="changeMonth(1)">→</button>
+                </div>
+
+            </div>
+
+            <div id="calendar" class="calendar"></div>
+
+        </main>
+
+    </div>
+
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <h3 id="dateTitle"></h3>
+            <input id="input" placeholder="予定">
+            <button onclick="addEvent()">追加</button>
+            <div id="list"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { db } from "../firebase-config.js";
+        import { doc, getDoc, setDoc, onSnapshot }
+            from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+
+        let date = new Date();
+        let selected = null;
+
+        let data = {};
+
+        function render() {
+            const y = date.getFullYear();
+            const m = date.getMonth();
+
+            document.getElementById("title").textContent = `${y}年 ${m + 1}月`;
+
+            const cal = document.getElementById("calendar");
+            cal.innerHTML = "";
+
+            const first = new Date(y, m, 1).getDay();
+            const last = new Date(y, m + 1, 0).getDate();
+
+            for (let i = 0; i < first; i++) {
+                cal.innerHTML += "<div></div>";
+            }
+
+            for (let d = 1; d <= last; d++) {
+                const key = `${y}-${m + 1}-${d}`;
+                const isToday =
+                    new Date().toDateString() === new Date(y, m, d).toDateString();
+
+                cal.innerHTML += `
+            <div class="day ${isToday ? "today" : ""}" data-key="${key}">
+                ${d}
+                ${data[key]?.length ? '<div class="event-dot"></div>' : ""}
+            </div>
+        `;
+            }
+
+            /* クリックイベント付与 */
+            document.querySelectorAll(".day").forEach(el => {
+                el.addEventListener("click", () => {
+                    openModal(el.dataset.key);
+                });
+            });
+        }
+
+        function changeMonth(v) {
+            date.setMonth(date.getMonth() + v);
+            render();
+        }
+
+        function openModal(key) {
+            selected = key;
+
+            document.getElementById("modal").style.display = "flex";
+            document.getElementById("dateTitle").textContent = key;
+
+            renderList();
+        }
+
+        async function addEvent() {
+            const input = document.getElementById("input");
+            const v = input.value.trim();
+
+            if (!v || !selected) return;
+
+            if (!data[selected]) data[selected] = [];
+
+            data[selected].push(v);
+
+            input.value = "";
+
+            await saveAll();
+            render();
+            renderList();
+        }
+
+        function renderList() {
+            const list = data[selected] || [];
+
+            document.getElementById("list").innerHTML =
+                list.length
+                    ? list.map(v => `• ${v}`).join("<br>")
+                    : "予定なし";
+        }
+
+        async function saveAll() {
+            const snap = await getDoc(doc(db, "users", uid));
+            const old = snap.exists() ? snap.data() : {};
+
+            await setDoc(doc(db, "users", uid), {
+                ...old,
+                calendar: data
+            });
+        }
+
+        async function loadCalendar() {
+            const snap = await getDoc(doc(db, "users", uid));
+
+            if (!snap.exists()) return;
+
+            const dataFromDB = snap.data();
+            data = dataFromDB.calendar || {};
+
+            render();
+        }
+
+        onSnapshot(doc(db, "users", uid), (snap) => {
+            if (!snap.exists()) return;
+
+            const dataFromDB = snap.data();
+            data = dataFromDB.calendar || {};
+
+            render();
+        });
+
+        window.addEventListener("DOMContentLoaded", loadCalendar);
+
+        window.changeMonth = changeMonth;
+        window.openModal = openModal;
+        window.addEventListener("addEvent", addEvent);
+    </script>
+
+</body>
+
+</html>

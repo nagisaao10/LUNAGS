@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Discord連携</title>
+</head>
+
+<body>
+
+    <script type="module">
+
+        const hash = window.location.hash.substring(1);
+        const params = new URLSearchParams(hash);
+
+        const accessToken = params.get("access_token");
+
+        if (!accessToken) {
+            document.body.innerHTML = "認証失敗";
+            throw new Error("No token");
+        }
+
+        const res = await fetch(
+            "https://discord.com/api/users/@me",
+            {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`
+                }
+            }
+        );
+
+        const user = await res.json();
+
+        console.log(user);
+
+        localStorage.setItem(
+            "discordUser",
+            JSON.stringify({
+                id: user.id,
+                username: user.username,
+                globalName: user.global_name,
+                avatar: user.avatar
+            })
+        );
+
+        location.href = "./profile.html";
+
+    </script>
+
+</body>
+
+</html>
