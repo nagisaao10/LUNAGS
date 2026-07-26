@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ポスト | LUNAGS 管理システム</title>
+    <link rel="stylesheet" href="../normalize.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Noto+Sans+JP:wght@400;500;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="./home.css">
+</head>
+
+<body>
+
+    <button class="hamburger" id="hamburgerBtn">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <div class="app-shell">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar__brand">
+                <img src="../images/logo_LUNAGS.png" alt="LUNAGS">
+                <span class="sidebar__brand-subtitle">MANAGEMENT SYSTEM</span>
+            </div>
+
+            <div class="sidebar__div">
+                <a class="sidebar__link" href="home.html">
+                    <i class="fa-solid fa-house"></i>
+                    <span>ホーム</span>
+                </a>
+
+                <a class="sidebar__link" href="calendar.html">
+                    <i class="fa-solid fa-calendar-days"></i>
+                    <span>カレンダー</span>
+                </a>
+
+                <a class="sidebar__link is-active" href="posts.html">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                    <span>ポスト</span>
+                </a>
+
+                <a class="sidebar__link" href="tasks.html">
+                    <i class="fa-solid fa-list-check"></i>
+                    <span>タスク</span>
+                </a>
+
+                <div class="sidebar__divider"></div>
+
+                <a class="sidebar__link" href="statistics.html">
+                    <i class="fa-solid fa-chart-column"></i>
+                    <span>統計</span>
+                </a>
+
+                <a class="sidebar__link" href="settings.html">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>設定</span>
+                </a>
+            </div>
+
+            <div class="sidebar__footer">
+                <a class="sidebar__mypage-btn" href="../My_page/profile.html">
+                    <i class="fa-solid fa-user"></i>
+                    <span>マイページへ戻る</span>
+                </a>
+            </div>
+        </aside>
+
+        <main class="main">
+            <header class="topbar">
+                <div>
+                    <h1 class="topbar__title">POSTS</h1>
+                    <div class="topbar__date">投稿予定、担当者、サムネ進行の管理</div>
+                </div>
+                <div class="topbar__right">
+                    <button class="btn-primary" id="addPostBtn"><svg class="icon" viewBox="0 0 24 24">
+                            <path d="M12 5v14M5 12h14" />
+                        </svg>新規ポスト</button>
+                    <div class="notif">
+                        <button class="notif__btn" id="notifBtn" aria-label="通知"><svg class="icon" viewBox="0 0 24 24">
+                                <path d="M6 9a6 6 0 0 1 12 0c0 4 1.5 5.5 1.5 5.5H4.5S6 13 6 9Z" />
+                                <path d="M10 19a2 2 0 0 0 4 0" />
+                            </svg><span class="notif__badge is-hidden" id="notifBadge">0</span></button>
+                        <div class="notif__dropdown" id="notifDropdown">
+                            <div class="notif__dropdown-title">通知</div>
+                            <div id="notifList"></div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <section class="metrics-grid">
+                <div class="metric">
+                    <div class="metric__label">投稿予定</div>
+                    <div class="metric__value" id="metricTotal">0</div>
+                    <div class="metric__note">全期間</div>
+                </div>
+                <div class="metric">
+                    <div class="metric__label">完了</div>
+                    <div class="metric__value" id="metricDone">0</div>
+                    <div class="metric__note">公開済み</div>
+                </div>
+                <div class="metric">
+                    <div class="metric__label">サムネ完了</div>
+                    <div class="metric__value" id="metricThumb">0</div>
+                    <div class="metric__note">制作済み</div>
+                </div>
+                <div class="metric">
+                    <div class="metric__label">本日</div>
+                    <div class="metric__value" id="metricToday">0</div>
+                    <div class="metric__note">今日の投稿</div>
+                </div>
+            </section>
+
+            <section class="card">
+                <div class="card__head">
+                    <h2>投稿予定リスト</h2><span class="count" id="postCount">0件</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>日付</th>
+                                <th>時間</th>
+                                <th>配信先</th>
+                                <th>タイトル</th>
+                                <th>担当者</th>
+                                <th>完了</th>
+                                <th>サムネ</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="postsList">
+                            <tr>
+                                <td colspan="8" class="text-center">読み込み中</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div class="modal-overlay is-hidden" id="postModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">新規ポスト</h3><button class="modal-close" id="postModalClose" aria-label="閉じる"><svg
+                        class="icon" viewBox="0 0 24 24">
+                        <path d="M18 6 6 18M6 6l12 12" />
+                    </svg></button>
+            </div>
+            <div class="modal-body">
+                <form id="postForm" class="form-grid">
+                    <div class="form-group span-2"><label for="postTitle">タイトル</label><input class="field" type="text"
+                            id="postTitle" required placeholder="例：新作動画の公開"></div>
+                    <div class="form-group"><label for="postDate">日付</label><input class="field" type="date"
+                            id="postDate" required></div>
+                    <div class="form-group"><label for="postTime">配信時間</label><input class="field" type="time"
+                            id="postTime"></div>
+                    <div class="form-group"><label for="postPlatform">配信先</label><select class="select"
+                            id="postPlatform">
+                            <option>YouTube</option>
+                            <option>X/Twitter</option>
+                            <option>Instagram</option>
+                            <option>TikTok</option>
+                            <option>その他</option>
+                        </select></div>
+                    <div class="form-group"><label for="postAssignee">担当者</label><input class="field" type="text"
+                            id="postAssignee" list="memberList" placeholder="例：ミク"></div>
+                    <div class="form-group span-2"><label for="postDetail">詳細</label><textarea class="textarea"
+                            id="postDetail" placeholder="詳細な内容を記載してください"></textarea></div>
+                    <div class="form-group span-2"><label>参加者</label>
+                        <div id="postParticipantsContainer" placeholder="参加者を選択"
+                            style="display: flex; flex-wrap: wrap; gap: 10px; padding: 0.5rem 0;"></div>
+                    </div>
+                    <div class="form-group"><label for="postThumb">サムネ状態</label><select class="select" id="postThumb">
+                            <option value="false">未完了</option>
+                            <option value="true">完了</option>
+                        </select></div>
+                    <div class="span-2 toolbar"><button class="btn-primary" type="submit">保存</button><button
+                            class="btn-secondary" type="button" id="postFormCancel">キャンセル</button></div>
+                </form>
+                <datalist id="memberList"></datalist>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-stack" id="toastStack"></div>
+
+    <script type="module">
+        import { auth } from "../firebase-config.js";
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                window.location.href = '../Login_page/login.html';
+            }
+        });
+
+        const STORAGE_KEYS = { posts: "lunags_posts", notifications: "lunags_notifications", settings: "lunags_settings" };
+        const state = { posts: [], notifications: [], firestore: null, seenNotifications: new Set() };
+        const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
+        const toDateKey = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+        const readLocal = (key) => { try { return JSON.parse(localStorage.getItem(key) || "[]"); } catch { return []; } };
+        const writeLocal = (key, value) => localStorage.setItem(key, JSON.stringify(value));
+
+        function seedLocalData() {
+            if (!localStorage.getItem(STORAGE_KEYS.posts)) writeLocal(STORAGE_KEYS.posts, [{ id: "post-sample-1", date: toDateKey(new Date()), time: "12:00", platform: "YouTube", title: "新作動画の公開", assignee: "なぎさ", mentions: ["なぎさ"], completed: true, thumbDone: true, detail: "公開文と固定コメントを確認" }]);
+            if (!localStorage.getItem(STORAGE_KEYS.notifications)) writeLocal(STORAGE_KEYS.notifications, []);
+        }
+
+        async function initData() {
+            seedLocalData();
+            renderMemberList();
+            try {
+                const [{ db, serverTimestamp }, firestore] = await Promise.all([import("../firebase-config.js"), import("https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js")]);
+                state.firestore = { db, serverTimestamp, ...firestore };
+                ["posts", "notifications"].forEach(watchFirestoreCollection);
+            } catch (error) {
+                console.info("[LUNAGS] Firestoreに接続できないためローカルデータで動作します。", error.message);
+                state.posts = readLocal(STORAGE_KEYS.posts);
+                state.notifications = readLocal(STORAGE_KEYS.notifications);
+                renderAll();
+            }
+        }
+
+        function watchFirestoreCollection(name) {
+            const { db, collection, onSnapshot } = state.firestore;
+            onSnapshot(collection(db, name), (snapshot) => {
+                state[name] = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+                if (name === "notifications") notifyNewItems(state[name]);
+                renderAll();
+            }, () => {
+                state[name] = readLocal(STORAGE_KEYS[name]);
+                renderAll();
+            });
+        }
+
+        function renderMemberList() {
+            const settings = readSettings();
+            document.getElementById("memberList").innerHTML = settings.members.map((name) => `<option value="${escapeHtml(name)}"></option>`).join("");
+            const container = document.getElementById("postParticipantsContainer");
+            if (container) {
+                container.innerHTML = settings.members.map((name) => `
+                    <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
+                        <input type="checkbox" name="postParticipants" value="${escapeHtml(name)}">
+                        ${escapeHtml(name)}
+                    </label>
+                `).join("");
+            }
+        }
+
+        function readSettings() {
+            const fallback = { members: ["なぎさ", "みなみ", "あかり", "ゆづき"], currentUser: "なぎさ" };
+            try { return { ...fallback, ...(JSON.parse(localStorage.getItem(STORAGE_KEYS.settings) || "{}")) }; } catch { return fallback; }
+        }
+
+        function renderAll() {
+            renderPosts();
+            renderMetrics();
+            renderNotifications();
+        }
+
+        function renderPosts() {
+            const list = document.getElementById("postsList");
+            const sorted = [...state.posts].sort((a, b) => `${a.date || ""}${a.time || ""}`.localeCompare(`${b.date || ""}${b.time || ""}`));
+            document.getElementById("postCount").textContent = `${sorted.length}件`;
+            if (!sorted.length) {
+                list.innerHTML = `<tr><td colspan="8" class="text-center">投稿予定はありません。</td></tr>`;
+                return;
+            }
+            list.innerHTML = sorted.map((post) => `
+                <tr class="${post.completed ? "is-done-row" : ""}">
+                    <td>${escapeHtml(post.date || "")}</td>
+                    <td>${escapeHtml(post.time || "-")}</td>
+                    <td><span class="badge badge--post">${escapeHtml(post.platform || "その他")}</span></td>
+                    <td class="fw-bold">${escapeHtml(post.title || "")}</td>
+                    <td>${escapeHtml(post.assignee || "未設定")}</td>
+                    <td><button class="check-toggle ${post.completed ? "is-checked" : ""}" data-toggle="completed:${post.id}" aria-label="完了を切り替え"><svg viewBox="0 0 24 24"><path d="M4 12l6 6L20 6"/></svg></button></td>
+                    <td><button class="check-toggle ${post.thumbDone ? "is-checked" : ""}" data-toggle="thumbDone:${post.id}" aria-label="サムネ状態を切り替え"><svg viewBox="0 0 24 24"><path d="M4 12l6 6L20 6"/></svg></button></td>
+                    <td>
+                        <button class="btn-secondary btn-sm" data-edit="${post.id}">編集</button>
+                        <button class="btn-secondary btn-sm" data-delete="${post.id}">削除</button>
+                    </td>
+                </tr>
+            `).join("");
+            document.querySelectorAll("[data-toggle]").forEach((button) => {
+                button.addEventListener("click", () => {
+                    const [field, id] = button.dataset.toggle.split(":");
+                    const post = state.posts.find((item) => item.id === id);
+                    if (post) updatePost(id, { [field]: !post[field] });
+                });
+            });
+            document.querySelectorAll("[data-edit]").forEach((button) => {
+                button.addEventListener("click", () => {
+                    const post = state.posts.find((item) => item.id === button.dataset.edit);
+                    if (post) openModalForEdit(post);
+                });
+            });
+            document.querySelectorAll("[data-delete]").forEach((button) => {
+                button.addEventListener("click", () => {
+                    if (confirm("この投稿予定を削除してもよろしいですか？")) {
+                        deletePost(button.dataset.delete);
+                    }
+                });
+            });
+        }
+
+        function renderMetrics() {
+            const today = toDateKey(new Date());
+            document.getElementById("metricTotal").textContent = state.posts.length;
+            document.getElementById("metricDone").textContent = state.posts.filter((post) => post.completed).length;
+            document.getElementById("metricThumb").textContent = state.posts.filter((post) => post.thumbDone).length;
+            document.getElementById("metricToday").textContent = state.posts.filter((post) => post.date === today).length;
+        }
+
+        async function createPost(post) {
+            const localPost = { ...post, id: `post-${Date.now()}`, createdAtLocal: Date.now() };
+            if (state.firestore) {
+                try {
+                    const { db, collection, addDoc, serverTimestamp } = state.firestore;
+                    const docRef = await addDoc(collection(db, "posts"), { ...post, createdAt: serverTimestamp() });
+                    localPost.id = docRef.id;
+                } catch (error) {
+                    console.info("[LUNAGS] Firestore保存をローカルにフォールバックしました。", error.message);
+                }
+            }
+            state.posts = [localPost, ...state.posts];
+            writeLocal(STORAGE_KEYS.posts, state.posts);
+            await createNotificationsForPost(localPost);
+            renderAll();
+            showToast("新しいポストを保存しました。");
+        }
+
+        async function updatePost(id, patch) {
+            state.posts = state.posts.map((post) => post.id === id ? { ...post, ...patch } : post);
+            writeLocal(STORAGE_KEYS.posts, state.posts);
+            renderAll();
+            if (!state.firestore) return;
+            try {
+                const { db, doc, updateDoc } = state.firestore;
+                await updateDoc(doc(db, "posts", id), patch);
+            } catch (error) {
+                console.info("[LUNAGS] Firestore更新をローカルにフォールバックしました。", error.message);
+            }
+        }
+
+        async function deletePost(id) {
+            state.posts = state.posts.filter((post) => post.id !== id);
+            writeLocal(STORAGE_KEYS.posts, state.posts);
+            renderAll();
+            if (!state.firestore) return;
+            try {
+                const { db, doc, deleteDoc } = state.firestore;
+                await deleteDoc(doc(db, "posts", id));
+            } catch (error) {
+                console.info("[LUNAGS] Firestore削除をローカルにフォールバックしました。", error.message);
+            }
+        }
+
+        async function createNotificationsForPost(post) {
+            const recipients = collectRecipients(post.assignee, post.mentions, post.title, post.detail);
+            const text = `新しいポスト「${post.title}」が追加されました。`;
+            for (const recipient of recipients) await addNotification({ text, recipient, sourceType: "post", sourceId: post.id });
+        }
+
+        async function addNotification(notification) {
+            const local = { id: `notice-${Date.now()}-${Math.random().toString(16).slice(2)}`, unread: true, createdAtLocal: Date.now(), ...notification };
+            if (state.firestore) {
+                try {
+                    const { db, collection, addDoc, serverTimestamp } = state.firestore;
+                    const docRef = await addDoc(collection(db, "notifications"), { ...notification, unread: true, createdAt: serverTimestamp() });
+                    local.id = docRef.id;
+                } catch (error) {
+                    console.info("[LUNAGS] 通知保存をローカルにフォールバックしました。", error.message);
+                }
+            }
+            state.notifications = [local, ...state.notifications];
+            writeLocal(STORAGE_KEYS.notifications, state.notifications);
+        }
+
+        function collectRecipients(assignee, mentions, title, detail) {
+            const explicit = String(mentions || "").split(/[,\s、]+/).map((name) => name.replace(/^@/, "").trim()).filter(Boolean);
+            const found = [...String(`${title} ${detail}`).matchAll(/@([^\s,、。]+)/g)].map((match) => match[1]);
+            const assigned = assignee ? [String(assignee).replace(/^@/, "").trim()] : [];
+            return [...new Set([...assigned, ...explicit, ...found].filter(Boolean))];
+        }
+
+        function notifyNewItems(items) {
+            items.forEach((item) => {
+                if (!state.seenNotifications.has(item.id)) {
+                    state.seenNotifications.add(item.id);
+                    if (item.unread) showToast(item.text || "新しい通知があります。");
+                }
+            });
+        }
+
+        function renderNotifications() {
+            const badge = document.getElementById("notifBadge");
+            const list = document.getElementById("notifList");
+            const sorted = [...state.notifications].sort((a, b) => getTimeValue(b) - getTimeValue(a));
+            const unread = sorted.filter((item) => item.unread).length;
+            badge.textContent = unread > 9 ? "9+" : String(unread);
+            badge.classList.toggle("is-hidden", unread === 0);
+            list.innerHTML = sorted.length ? sorted.slice(0, 20).map((item) => `<div class="notif__item"><span class="notif__dot"></span><div><div class="notif__item-text">${escapeHtml(item.text || "")}</div><div class="notif__item-time">${escapeHtml(formatRelativeTime(item))}</div></div></div>`).join("") : `<div class="notif__empty">通知はまだありません。</div>`;
+        }
+
+        function getTimeValue(item) {
+            if (typeof item.createdAtLocal === "number") return item.createdAtLocal;
+            if (item.createdAt?.toMillis) return item.createdAt.toMillis();
+            return 0;
+        }
+
+        function formatRelativeTime(item) {
+            const value = getTimeValue(item);
+            if (!value) return item.time || "";
+            const diff = Math.max(1, Math.round((Date.now() - value) / 60000));
+            if (diff < 60) return `${diff}分前`;
+            if (diff < 1440) return `${Math.round(diff / 60)}時間前`;
+            return `${Math.round(diff / 1440)}日前`;
+        }
+
+        function showToast(text) {
+            const stack = document.getElementById("toastStack");
+            const toast = document.createElement("div");
+            toast.className = "toast";
+            toast.textContent = text;
+            stack.appendChild(toast);
+            requestAnimationFrame(() => toast.classList.add("is-visible"));
+            setTimeout(() => { toast.classList.remove("is-visible"); setTimeout(() => toast.remove(), 220); }, 4200);
+        }
+
+        function openModal() {
+            document.getElementById("postForm").reset();
+            delete document.getElementById("postForm").dataset.editId;
+            document.querySelectorAll('#postParticipantsContainer input[type="checkbox"]').forEach(cb => cb.checked = false);
+            document.getElementById("postDate").value = toDateKey(new Date());
+            document.querySelector("#postModal .modal-title").textContent = "新規ポスト";
+            document.getElementById("postModal").classList.remove("is-hidden");
+        }
+
+        function openModalForEdit(post) {
+            document.getElementById("postForm").reset();
+            document.getElementById("postForm").dataset.editId = post.id;
+            document.getElementById("postTitle").value = post.title || "";
+            document.getElementById("postDate").value = post.date || "";
+            document.getElementById("postTime").value = post.time || "";
+            document.getElementById("postPlatform").value = post.platform || "YouTube";
+            document.getElementById("postAssignee").value = post.assignee || "";
+            document.getElementById("postDetail").value = post.detail || "";
+            document.getElementById("postThumb").value = post.thumbDone ? "true" : "false";
+
+            const participants = String(post.participants || "").split(",").map(s => s.trim()).filter(Boolean);
+            document.querySelectorAll('#postParticipantsContainer input[type="checkbox"]').forEach(cb => {
+                cb.checked = participants.includes(cb.value);
+            });
+
+            document.querySelector("#postModal .modal-title").textContent = "ポストを編集";
+            document.getElementById("postModal").classList.remove("is-hidden");
+        }
+
+        function closeModal() {
+            document.getElementById("postModal").classList.add("is-hidden");
+            document.getElementById("postForm").reset();
+            delete document.getElementById("postForm").dataset.editId;
+        }
+
+        function initEvents() {
+            document.getElementById("addPostBtn").addEventListener("click", openModal);
+            document.getElementById("postModalClose").addEventListener("click", closeModal);
+            document.getElementById("postFormCancel").addEventListener("click", closeModal);
+            document.getElementById("postForm").addEventListener("submit", async (event) => {
+                event.preventDefault();
+                const editId = document.getElementById("postForm").dataset.editId;
+                const checkedParticipants = Array.from(document.querySelectorAll('#postParticipantsContainer input[type="checkbox"]:checked')).map(cb => cb.value).join(", ");
+                const postData = {
+                    title: document.getElementById("postTitle").value.trim(),
+                    date: document.getElementById("postDate").value,
+                    time: document.getElementById("postTime").value,
+                    platform: document.getElementById("postPlatform").value,
+                    assignee: document.getElementById("postAssignee").value.trim().replace(/^@/, ""),
+                    detail: document.getElementById("postDetail").value.trim(),
+                    participants: checkedParticipants,
+                    mentions: collectRecipients("", checkedParticipants, document.getElementById("postTitle").value, document.getElementById("postDetail").value),
+                    thumbDone: document.getElementById("postThumb").value === "true"
+                };
+
+                if (editId) {
+                    await updatePost(editId, postData);
+                    showToast("ポストを更新しました。");
+                } else {
+                    await createPost({ ...postData, completed: false });
+                }
+                closeModal();
+            });
+            const notifBtn = document.getElementById("notifBtn");
+            const notifDropdown = document.getElementById("notifDropdown");
+            notifBtn.addEventListener("click", (event) => { event.stopPropagation(); notifDropdown.classList.toggle("is-open"); });
+            document.addEventListener("click", (event) => { if (!notifDropdown.contains(event.target) && event.target !== notifBtn) notifDropdown.classList.remove("is-open"); });
+            document.addEventListener("click", (event) => { if (window.innerWidth <= 760 && !sidebar.contains(event.target) && !hamburgerBtn.contains(event.target)) sidebar.classList.remove("open"); });
+        }
+
+        initEvents();
+        initData();
+
+        const hamburgerBtn = document.getElementById("hamburgerBtn");
+        const sidebar = document.getElementById("sidebar");
+
+        hamburgerBtn.addEventListener("click", () => {
+            sidebar.classList.toggle("open");
+        });
+    </script>
+</body>
+
+</html>
