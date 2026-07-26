@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>タスク | LUNAGS 管理システム</title>
+    <link rel="stylesheet" href="../normalize.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Noto+Sans+JP:wght@400;500;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="./home.css">
+</head>
+
+<body>
+    <div class="app-shell">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar__brand">
+                <img src="../images/logo_LUNAGS.png" alt="LUNAGS">
+                <span class="sidebar__brand-subtitle">MANAGEMENT SYSTEM</span>
+            </div>
+
+            <div class="sidebar__div">
+                <a class="sidebar__link" href="home.html">
+                    <i class="fa-solid fa-house"></i>
+                    <span>ホーム</span>
+                </a>
+
+                <a class="sidebar__link" href="calendar.html">
+                    <i class="fa-solid fa-calendar-days"></i>
+                    <span>カレンダー</span>
+                </a>
+
+                <a class="sidebar__link" href="posts.html">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                    <span>ポスト</span>
+                </a>
+
+                <a class="sidebar__link is-active href=" tasks.html">
+                    <i class="fa-solid fa-list-check"></i>
+                    <span>タスク</span>
+                </a>
+
+                <div class="sidebar__divider"></div>
+
+                <a class="sidebar__link" href="statistics.html">
+                    <i class="fa-solid fa-chart-column"></i>
+                    <span>統計</span>
+                </a>
+
+                <a class="sidebar__link" href="settings.html">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>設定</span>
+                </a>
+            </div>
+
+            <div class="sidebar__footer">
+                <a class="sidebar__mypage-btn" href="../My_page/profile.html">
+                    <i class="fa-solid fa-user"></i>
+                    <span>マイページへ戻る</span>
+                </a>
+            </div>
+        </aside>
+
+        <main class="main">
+            <header class="topbar">
+                <div>
+                    <h1 class="topbar__title">TASKS</h1>
+                    <div class="topbar__date">メンバーごとの課題と期限管理</div>
+                </div>
+                <div class="topbar__right">
+                    <button class="btn-primary" id="addTaskBtn"><svg class="icon" viewBox="0 0 24 24">
+                            <path d="M12 5v14M5 12h14" />
+                        </svg>新規タスク</button>
+                    <div class="notif">
+                        <button class="notif__btn" id="notifBtn" aria-label="通知"><svg class="icon" viewBox="0 0 24 24">
+                                <path d="M6 9a6 6 0 0 1 12 0c0 4 1.5 5.5 1.5 5.5H4.5S6 13 6 9Z" />
+                                <path d="M10 19a2 2 0 0 0 4 0" />
+                            </svg><span class="notif__badge is-hidden" id="notifBadge">0</span></button>
+                        <div class="notif__dropdown" id="notifDropdown">
+                            <div class="notif__dropdown-title">通知</div>
+                            <div id="notifList"></div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <section class="metrics-grid">
+                <div class="metric">
+                    <div class="metric__label">タスク総数</div>
+                    <div class="metric__value" id="metricTotal">0</div>
+                    <div class="metric__note">全期間</div>
+                </div>
+                <div class="metric">
+                    <div class="metric__label">完了</div>
+                    <div class="metric__value" id="metricDone">0</div>
+                    <div class="metric__note">対応済み</div>
+                </div>
+                <div class="metric">
+                    <div class="metric__label">本日期限</div>
+                    <div class="metric__value" id="metricToday">0</div>
+                    <div class="metric__note">今日の確認対象</div>
+                </div>
+                <div class="metric">
+                    <div class="metric__label">期限超過</div>
+                    <div class="metric__value" id="metricOverdue">0</div>
+                    <div class="metric__note">未完了のみ</div>
+                </div>
+            </section>
+
+            <section class="card">
+                <div class="card__head">
+                    <h2>タスクリスト</h2><span class="count" id="taskCount">0件</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>日付</th>
+                                <th>時間</th>
+                                <th>タイトル</th>
+                                <th>担当者</th>
+                                <th>詳細</th>
+                                <th>完了</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tasksList">
+                            <tr>
+                                <td colspan="7" class="text-center">読み込み中</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="card section-gap">
+                <div class="card__head">
+                    <h2>メンバー別進行</h2>
+                </div>
+                <div class="progress-list" id="memberProgress"></div>
+            </section>
+        </main>
+    </div>
+
+    <div class="modal-overlay is-hidden" id="taskModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">新規タスク</h3><button class="modal-close" id="taskModalClose" aria-label="閉じる"><svg
+                        class="icon" viewBox="0 0 24 24">
+                        <path d="M18 6 6 18M6 6l12 12" />
+                    </svg></button>
+            </div>
+            <div class="modal-body">
+                <form id="taskForm" class="form-grid">
+                    <div class="form-group span-2"><label for="taskTitle">タイトル</label><input class="field" type="text"
+                            id="taskTitle" required placeholder="例：動画編集の仕上げ"></div>
+                    <div class="form-group"><label for="taskDate">日付</label><input class="field" type="date"
+                            id="taskDate" required></div>
+                    <div class="form-group"><label for="taskTime">時間</label><input class="field" type="time"
+                            id="taskTime"></div>
+                    <div class="form-group"><label for="taskAssignee">担当者</label><input class="field" type="text"
+                            id="taskAssignee" list="memberList" placeholder="例：みなみ"></div>
+                    <div class="form-group span-2"><label for="taskDetail">詳細・メンション</label><textarea class="textarea"
+                            id="taskDetail" placeholder="@名前 を含めると通知対象に含めます"></textarea></div>
+                    <div class="form-group span-2"><label for="taskMentions">通知先</label><input class="field" type="text"
+                            id="taskMentions" placeholder="例：なぎさ, あかり"></div>
+                    <div class="span-2 toolbar"><button class="btn-primary" type="submit">保存</button><button
+                            class="btn-secondary" type="button" id="taskFormCancel">キャンセル</button></div>
+                </form>
+                <datalist id="memberList"></datalist>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-stack" id="toastStack"></div>
+
+    <script type="module">
+        import { auth } from "../firebase-config.js";
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                window.location.href = '../Login_page/login.html';
+            }
+        });
+
+        const STORAGE_KEYS = { tasks: "lunags_tasks", notifications: "lunags_notifications", settings: "lunags_settings" };
+        const state = { tasks: [], notifications: [], firestore: null, seenNotifications: new Set() };
+        const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
+        const toDateKey = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+        const readLocal = (key) => { try { return JSON.parse(localStorage.getItem(key) || "[]"); } catch { return []; } };
+        const writeLocal = (key, value) => localStorage.setItem(key, JSON.stringify(value));
+
+        function seedLocalData() {
+            if (!localStorage.getItem(STORAGE_KEYS.tasks)) writeLocal(STORAGE_KEYS.tasks, [{ id: "task-sample-1", dueDate: toDateKey(new Date()), time: "15:00", title: "台本の最終確認", assignee: "あかり", mentions: ["あかり"], completed: false, detail: "表記ゆれを確認" }]);
+            if (!localStorage.getItem(STORAGE_KEYS.notifications)) writeLocal(STORAGE_KEYS.notifications, []);
+        }
+
+        async function initData() {
+            seedLocalData();
+            renderMemberList();
+            try {
+                const [{ db, serverTimestamp }, firestore] = await Promise.all([import("../firebase-config.js"), import("https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js")]);
+                state.firestore = { db, serverTimestamp, ...firestore };
+                ["tasks", "notifications"].forEach(watchFirestoreCollection);
+            } catch (error) {
+                console.info("[LUNAGS] Firestoreに接続できないためローカルデータで動作します。", error.message);
+                state.tasks = readLocal(STORAGE_KEYS.tasks);
+                state.notifications = readLocal(STORAGE_KEYS.notifications);
+                renderAll();
+            }
+        }
+
+        function watchFirestoreCollection(name) {
+            const { db, collection, onSnapshot } = state.firestore;
+            onSnapshot(collection(db, name), (snapshot) => {
+                state[name] = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+                if (name === "notifications") notifyNewItems(state[name]);
+                renderAll();
+            }, () => {
+                state[name] = readLocal(STORAGE_KEYS[name]);
+                renderAll();
+            });
+        }
+
+        function readSettings() {
+            const fallback = { members: ["なぎさ", "みなみ", "あかり", "ゆづき"], currentUser: "なぎさ" };
+            try { return { ...fallback, ...(JSON.parse(localStorage.getItem(STORAGE_KEYS.settings) || "{}")) }; } catch { return fallback; }
+        }
+
+        function renderMemberList() {
+            document.getElementById("memberList").innerHTML = readSettings().members.map((name) => `<option value="${escapeHtml(name)}"></option>`).join("");
+        }
+
+        function renderAll() {
+            renderTasks();
+            renderMetrics();
+            renderMemberProgress();
+            renderNotifications();
+        }
+
+        function renderTasks() {
+            const list = document.getElementById("tasksList");
+            const sorted = [...state.tasks].sort((a, b) => `${a.dueDate || ""}${a.time || ""}`.localeCompare(`${b.dueDate || ""}${b.time || ""}`));
+            document.getElementById("taskCount").textContent = `${sorted.length}件`;
+            if (!sorted.length) {
+                list.innerHTML = `<tr><td colspan="7" class="text-center">タスクはありません。</td></tr>`;
+                return;
+            }
+            list.innerHTML = sorted.map((task) => `
+                <tr class="${task.completed ? "is-done-row" : ""}">
+                    <td>${escapeHtml(task.dueDate || "")}</td>
+                    <td>${escapeHtml(task.time || "-")}</td>
+                    <td class="fw-bold">${escapeHtml(task.title || "")}</td>
+                    <td>${escapeHtml(task.assignee || "未設定")}</td>
+                    <td>${escapeHtml(task.detail || "-")}</td>
+                    <td><button class="check-toggle ${task.completed ? "is-checked" : ""}" data-toggle="completed:${task.id}" aria-label="完了を切り替え"><svg viewBox="0 0 24 24"><path d="M4 12l6 6L20 6"/></svg></button></td>
+                    <td>
+                        <button class="btn-secondary btn-sm" data-edit="${task.id}">編集</button>
+                        <button class="btn-secondary btn-sm" data-delete="${task.id}">削除</button>
+                    </td>
+                </tr>
+            `).join("");
+            document.querySelectorAll("[data-toggle]").forEach((button) => {
+                button.addEventListener("click", () => {
+                    const [field, id] = button.dataset.toggle.split(":");
+                    const task = state.tasks.find((item) => item.id === id);
+                    if (task) updateTask(id, { [field]: !task[field] });
+                });
+            });
+            document.querySelectorAll("[data-edit]").forEach((button) => {
+                button.addEventListener("click", () => {
+                    const task = state.tasks.find((item) => item.id === button.dataset.edit);
+                    if (task) openModalForEdit(task);
+                });
+            });
+            document.querySelectorAll("[data-delete]").forEach((button) => {
+                button.addEventListener("click", () => {
+                    if (confirm("このタスクを削除してもよろしいですか？")) {
+                        deleteTask(button.dataset.delete);
+                    }
+                });
+            });
+        }
+
+        function renderMetrics() {
+            const today = toDateKey(new Date());
+            document.getElementById("metricTotal").textContent = state.tasks.length;
+            document.getElementById("metricDone").textContent = state.tasks.filter((task) => task.completed).length;
+            document.getElementById("metricToday").textContent = state.tasks.filter((task) => task.dueDate === today).length;
+            document.getElementById("metricOverdue").textContent = state.tasks.filter((task) => !task.completed && String(task.dueDate || "") < today).length;
+        }
+
+        function renderMemberProgress() {
+            const members = readSettings().members;
+            const wrap = document.getElementById("memberProgress");
+            wrap.innerHTML = members.map((member) => {
+                const own = state.tasks.filter((task) => task.assignee === member);
+                const done = own.filter((task) => task.completed).length;
+                const percent = own.length ? Math.round(done / own.length * 100) : 0;
+                return `<div class="progress-row"><div class="progress-row__head"><span>${escapeHtml(member)}</span><span>${done}/${own.length}件</span></div><div class="progress-bar"><span style="width:${percent}%"></span></div></div>`;
+            }).join("") || `<div class="empty-state">メンバーは設定画面から登録できます。</div>`;
+        }
+
+        async function createTask(task) {
+            const localTask = { ...task, id: `task-${Date.now()}`, createdAtLocal: Date.now() };
+            if (state.firestore) {
+                try {
+                    const { db, collection, addDoc, serverTimestamp } = state.firestore;
+                    const docRef = await addDoc(collection(db, "tasks"), { ...task, createdAt: serverTimestamp() });
+                    localTask.id = docRef.id;
+                } catch (error) {
+                    console.info("[LUNAGS] Firestore保存をローカルにフォールバックしました。", error.message);
+                }
+            }
+            state.tasks = [localTask, ...state.tasks];
+            writeLocal(STORAGE_KEYS.tasks, state.tasks);
+            await createNotificationsForTask(localTask);
+            renderAll();
+            showToast("新しいタスクを保存しました。");
+        }
+
+        async function updateTask(id, patch) {
+            state.tasks = state.tasks.map((task) => task.id === id ? { ...task, ...patch } : task);
+            writeLocal(STORAGE_KEYS.tasks, state.tasks);
+            renderAll();
+            if (!state.firestore) return;
+            try {
+                const { db, doc, updateDoc } = state.firestore;
+                await updateDoc(doc(db, "tasks", id), patch);
+            } catch (error) {
+                console.info("[LUNAGS] Firestore更新をローカルにフォールバックしました。", error.message);
+            }
+        }
+
+        async function deleteTask(id) {
+            state.tasks = state.tasks.filter((task) => task.id !== id);
+            writeLocal(STORAGE_KEYS.tasks, state.tasks);
+            renderAll();
+            if (!state.firestore) return;
+            try {
+                const { db, doc, deleteDoc } = state.firestore;
+                await deleteDoc(doc(db, "tasks", id));
+            } catch (error) {
+                console.info("[LUNAGS] Firestore削除をローカルにフォールバックしました。", error.message);
+            }
+        }
+
+        async function createNotificationsForTask(task) {
+            const recipients = collectRecipients(task.assignee, task.mentions, task.title, task.detail);
+            const text = `新しいタスク「${task.title}」が追加されました。`;
+            for (const recipient of recipients) await addNotification({ text, recipient, sourceType: "task", sourceId: task.id });
+        }
+
+        async function addNotification(notification) {
+            const local = { id: `notice-${Date.now()}-${Math.random().toString(16).slice(2)}`, unread: true, createdAtLocal: Date.now(), ...notification };
+            if (state.firestore) {
+                try {
+                    const { db, collection, addDoc, serverTimestamp } = state.firestore;
+                    const docRef = await addDoc(collection(db, "notifications"), { ...notification, unread: true, createdAt: serverTimestamp() });
+                    local.id = docRef.id;
+                } catch (error) {
+                    console.info("[LUNAGS] 通知保存をローカルにフォールバックしました。", error.message);
+                }
+            }
+            state.notifications = [local, ...state.notifications];
+            writeLocal(STORAGE_KEYS.notifications, state.notifications);
+        }
+
+        function collectRecipients(assignee, mentions, title, detail) {
+            const explicit = String(mentions || "").split(/[,\s、]+/).map((name) => name.replace(/^@/, "").trim()).filter(Boolean);
+            const found = [...String(`${title} ${detail}`).matchAll(/@([^\s,、。]+)/g)].map((match) => match[1]);
+            const assigned = assignee ? [String(assignee).replace(/^@/, "").trim()] : [];
+            return [...new Set([...assigned, ...explicit, ...found].filter(Boolean))];
+        }
+
+        function notifyNewItems(items) {
+            items.forEach((item) => {
+                if (!state.seenNotifications.has(item.id)) {
+                    state.seenNotifications.add(item.id);
+                    if (item.unread) showToast(item.text || "新しい通知があります。");
+                }
+            });
+        }
+
+        function renderNotifications() {
+            const badge = document.getElementById("notifBadge");
+            const list = document.getElementById("notifList");
+            const sorted = [...state.notifications].sort((a, b) => getTimeValue(b) - getTimeValue(a));
+            const unread = sorted.filter((item) => item.unread).length;
+            badge.textContent = unread > 9 ? "9+" : String(unread);
+            badge.classList.toggle("is-hidden", unread === 0);
+            list.innerHTML = sorted.length ? sorted.slice(0, 20).map((item) => `<div class="notif__item"><span class="notif__dot"></span><div><div class="notif__item-text">${escapeHtml(item.text || "")}</div><div class="notif__item-time">${escapeHtml(formatRelativeTime(item))}</div></div></div>`).join("") : `<div class="notif__empty">通知はまだありません。</div>`;
+        }
+
+        function getTimeValue(item) {
+            if (typeof item.createdAtLocal === "number") return item.createdAtLocal;
+            if (item.createdAt?.toMillis) return item.createdAt.toMillis();
+            return 0;
+        }
+
+        function formatRelativeTime(item) {
+            const value = getTimeValue(item);
+            if (!value) return item.time || "";
+            const diff = Math.max(1, Math.round((Date.now() - value) / 60000));
+            if (diff < 60) return `${diff}分前`;
+            if (diff < 1440) return `${Math.round(diff / 60)}時間前`;
+            return `${Math.round(diff / 1440)}日前`;
+        }
+
+        function showToast(text) {
+            const stack = document.getElementById("toastStack");
+            const toast = document.createElement("div");
+            toast.className = "toast";
+            toast.textContent = text;
+            stack.appendChild(toast);
+            requestAnimationFrame(() => toast.classList.add("is-visible"));
+            setTimeout(() => { toast.classList.remove("is-visible"); setTimeout(() => toast.remove(), 220); }, 4200);
+        }
+
+        function openModal() {
+            document.getElementById("taskForm").reset();
+            delete document.getElementById("taskForm").dataset.editId;
+            document.getElementById("taskDate").value = toDateKey(new Date());
+            document.querySelector("#taskModal .modal-title").textContent = "新規タスク";
+            document.getElementById("taskModal").classList.remove("is-hidden");
+        }
+
+        function openModalForEdit(task) {
+            document.getElementById("taskForm").reset();
+            document.getElementById("taskForm").dataset.editId = task.id;
+            document.getElementById("taskTitle").value = task.title || "";
+            document.getElementById("taskDate").value = task.dueDate || "";
+            document.getElementById("taskTime").value = task.time || "";
+            document.getElementById("taskAssignee").value = task.assignee || "";
+            document.getElementById("taskDetail").value = task.detail || "";
+            document.getElementById("taskMentions").value = (task.mentions || []).join(", ");
+            document.querySelector("#taskModal .modal-title").textContent = "タスクを編集";
+            document.getElementById("taskModal").classList.remove("is-hidden");
+        }
+
+        function closeModal() {
+            document.getElementById("taskModal").classList.add("is-hidden");
+            document.getElementById("taskForm").reset();
+            delete document.getElementById("taskForm").dataset.editId;
+        }
+
+        function initEvents() {
+            document.getElementById("addTaskBtn").addEventListener("click", openModal);
+            document.getElementById("taskModalClose").addEventListener("click", closeModal);
+            document.getElementById("taskFormCancel").addEventListener("click", closeModal);
+            document.getElementById("taskForm").addEventListener("submit", async (event) => {
+                event.preventDefault();
+                const editId = document.getElementById("taskForm").dataset.editId;
+                const taskData = {
+                    title: document.getElementById("taskTitle").value.trim(),
+                    dueDate: document.getElementById("taskDate").value,
+                    time: document.getElementById("taskTime").value,
+                    assignee: document.getElementById("taskAssignee").value.trim().replace(/^@/, ""),
+                    detail: document.getElementById("taskDetail").value.trim(),
+                    mentions: collectRecipients("", document.getElementById("taskMentions").value, document.getElementById("taskTitle").value, document.getElementById("taskDetail").value)
+                };
+
+                if (editId) {
+                    await updateTask(editId, taskData);
+                    showToast("タスクを更新しました。");
+                } else {
+                    await createTask({ ...taskData, completed: false });
+                }
+                closeModal();
+            });
+            const notifBtn = document.getElementById("notifBtn");
+            const notifDropdown = document.getElementById("notifDropdown");
+            notifBtn.addEventListener("click", (event) => { event.stopPropagation(); notifDropdown.classList.toggle("is-open"); });
+            document.addEventListener("click", (event) => { if (!notifDropdown.contains(event.target) && event.target !== notifBtn) notifDropdown.classList.remove("is-open"); });
+        }
+
+        initEvents();
+        initData();
+    </script>
+</body>
+
+</html>

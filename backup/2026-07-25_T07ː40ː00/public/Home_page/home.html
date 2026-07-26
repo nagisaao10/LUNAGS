@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ホーム | LUNAGS 管理システム</title>
+    <link rel="stylesheet" href="../normalize.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Noto+Sans+JP:wght@400;500;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="./home.css">
+</head>
+
+<body>
+    <div class="app-shell">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar__brand">
+                <img src="../images/logo_LUNAGS.png" alt="LUNAGS">
+                <span class="sidebar__brand-subtitle">MANAGEMENT SYSTEM</span>
+            </div>
+
+            <div class="sidebar__div">
+                <a class="sidebar__link is-active" href="home.html">
+                    <i class="fa-solid fa-house"></i>
+                    <span>ホーム</span>
+                </a>
+
+                <a class="sidebar__link" href="calendar.html">
+                    <i class="fa-solid fa-calendar-days"></i>
+                    <span>カレンダー</span>
+                </a>
+
+                <a class="sidebar__link" href="posts.html">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                    <span>ポスト</span>
+                </a>
+
+                <a class="sidebar__link" href="tasks.html">
+                    <i class="fa-solid fa-list-check"></i>
+                    <span>タスク</span>
+                </a>
+
+                <div class="sidebar__divider"></div>
+
+                <a class="sidebar__link" href="statistics.html">
+                    <i class="fa-solid fa-chart-column"></i>
+                    <span>統計</span>
+                </a>
+
+                <a class="sidebar__link" href="settings.html">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>設定</span>
+                </a>
+            </div>
+
+            <div class="sidebar__footer">
+                <a class="sidebar__mypage-btn" href="../My_page/profile.html">
+                    <i class="fa-solid fa-user"></i>
+                    <span>マイページへ戻る</span>
+                </a>
+            </div>
+        </aside>
+
+        <main class="main">
+            <header class="topbar">
+                <div>
+                    <h1 class="topbar__title">HOME</h1>
+                    <div class="topbar__date" id="todayLabel">読み込み中</div>
+                </div>
+                <div class="topbar__right">
+                    <div class="search-box">
+                        <svg class="icon" viewBox="0 0 24 24">
+                            <circle cx="11" cy="11" r="7" />
+                            <path d="m20 20-3.5-3.5" />
+                        </svg>
+                        <input type="search" id="searchInput" placeholder="タイトル・担当者・メンバーで検索" autocomplete="off">
+                    </div>
+                    <div class="notif">
+                        <button class="notif__btn" id="notifBtn" aria-label="通知"><svg class="icon" viewBox="0 0 24 24">
+                                <path d="M6 9a6 6 0 0 1 12 0c0 4 1.5 5.5 1.5 5.5H4.5S6 13 6 9Z" />
+                                <path d="M10 19a2 2 0 0 0 4 0" />
+                            </svg><span class="notif__badge is-hidden" id="notifBadge">0</span></button>
+                        <div class="notif__dropdown" id="notifDropdown">
+                            <div class="notif__dropdown-title">通知</div>
+                            <div id="notifList"></div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <section class="metrics-grid">
+                <div class="metric">
+                    <div class="metric__label">本日の予定</div>
+                    <div class="metric__value" id="metricToday">0</div>
+                    <div class="metric__note">ポスト・タスク合計</div>
+                </div>
+                <div class="metric">
+                    <div class="metric__label">未完了</div>
+                    <div class="metric__value" id="metricOpen">0</div>
+                    <div class="metric__note">今日中に確認</div>
+                </div>
+                <div class="metric">
+                    <div class="metric__label">投稿予定</div>
+                    <div class="metric__value" id="metricPosts">0</div>
+                    <div class="metric__note">全期間</div>
+                </div>
+                <div class="metric">
+                    <div class="metric__label">タスク</div>
+                    <div class="metric__value" id="metricTasks">0</div>
+                    <div class="metric__note">全期間</div>
+                </div>
+            </section>
+
+            <section class="dashboard-grid">
+                <div class="card">
+                    <div class="card__head">
+                        <h2>今日の予定</h2>
+                        <span class="count" id="scheduleCount">0件</span>
+                    </div>
+                    <div class="schedule-list" id="scheduleList"></div>
+                </div>
+
+                <div class="card">
+                    <div class="card__head">
+                        <h2>今日の達成率</h2>
+                    </div>
+                    <div class="achievement">
+                        <div class="achievement__ring-wrap">
+                            <svg viewBox="0 0 176 176">
+                                <circle class="achievement__ring-bg" cx="88" cy="88" r="72"></circle>
+                                <circle class="achievement__ring-fill" id="ringFill" cx="88" cy="88" r="72"></circle>
+                            </svg>
+                            <div class="achievement__ring-label">
+                                <div class="achievement__percent" id="achievementPercent">0%</div>
+                                <div class="achievement__fraction" id="achievementFraction">0 / 0 件</div>
+                            </div>
+                        </div>
+                        <div class="achievement__caption">完了済みの本日分ポスト・タスクから算出します。</div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card search-results is-hidden" id="searchResults">
+                <div class="card__head">
+                    <h2>検索結果</h2>
+                    <span class="count" id="searchResultCount">0件</span>
+                </div>
+                <div class="search-results__list" id="searchResultList"></div>
+            </section>
+        </main>
+    </div>
+
+    <div class="toast-stack" id="toastStack"></div>
+
+    <script type="module">
+        import { auth } from "../firebase-config.js";
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                window.location.href = '../Login_page/login.html';
+            }
+        });
+
+        const STORAGE_KEYS = {
+            posts: "lunags_posts",
+            tasks: "lunags_tasks",
+            notifications: "lunags_notifications",
+            settings: "lunags_settings"
+        };
+        const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
+        const ringCircumference = 2 * Math.PI * 72;
+        const state = { posts: [], tasks: [], notifications: [], firestore: null, seenNotifications: new Set() };
+
+        const todayStr = () => toDateKey(new Date());
+        const toDateKey = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+        const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
+        const readLocal = (key) => { try { return JSON.parse(localStorage.getItem(key) || "[]"); } catch { return []; } };
+        const writeLocal = (key, value) => localStorage.setItem(key, JSON.stringify(value));
+
+        function seedLocalData() {
+            if (!localStorage.getItem(STORAGE_KEYS.posts)) {
+                writeLocal(STORAGE_KEYS.posts, [
+                    { id: "post-sample-1", date: todayStr(), time: "12:00", platform: "YouTube", title: "新作動画の公開", assignee: "なぎさ", mentions: ["なぎさ"], completed: true, thumbDone: true, detail: "公開文と固定コメントを確認" },
+                    { id: "post-sample-2", date: todayStr(), time: "19:30", platform: "X", title: "配信告知ポスト", assignee: "みなみ", mentions: ["みなみ"], completed: false, thumbDone: true, detail: "告知画像を添付" },
+                    { id: "post-sample-3", date: "2026-07-24", time: "20:00", platform: "Instagram", title: "@あかり コラボ告知", assignee: "あかり", mentions: ["あかり"], completed: false, thumbDone: false, detail: "" }
+                ]);
+            }
+            if (!localStorage.getItem(STORAGE_KEYS.tasks)) {
+                writeLocal(STORAGE_KEYS.tasks, [
+                    { id: "task-sample-1", dueDate: todayStr(), title: "台本の最終確認", assignee: "あかり", mentions: ["あかり"], completed: false, detail: "誤字と表記ゆれを確認" },
+                    { id: "task-sample-2", dueDate: todayStr(), title: "サムネ差し替え", assignee: "なぎさ", mentions: ["なぎさ"], completed: true, detail: "青基調の最新版へ差し替え" },
+                    { id: "task-sample-3", dueDate: "2026-07-25", title: "月次レポート作成", assignee: "みなみ", mentions: ["みなみ"], completed: false, detail: "" }
+                ]);
+            }
+            if (!localStorage.getItem(STORAGE_KEYS.notifications)) {
+                writeLocal(STORAGE_KEYS.notifications, [
+                    { id: "notice-sample-1", text: "配信告知ポストで、みなみさんが担当者に設定されました。", recipient: "みなみ", unread: true, createdAtLocal: Date.now() - 1000 * 60 * 24 },
+                    { id: "notice-sample-2", text: "台本の最終確認で、あかりさんがメンションされました。", recipient: "あかり", unread: true, createdAtLocal: Date.now() - 1000 * 60 * 68 }
+                ]);
+            }
+        }
+
+        async function initData() {
+            seedLocalData();
+            try {
+                const [{ db, serverTimestamp }, firestore] = await Promise.all([
+                    import("../firebase-config.js"),
+                    import("https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js")
+                ]);
+                state.firestore = { db, serverTimestamp, ...firestore };
+                watchFirestoreCollection("posts");
+                watchFirestoreCollection("tasks");
+                watchFirestoreCollection("notifications");
+            } catch (error) {
+                console.info("[LUNAGS] Firestoreに接続できないためローカルデータで動作します。", error.message);
+                state.posts = readLocal(STORAGE_KEYS.posts);
+                state.tasks = readLocal(STORAGE_KEYS.tasks);
+                state.notifications = readLocal(STORAGE_KEYS.notifications);
+                renderAll();
+            }
+        }
+
+        function watchFirestoreCollection(name) {
+            const { db, collection, onSnapshot } = state.firestore;
+            onSnapshot(collection(db, name), (snapshot) => {
+                const items = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+                state[name] = items;
+                if (name === "notifications") notifyNewItems(items);
+                renderAll();
+            }, () => {
+                state[name] = readLocal(STORAGE_KEYS[name]);
+                renderAll();
+            });
+        }
+
+        function notifyNewItems(items) {
+            const known = state.seenNotifications;
+            items.forEach((item) => {
+                if (!known.has(item.id)) {
+                    known.add(item.id);
+                    if (item.unread) showToast(item.text || "新しい通知があります。");
+                }
+            });
+        }
+
+        async function updateItem(collectionName, id, patch) {
+            const key = STORAGE_KEYS[collectionName];
+            const current = state[collectionName];
+            const next = current.map((item) => item.id === id ? { ...item, ...patch } : item);
+            state[collectionName] = next;
+            writeLocal(key, next);
+            renderAll();
+            if (!state.firestore) return;
+            try {
+                const { db, doc, updateDoc } = state.firestore;
+                await updateDoc(doc(db, collectionName, id), patch);
+            } catch (error) {
+                console.info("[LUNAGS] Firestore更新をローカルにフォールバックしました。", error.message);
+            }
+        }
+
+        function buildTodayItems() {
+            const today = todayStr();
+            const posts = state.posts
+                .filter((post) => post.date === today)
+                .map((post) => ({ kind: "post", id: post.id, title: post.title, assignee: post.assignee, meta: post.platform || "投稿", time: post.time || "", completed: !!post.completed }));
+            const tasks = state.tasks
+                .filter((task) => task.dueDate === today)
+                .map((task) => ({ kind: "task", id: task.id, title: task.title, assignee: task.assignee, meta: "期限日", time: "", completed: !!task.completed }));
+            return [...posts, ...tasks].sort((a, b) => `${a.time}${a.title}`.localeCompare(`${b.time}${b.title}`, "ja"));
+        }
+
+        function renderTodayLabel() {
+            const now = new Date();
+            document.getElementById("todayLabel").textContent = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日（${WEEKDAYS[now.getDay()]}）　今日の概要`;
+        }
+
+        function renderSchedule(items) {
+            const list = document.getElementById("scheduleList");
+            document.getElementById("scheduleCount").textContent = `${items.length}件`;
+            if (!items.length) {
+                list.innerHTML = `<div class="empty-state">本日の予定はありません。ポストまたはタスク画面から追加できます。</div>`;
+                return;
+            }
+            list.innerHTML = items.map((item) => `
+                <div class="schedule-item ${item.completed ? "is-done" : ""}">
+                    <button class="check-toggle ${item.completed ? "is-checked" : ""}" data-toggle="${item.kind}:${item.id}" aria-label="完了状態を切り替え"><svg viewBox="0 0 24 24"><path d="M4 12l6 6L20 6"/></svg></button>
+                    <span class="schedule-item__badge ${item.kind === "post" ? "badge--post" : "badge--task"}">${item.kind === "post" ? "ポスト" : "タスク"}</span>
+                    <div class="schedule-item__body"><div class="schedule-item__title">${escapeHtml(item.title)}</div><div class="schedule-item__meta">${escapeHtml(item.meta)} ・ 担当：${escapeHtml(item.assignee || "未設定")}</div></div>
+                    <div class="schedule-item__time">${escapeHtml(item.time || "終日")}</div>
+                </div>
+            `).join("");
+            document.querySelectorAll("[data-toggle]").forEach((button) => {
+                button.addEventListener("click", () => {
+                    const [kind, id] = button.dataset.toggle.split(":");
+                    const collectionName = kind === "post" ? "posts" : "tasks";
+                    const item = state[collectionName].find((entry) => entry.id === id);
+                    if (item) updateItem(collectionName, id, { completed: !item.completed });
+                });
+            });
+        }
+
+        function renderAchievement(items) {
+            const total = items.length;
+            const done = items.filter((item) => item.completed).length;
+            const percent = total ? Math.round((done / total) * 100) : 0;
+            document.getElementById("achievementPercent").textContent = `${percent}%`;
+            document.getElementById("achievementFraction").textContent = `${done} / ${total} 件`;
+            const ring = document.getElementById("ringFill");
+            ring.style.strokeDasharray = `${ringCircumference}`;
+            ring.style.strokeDashoffset = `${ringCircumference - (ringCircumference * percent) / 100}`;
+        }
+
+        function renderMetrics(items) {
+            document.getElementById("metricToday").textContent = items.length;
+            document.getElementById("metricOpen").textContent = items.filter((item) => !item.completed).length;
+            document.getElementById("metricPosts").textContent = state.posts.length;
+            document.getElementById("metricTasks").textContent = state.tasks.length;
+        }
+
+        function renderSearch() {
+            const query = document.getElementById("searchInput").value.trim().toLowerCase();
+            const section = document.getElementById("searchResults");
+            const count = document.getElementById("searchResultCount");
+            const list = document.getElementById("searchResultList");
+            if (!query) {
+                section.classList.add("is-hidden");
+                return;
+            }
+            const matches = [
+                ...state.posts.map((post) => ({ kind: "post", title: post.title, assignee: post.assignee, date: post.date, meta: post.platform, mentions: post.mentions })),
+                ...state.tasks.map((task) => ({ kind: "task", title: task.title, assignee: task.assignee, date: task.dueDate, meta: "期限日", mentions: task.mentions }))
+            ].filter((item) => [item.title, item.assignee, item.meta, ...(item.mentions || [])].join(" ").toLowerCase().includes(query))
+                .sort((a, b) => String(a.date || "").localeCompare(String(b.date || "")));
+            section.classList.remove("is-hidden");
+            count.textContent = `${matches.length}件`;
+            list.innerHTML = matches.length ? matches.map((item) => `
+                <div class="search-results__item">
+                    <span class="schedule-item__badge ${item.kind === "post" ? "badge--post" : "badge--task"}">${item.kind === "post" ? "ポスト" : "タスク"}</span>
+                    <div class="schedule-item__body"><div class="schedule-item__title">${escapeHtml(item.title)}</div><div class="schedule-item__meta">${escapeHtml(item.meta || "")} ・ 担当：${escapeHtml(item.assignee || "未設定")}</div></div>
+                    <div class="search-results__date">${escapeHtml(item.date || "")}</div>
+                </div>
+            `).join("") : `<div class="empty-state">一致する予定はありません。</div>`;
+        }
+
+        function renderNotifications() {
+            const badge = document.getElementById("notifBadge");
+            const list = document.getElementById("notifList");
+            const sorted = [...state.notifications].sort((a, b) => getTimeValue(b) - getTimeValue(a));
+            const unread = sorted.filter((item) => item.unread).length;
+            badge.textContent = unread > 9 ? "9+" : String(unread);
+            badge.classList.toggle("is-hidden", unread === 0);
+            list.innerHTML = sorted.length ? sorted.slice(0, 20).map((item) => `
+                <div class="notif__item"><span class="notif__dot"></span><div><div class="notif__item-text">${escapeHtml(item.text || "")}</div><div class="notif__item-time">${escapeHtml(formatRelativeTime(item))}</div></div></div>
+            `).join("") : `<div class="notif__empty">通知はまだありません。</div>`;
+        }
+
+        function getTimeValue(item) {
+            if (typeof item.createdAtLocal === "number") return item.createdAtLocal;
+            if (item.createdAt?.toMillis) return item.createdAt.toMillis();
+            return 0;
+        }
+
+        function formatRelativeTime(item) {
+            const value = getTimeValue(item);
+            if (!value) return item.time || "";
+            const diff = Math.max(1, Math.round((Date.now() - value) / 60000));
+            if (diff < 60) return `${diff}分前`;
+            if (diff < 1440) return `${Math.round(diff / 60)}時間前`;
+            return `${Math.round(diff / 1440)}日前`;
+        }
+
+        function showToast(text) {
+            const stack = document.getElementById("toastStack");
+            const toast = document.createElement("div");
+            toast.className = "toast";
+            toast.textContent = text;
+            stack.appendChild(toast);
+            requestAnimationFrame(() => toast.classList.add("is-visible"));
+            setTimeout(() => {
+                toast.classList.remove("is-visible");
+                setTimeout(() => toast.remove(), 220);
+            }, 4200);
+        }
+
+        function renderAll() {
+            const items = buildTodayItems();
+            renderSchedule(items);
+            renderAchievement(items);
+            renderMetrics(items);
+            renderSearch();
+            renderNotifications();
+        }
+
+        function initEvents() {
+            document.getElementById("searchInput").addEventListener("input", renderSearch);
+            const notifBtn = document.getElementById("notifBtn");
+            const notifDropdown = document.getElementById("notifDropdown");
+            notifBtn.addEventListener("click", (event) => {
+                event.stopPropagation();
+                notifDropdown.classList.toggle("is-open");
+            });
+            document.addEventListener("click", (event) => {
+                if (!notifDropdown.contains(event.target) && event.target !== notifBtn) notifDropdown.classList.remove("is-open");
+            });
+        }
+
+        renderTodayLabel();
+        initEvents();
+        initData();
+    </script>
+</body>
+
+</html>

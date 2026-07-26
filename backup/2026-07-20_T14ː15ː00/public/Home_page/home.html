@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ダッシュボード | LUNAGS 管理システム</title>
+    <link rel="stylesheet" href="../normalize.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="../common.css">
+    <link rel="stylesheet" href="./home.css">
+</head>
+
+<body>
+    <div class="app-shell">
+
+        <!-- ========== サイドバー ========== -->
+        <aside class="sidebar">
+            <div class="sidebar__brand">
+                <img src="../images/logo_LUNAGS.png" alt="LUNAGS">
+                <span class="sidebar__brand-subtitle">
+                    MANAGEMENT SYSTEM
+                </span>
+            </div>
+
+            <nav class="sidebar__nav">
+                <a class="sidebar__link is-active" href="home.html">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M4 11.5 12 4l8 7.5" />
+                        <path d="M6 10v9a1 1 0 0 0 1 1h4v-6h2v6h4a1 1 0 0 0 1-1v-9" />
+                    </svg>
+                    ホーム
+                </a>
+                <a class="sidebar__link" href="calendar.html">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <rect x="3.5" y="5" width="17" height="15" rx="2.5" />
+                        <path d="M3.5 9.5h17" />
+                        <path d="M8 3v3.5M16 3v3.5" />
+                    </svg>
+                    カレンダー
+                </a>
+                <a class="sidebar__link" href="posts.html">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <rect x="4" y="4" width="16" height="16" rx="3" />
+                        <path d="M8 9h8M8 13h8M8 17h4" />
+                    </svg>
+                    ポスト
+                </a>
+                <a class="sidebar__link" href="tasks.html">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M5 7h1.5l1 1.5L9 7h10" />
+                        <path d="M5 12h1.5l1 1.5L9 12h10" />
+                        <path d="M5 17h1.5l1 1.5L9 17h10" />
+                    </svg>
+                    タスク
+                </a>
+
+                <div class="sidebar__divider"></div>
+
+                <a class="sidebar__link" href="statistics.html">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M4 20V10M11 20V4M18 20v-7" />
+                    </svg>
+                    統計
+                </a>
+                <a class="sidebar__link" href="settings.html">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="3" />
+                        <path
+                            d="M19 12a7 7 0 0 0-.1-1.2l2-1.6-2-3.4-2.4.7a7 7 0 0 0-2-1.2L14 3h-4l-.5 2.3a7 7 0 0 0-2 1.2l-2.4-.7-2 3.4 2 1.6a7 7 0 0 0 0 2.4l-2 1.6 2 3.4 2.4-.7a7 7 0 0 0 2 1.2L10 21h4l.5-2.3a7 7 0 0 0 2-1.2l2.4.7 2-3.4-2-1.6c.067-.4.1-.8.1-1.2Z" />
+                    </svg>
+                    設定
+                </a>
+            </nav>
+
+            <div class="sidebar__footer">
+                <a class="sidebar__mypage-btn" href="../My_page/profile.html">
+                    <svg class="icon" viewBox="0 0 24 24" style="width:14px;height:14px;">
+                        <circle cx="12" cy="8" r="3.5" />
+                        <path d="M5 20c0-3.6 3.1-6.5 7-6.5s7 2.9 7 6.5" />
+                    </svg>
+                    マイページへ戻る
+                </a>
+            </div>
+        </aside>
+
+        <!-- ========== メイン ========== -->
+        <main class="main">
+
+            <header class="topbar">
+                <div>
+                    <h1 class="topbar__title">ホーム</h1>
+                    <div class="topbar__date" id="todayLabel">読み込み中…</div>
+                </div>
+
+                <div class="topbar__right">
+                    <div class="search-box">
+                        <svg class="icon" viewBox="0 0 24 24">
+                            <circle cx="11" cy="11" r="7" />
+                            <path d="m20 20-3.5-3.5" />
+                        </svg>
+                        <input type="text" id="searchInput" placeholder="タイトル・担当者で検索" autocomplete="off" />
+                    </div>
+
+                    <div class="notif">
+                        <button class="notif__btn" id="notifBtn" aria-label="通知">
+                            <svg class="icon" viewBox="0 0 24 24">
+                                <path d="M6 9a6 6 0 0 1 12 0c0 4 1.5 5.5 1.5 5.5H4.5S6 13 6 9Z" />
+                                <path d="M10 19a2 2 0 0 0 4 0" />
+                            </svg>
+                            <span class="notif__badge is-hidden" id="notifBadge">0</span>
+                        </button>
+                        <div class="notif__dropdown" id="notifDropdown">
+                            <div class="notif__dropdown-title">通知</div>
+                            <div id="notifList"></div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <section class="dashboard-grid">
+                <div class="card">
+                    <div class="card__head">
+                        <h2>今日の予定</h2>
+                        <span class="count" id="scheduleCount">0件</span>
+                    </div>
+                    <div class="schedule-list" id="scheduleList">
+                        <div class="empty-state">読み込み中…</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card__head">
+                        <h2>今日の達成率</h2>
+                    </div>
+                    <div class="achievement">
+                        <div class="achievement__ring-wrap">
+                            <svg viewBox="0 0 176 176">
+                                <defs>
+                                    <linearGradient id="ringGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stop-color="#5FC9F0" />
+                                        <stop offset="100%" stop-color="#3B6FE8" />
+                                    </linearGradient>
+                                </defs>
+                                <circle class="achievement__ring-bg" cx="88" cy="88" r="72" />
+                                <circle class="achievement__ring-fill" id="ringFill" cx="88" cy="88" r="72" />
+                            </svg>
+                            <div class="achievement__ring-label">
+                                <div class="achievement__percent" id="achievementPercent">0%</div>
+                                <div class="achievement__fraction" id="achievementFraction">0 / 0 件</div>
+                            </div>
+                        </div>
+                        <p class="achievement__caption">完了した本日分のポスト・タスクの割合です。</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card search-results is-hidden" id="searchResults">
+                <div class="card__head">
+                    <h2>検索結果</h2>
+                    <span class="count" id="searchResultCount">0件</span>
+                </div>
+                <div class="search-results__list" id="searchResultList"></div>
+            </section>
+
+        </main>
+    </div>
+
+    <div class="toast-stack" id="toastStack"></div>
+
+    <!-- Firebase & Logic -->
+    <script type="module">
+        // ==========================================
+        // 定数・初期データ定義
+        // ==========================================
+        const STORAGE_KEYS = {
+            posts: "lunags_posts",
+            tasks: "lunags_tasks",
+            notifications: "lunags_notifications",
+            events: "lunags_events"
+        };
+
+        // 今日の日付を YYYY-MM-DD 形式で取得する関数
+        const todayStr = () => {
+            const d = new Date();
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, "0");
+            const day = String(d.getDate()).padStart(2, "0");
+
+            return `${year}-${month}-${day}`;
+        };
+
+        // ダミーデータ：ポスト
+        const DUMMY_POSTS = [
+            {
+                id: "p1",
+                date: todayStr(),
+                time: "12:00",
+                platform: "YouTube",
+                title: "新作アイテム紹介動画",
+                assignee: "みなみ",
+                completed: true,
+                thumbDone: true
+            },
+            {
+                id: "p2",
+                date: todayStr(),
+                time: "18:00",
+                platform: "ショート動画",
+                title: "コラボ告知ショート",
+                assignee: "あかり",
+                completed: false,
+                thumbDone: false
+            },
+            {
+                id: "p3",
+                date: todayStr(),
+                time: "21:00",
+                platform: "X / Twitter",
+                title: "配信予告ポスト",
+                assignee: "なぎさ",
+                completed: false,
+                thumbDone: true
+            },
+            {
+                id: "p4",
+                date: "2026-07-06",
+                time: "20:00",
+                platform: "Twitch",
+                title: "雑談配信",
+                assignee: "ゆづき",
+                completed: false,
+                thumbDone: false
+            },
+        ];
+
+        // ダミーデータ：タスク
+        const DUMMY_TASKS = [
+            {
+                id: "t1",
+                dueDate: todayStr(),
+                title: "サムネ素材の差し替え",
+                assignee: "あかり",
+                completed: true
+            },
+            {
+                id: "t2",
+                dueDate: todayStr(),
+                title: "台本の最終チェック",
+                assignee: "なぎさ",
+                completed: false
+            },
+            {
+                id: "t3",
+                dueDate: "2026-07-07",
+                title: "月次レポートの作成",
+                assignee: "みなみ",
+                completed: false
+            },
+        ];
+
+        // ダミーデータ：通知
+        const DUMMY_NOTIFICATIONS = [
+            {
+                id: "n1",
+                text: "みなみさんが「新作アイテム紹介動画」を完了にしました。",
+                time: "5分前",
+                unread: true
+            },
+            {
+                id: "n2",
+                text: "@なぎさ さんが「台本の最終チェック」であなたをメンションしました。",
+                time: "1時間前",
+                unread: true
+            },
+        ];
+
+        let db = null;
+        let usingFirestore = false;
+
+        // ==========================================
+        // ローカルストレージ関連
+        // ==========================================
+        function seedLocalStorage() {
+            if (!localStorage.getItem(STORAGE_KEYS.posts)) {
+                localStorage.setItem(STORAGE_KEYS.posts, JSON.stringify(DUMMY_POSTS));
+            }
+            if (!localStorage.getItem(STORAGE_KEYS.tasks)) {
+                localStorage.setItem(STORAGE_KEYS.tasks, JSON.stringify(DUMMY_TASKS));
+            }
+            if (!localStorage.getItem(STORAGE_KEYS.notifications)) {
+                localStorage.setItem(STORAGE_KEYS.notifications, JSON.stringify(DUMMY_NOTIFICATIONS));
+            }
+        }
+
+        function readLocal(key) {
+            try {
+                return JSON.parse(localStorage.getItem(key) || "[]");
+            } catch {
+                return [];
+            }
+        }
+
+        function writeLocal(key, data) {
+            localStorage.setItem(key, JSON.stringify(data));
+        }
+
+        // ==========================================
+        // データ初期化・監視
+        // ==========================================
+        async function initData(onUpdate) {
+            try {
+                // Firestoreの設定を読み込む
+                const mod = await import("../../firebase-config.js");
+                const { db: firestoreDb, collection, onSnapshot } = mod;
+
+                if (!firestoreDb) {
+                    throw new Error("Firestore db not available");
+                }
+
+                db = firestoreDb;
+                usingFirestore = true;
+
+                let posts = [];
+                let tasks = [];
+                let notifications = [];
+
+                // ポストデータの監視
+                onSnapshot(collection(db, "posts"), (snap) => {
+                    posts = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+                    onUpdate({ posts, tasks, notifications, events: readLocal(STORAGE_KEYS.events) });
+                });
+
+                // タスクデータの監視
+                onSnapshot(collection(db, "tasks"), (snap) => {
+                    tasks = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+                    onUpdate({ posts, tasks, notifications, events: readLocal(STORAGE_KEYS.events) });
+                });
+
+                // 通知データの監視
+                onSnapshot(collection(db, "notifications"), (snap) => {
+                    notifications = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+                    onUpdate({ posts, tasks, notifications, events: readLocal(STORAGE_KEYS.events) });
+                });
+
+            } catch (err) {
+                console.info("[LUNAGS] Firestoreに接続できないため、ローカルデータで動作します。", err.message);
+
+                usingFirestore = false;
+                seedLocalStorage();
+
+                onUpdate({
+                    posts: readLocal(STORAGE_KEYS.posts),
+                    tasks: readLocal(STORAGE_KEYS.tasks),
+                    notifications: readLocal(STORAGE_KEYS.notifications),
+                    events: readLocal(STORAGE_KEYS.events)
+                });
+            }
+        }
+
+        // ==========================================
+        // UI 更新ロジック
+        // ==========================================
+
+        // 完了状態の切り替え
+        function toggleCompleted(type, id, posts, tasks, rerender) {
+            if (usingFirestore) {
+                console.info("[LUNAGS] Firestore更新は未実装のプレースホルダーです。", type, id);
+                return;
+            }
+
+            if (type === "post") {
+                const list = posts.map((p) => {
+                    if (p.id === id) {
+                        return { ...p, completed: !p.completed };
+                    }
+                    return p;
+                });
+
+                writeLocal(STORAGE_KEYS.posts, list);
+                rerender({
+                    posts: list,
+                    tasks,
+                    notifications: readLocal(STORAGE_KEYS.notifications)
+                });
+
+            } else {
+                const list = tasks.map((t) => {
+                    if (t.id === id) {
+                        return { ...t, completed: !t.completed };
+                    }
+                    return t;
+                });
+
+                writeLocal(STORAGE_KEYS.tasks, list);
+                rerender({
+                    posts,
+                    tasks: list,
+                    notifications: readLocal(STORAGE_KEYS.notifications)
+                });
+            }
+        }
+
+        // 今日の日付ラベルの描画
+        const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
+
+        function renderTodayLabel() {
+            const d = new Date();
+            const year = d.getFullYear();
+            const month = d.getMonth() + 1;
+            const date = d.getDate();
+            const weekday = WEEKDAYS[d.getDay()];
+
+            document.getElementById("todayLabel").textContent =
+                `${year}年${month}月${date}日（${weekday}）の予定`;
+        }
+
+        // 今日の予定アイテムの構築
+        function buildTodayItems(posts, tasks, events) {
+            const t = todayStr();
+
+            const postItems = posts
+                .filter((p) => p.date === t)
+                .map((p) => ({
+                    kind: "post",
+                    id: p.id,
+                    title: p.title,
+                    assignee: p.assignee,
+                    meta: p.platform,
+                    time: p.time || "",
+                    completed: !!p.completed
+                }));
+
+            const taskItems = tasks
+                .filter((tk) => tk.dueDate === t)
+                .map((tk) => ({
+                    kind: "task",
+                    id: tk.id,
+                    title: tk.title,
+                    assignee: tk.assignee,
+                    meta: "タスク期限",
+                    time: "",
+                    completed: !!tk.completed
+                }));
+
+            const eventItems = (events || [])
+                .filter((e) => e.date === t)
+                .map((e) => ({
+                    kind: "event",
+                    id: e.id,
+                    title: e.title,
+                    assignee: "",
+                    meta: "予定",
+                    time: e.time || "",
+                    completed: false,
+                    color: e.color
+                }));
+
+            return [...postItems, ...taskItems, ...eventItems].sort((a, b) => a.time.localeCompare(b.time));
+        }
+
+        // チェックアイコンのSVG
+        function checkIconSvg() {
+            return `<svg viewBox="0 0 24 24"><path d="M4 12l6 6L20 6"/></svg>`;
+        }
+
+        // スケジュール一覧の描画
+        function renderSchedule(state) {
+            const items = buildTodayItems(state.posts, state.tasks, state.events);
+            const listEl = document.getElementById("scheduleList");
+
+            document.getElementById("scheduleCount").textContent = `${items.length}件`;
+
+            if (items.length === 0) {
+                listEl.innerHTML = `
+                    <div class="empty-state">
+                        本日の予定はありません。 投稿/タスク から追加できます。
+                    </div>
+                `;
+            } else {
+                listEl.innerHTML = items.map((item) => {
+                    const isDoneClass = item.completed ? "is-done" : "";
+                    const isCheckedClass = item.completed ? "is-checked" : "";
+
+                    let badgeClass = "";
+                    let badgeText = "";
+                    let customStyle = "";
+
+                    if (item.kind === "post") {
+                        badgeClass = "badge--post";
+                        badgeText = "ポスト";
+                    } else if (item.kind === "task") {
+                        badgeClass = "badge--task";
+                        badgeText = "タスク";
+                    } else {
+                        badgeClass = item.color; // event-color-blue etc.
+                        badgeText = "予定";
+                        customStyle = `style="background: color-mix(in srgb, var(--event-color) 15%, transparent); color: var(--event-color);"`;
+                    }
+
+                    const timeHtml = item.time ? `<div class="schedule-item__time">${item.time}</div>` : "";
+
+                    return `
+                        <div class="schedule-item ${isDoneClass}" data-kind="${item.kind}" data-id="${item.id}">
+                            <button class="check-toggle ${isCheckedClass}" data-toggle="${item.kind}:${item.id}" aria-label="完了切り替え">
+                                ${checkIconSvg()}
+                            </button>
+                            
+                            <span class="schedule-item__badge ${badgeClass}" ${customStyle}>${badgeText}</span>
+                            
+                            <div class="schedule-item__body">
+                                <div class="schedule-item__title">${escapeHtml(item.title)}</div>
+                                <div class="schedule-item__meta">${escapeHtml(item.meta)} ・ 担当：${escapeHtml(item.assignee || "未設定")}</div>
+                            </div>
+                            
+                            ${timeHtml}
+                        </div>
+                    `;
+                }).join("");
+            }
+
+            renderAchievement(items);
+            attachToggleHandlers(state);
+        }
+
+        // 完了状態トグルのイベントハンドラ設定
+        function attachToggleHandlers(state) {
+            document.querySelectorAll("[data-toggle]").forEach((btn) => {
+                btn.addEventListener("click", () => {
+                    const [kind, id] = btn.dataset.toggle.split(":");
+                    const type = kind === "post" ? "post" : "task";
+
+                    toggleCompleted(type, id, state.posts, state.tasks, renderAll);
+                });
+            });
+        }
+
+        // 達成率リングの描画
+        const RING_CIRCUMFERENCE = 2 * Math.PI * 72;
+
+        function renderAchievement(items) {
+            const total = items.length;
+            const done = items.filter((i) => i.completed).length;
+            const percent = total === 0 ? 0 : Math.round((done / total) * 100);
+
+            document.getElementById("achievementPercent").textContent = `${percent}%`;
+            document.getElementById("achievementFraction").textContent = `${done} / ${total} 件`;
+
+            const offset = RING_CIRCUMFERENCE - (RING_CIRCUMFERENCE * percent) / 100;
+            const ring = document.getElementById("ringFill");
+
+            ring.style.strokeDasharray = `${RING_CIRCUMFERENCE}`;
+
+            requestAnimationFrame(() => {
+                ring.style.strokeDashoffset = `${offset}`;
+            });
+        }
+
+        // 検索結果の描画
+        function renderSearch(state, query) {
+            const resultsSection = document.getElementById("searchResults");
+            const listEl = document.getElementById("searchResultList");
+            const countEl = document.getElementById("searchResultCount");
+
+            const q = query.trim().toLowerCase();
+
+            if (!q) {
+                resultsSection.classList.add("is-hidden");
+                listEl.innerHTML = "";
+                return;
+            }
+
+            const postMatches = state.posts
+                .filter((p) => p.title.toLowerCase().includes(q) || (p.assignee || "").toLowerCase().includes(q))
+                .map((p) => ({
+                    kind: "post",
+                    title: p.title,
+                    assignee: p.assignee,
+                    date: p.date,
+                    meta: p.platform
+                }));
+
+            const taskMatches = state.tasks
+                .filter((t) => t.title.toLowerCase().includes(q) || (t.assignee || "").toLowerCase().includes(q))
+                .map((t) => ({
+                    kind: "task",
+                    title: t.title,
+                    assignee: t.assignee,
+                    date: t.dueDate,
+                    meta: "タスク期限"
+                }));
+
+            const results = [...postMatches, ...taskMatches].sort((a, b) => a.date.localeCompare(b.date));
+
+            resultsSection.classList.remove("is-hidden");
+            countEl.textContent = `${results.length}件`;
+
+            if (results.length === 0) {
+                listEl.innerHTML = `
+                    <div class="empty-state">
+                        「${escapeHtml(query)}」に一致する予定は見つかりませんでした。
+                    </div>
+                `;
+            } else {
+                listEl.innerHTML = results.map((r) => {
+                    const badgeClass = r.kind === "post" ? "badge--post" : "badge--task";
+                    const badgeText = r.kind === "post" ? "ポスト" : "タスク";
+
+                    return `
+                        <div class="search-results__item">
+                            <span class="schedule-item__badge ${badgeClass}">${badgeText}</span>
+                            <span class="search-results__date">${formatDate(r.date)}</span>
+                            
+                            <div class="schedule-item__body">
+                                <div class="schedule-item__title">${escapeHtml(r.title)}</div>
+                                <div class="schedule-item__meta">${escapeHtml(r.meta)} ・ 担当：${escapeHtml(r.assignee || "未設定")}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join("");
+            }
+        }
+
+        // 日付フォーマット
+        function formatDate(dateStr) {
+            if (!dateStr) return "";
+            const [, m, d] = dateStr.split("-");
+            return `${Number(m)}/${Number(d)}`;
+        }
+
+        // 通知の描画
+        function renderNotifications(state) {
+            const badge = document.getElementById("notifBadge");
+            const listEl = document.getElementById("notifList");
+            const unread = state.notifications.filter((n) => n.unread).length;
+
+            if (unread > 0) {
+                badge.textContent = unread > 9 ? "9+" : String(unread);
+                badge.classList.remove("is-hidden");
+            } else {
+                badge.classList.add("is-hidden");
+            }
+
+            if (state.notifications.length === 0) {
+                listEl.innerHTML = `<div class="notif__empty">通知はまだありません。</div>`;
+            } else {
+                listEl.innerHTML = state.notifications.map((n) => `
+                    <div class="notif__item">
+                        <span class="notif__dot"></span>
+                        <div>
+                            <div class="notif__item-text">${escapeHtml(n.text)}</div>
+                            <div class="notif__item-time">${escapeHtml(n.time || "")}</div>
+                        </div>
+                    </div>
+                `).join("");
+            }
+        }
+
+        // ベルアイコンSVG
+        function bellIconSvg() {
+            return `<svg class="icon" viewBox="0 0 24 24"><path d="M6 9a6 6 0 0 1 12 0c0 4 1.5 5.5 1.5 5.5H4.5S6 13 6 9Z"/></svg>`;
+        }
+
+        // トースト表示
+        function showToast(text) {
+            const stack = document.getElementById("toastStack");
+            const el = document.createElement("div");
+            el.className = "toast";
+
+            el.innerHTML = `
+                <div class="toast__icon">${bellIconSvg()}</div>
+                <div class="toast__text">${escapeHtml(text)}</div>
+            `;
+
+            stack.appendChild(el);
+
+            requestAnimationFrame(() => el.classList.add("is-visible"));
+
+            setTimeout(() => {
+                el.classList.remove("is-visible");
+                setTimeout(() => el.remove(), 350);
+            }, 5000);
+        }
+
+        // HTMLエスケープ
+        function escapeHtml(str) {
+            return String(str ?? "").replace(/[&<>"']/g, (c) =>
+                ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])
+            );
+        }
+
+        // ==========================================
+        // イベント・メイン処理
+        // ==========================================
+        let currentState = {
+            posts: [],
+            tasks: [],
+            notifications: [],
+            events: []
+        };
+
+        function renderAll(state) {
+            currentState = state;
+            renderSchedule(state);
+            renderNotifications(state);
+            renderSearch(state, document.getElementById("searchInput").value);
+        }
+
+        function initEvents() {
+            // 検索入力イベント
+            document.getElementById("searchInput").addEventListener("input", (e) => {
+                renderSearch(currentState, e.target.value);
+            });
+
+            // 通知ボタンイベント
+            const notifBtn = document.getElementById("notifBtn");
+            const notifDropdown = document.getElementById("notifDropdown");
+
+            notifBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                notifDropdown.classList.toggle("is-open");
+            });
+
+            document.addEventListener("click", (e) => {
+                if (!notifDropdown.contains(e.target) && e.target !== notifBtn) {
+                    notifDropdown.classList.remove("is-open");
+                }
+            });
+        }
+
+        // 初期化実行
+        renderTodayLabel();
+        initEvents();
+        initData((state) => renderAll(state));
+
+        // ダミー通知の発火
+        if (!usingFirestore) {
+            setTimeout(() => {
+                showToast("なぎさ さんがあなたを「配信予告ポスト」でメンションしました。");
+            }, 4000);
+        }
+    </script>
+</body>
+
+</html>

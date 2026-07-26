@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>タスク | LUNAGS 管理システム</title>
+    <link rel="stylesheet" href="../normalize.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="../common.css">
+    <link rel="stylesheet" href="./home.css">
+</head>
+
+<body>
+    <div class="app-shell">
+        <!-- ========== サイドバー ========== -->
+        <aside class="sidebar">
+            <div class="sidebar__brand">
+                <img src="../images/logo_LUNAGS.png" alt="LUNAGS">
+                <span class="sidebar__brand-subtitle">
+                    MANAGEMENT SYSTEM
+                </span>
+            </div>
+
+            <nav class="sidebar__nav">
+                <a class="sidebar__link" href="home.html">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M4 11.5 12 4l8 7.5" />
+                        <path d="M6 10v9a1 1 0 0 0 1 1h4v-6h2v6h4a1 1 0 0 0 1-1v-9" />
+                    </svg>ホーム
+                </a>
+                <a class="sidebar__link" href="calendar.html">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <rect x="3.5" y="5" width="17" height="15" rx="2.5" />
+                        <path d="M3.5 9.5h17" />
+                        <path d="M8 3v3.5M16 3v3.5" />
+                    </svg>カレンダー
+                </a>
+                <a class="sidebar__link" href="posts.html">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <rect x="4" y="4" width="16" height="16" rx="3" />
+                        <path d="M8 9h8M8 13h8M8 17h4" />
+                    </svg>ポスト
+                </a>
+                <a class="sidebar__link is-active" href="tasks.html">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M5 7h1.5l1 1.5L9 7h10" />
+                        <path d="M5 12h1.5l1 1.5L9 12h10" />
+                        <path d="M5 17h1.5l1 1.5L9 17h10" />
+                    </svg>タスク
+                </a>
+                <div class="sidebar__divider"></div>
+                <a class="sidebar__link" href="statistics.html">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M4 20V10M11 20V4M18 20v-7" />
+                    </svg>統計
+                </a>
+                <a class="sidebar__link" href="settings.html">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="3" />
+                        <path
+                            d="M19 12a7 7 0 0 0-.1-1.2l2-1.6-2-3.4-2.4.7a7 7 0 0 0-2-1.2L14 3h-4l-.5 2.3a7 7 0 0 0-2 1.2l-2.4-.7-2 3.4 2 1.6a7 7 0 0 0 0 2.4l-2 1.6 2 3.4 2.4-.7a7 7 0 0 0 2 1.2L10 21h4l.5-2.3a7 7 0 0 0 2-1.2l2.4.7 2-3.4-2-1.6c.067-.4.1-.8.1-1.2Z" />
+                    </svg>設定
+                </a>
+            </nav>
+            <div class="sidebar__footer">
+                <a class="sidebar__mypage-btn" href="../../My_page/profile.html">
+                    <svg class="icon" viewBox="0 0 24 24" style="width:14px;height:14px;">
+                        <circle cx="12" cy="8" r="3.5" />
+                        <path d="M5 20c0-3.6 3.1-6.5 7-6.5s7 2.9 7 6.5" />
+                    </svg>マイページへ戻る
+                </a>
+            </div>
+        </aside>
+
+        <!-- ========== メイン ========== -->
+        <main class="main">
+            <header class="topbar">
+                <div>
+                    <h1 class="topbar__title">タスク</h1>
+                    <div class="topbar__date">メンバーごとの課題リスト</div>
+                </div>
+
+                <div class="topbar__right">
+                    <button class="btn-primary" id="addTaskBtn">
+                        <svg class="icon" viewBox="0 0 24 24">
+                            <path d="M12 5v14M5 12h14" />
+                        </svg>
+                        タスクを追加
+                    </button>
+                    <div class="notif">
+                        <button class="notif__btn" id="notifBtn" aria-label="通知">
+                            <svg class="icon" viewBox="0 0 24 24">
+                                <path d="M6 9a6 6 0 0 1 12 0c0 4 1.5 5.5 1.5 5.5H4.5S6 13 6 9Z" />
+                                <path d="M10 19a2 2 0 0 0 4 0" />
+                            </svg>
+                            <span class="notif__badge is-hidden" id="notifBadge">0</span>
+                        </button>
+                        <div class="notif__dropdown" id="notifDropdown">
+                            <div class="notif__dropdown-title">通知</div>
+                            <div id="notifList"></div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <section class="card">
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>期限日</th>
+                                <th>タスク名</th>
+                                <th>担当者</th>
+                                <th>完了状態</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tasksList">
+                            <tr>
+                                <td colspan="4" class="text-center">読み込み中…</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- タスク追加モーダル -->
+    <div class="modal-overlay is-hidden" id="taskModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">新規タスク作成</h3>
+                <button class="modal-close" id="taskModalClose">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M18 6 6 18M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="taskForm" class="form-grid">
+                    <div class="form-group">
+                        <label>タスク名</label>
+                        <input type="text" id="taskTitle" required placeholder="例: 動画編集の仕上げ">
+                    </div>
+                    <div class="form-group">
+                        <label>期限日</label>
+                        <input type="date" id="taskDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label>担当者 (@メンション)</label>
+                        <input type="text" id="taskAssignee" placeholder="例: @みなみ">
+                    </div>
+                    <button type="submit" class="btn-primary" style="margin-top: 10px;">追加</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        const STORAGE_KEYS = { tasks: "lunags_tasks", notifications: "lunags_notifications" };
+        function readLocal(key) { try { return JSON.parse(localStorage.getItem(key) || "[]"); } catch { return []; } }
+        function writeLocal(key, data) { localStorage.setItem(key, JSON.stringify(data)); }
+        function escapeHtml(str) { return String(str ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+
+        let tasks = [];
+        let notifications = [];
+
+        function renderTasks() {
+            const listEl = document.getElementById("tasksList");
+            if (tasks.length === 0) {
+                listEl.innerHTML = `<tr><td colspan="4" class="text-center">タスクはありません。</td></tr>`;
+                return;
+            }
+
+            // 期限でソート
+            const sortedTasks = [...tasks].sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+
+            listEl.innerHTML = sortedTasks.map(t => `
+                <tr class="${t.completed ? 'is-done-row' : ''}">
+                    <td>${escapeHtml(t.dueDate)}</td>
+                    <td class="fw-bold">${escapeHtml(t.title)}</td>
+                    <td><span class="badge badge--task">${escapeHtml(t.assignee || "未設定")}</span></td>
+                    <td>
+                        <button class="check-toggle ${t.completed ? "is-checked" : ""}" data-id="${t.id}">
+                            <svg viewBox="0 0 24 24"><path d="M4 12l6 6L20 6"/></svg>
+                        </button>
+                    </td>
+                </tr>
+            `).join("");
+
+            document.querySelectorAll(".check-toggle").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    const id = btn.dataset.id;
+                    const tIndex = tasks.findIndex(t => t.id === id);
+                    if (tIndex !== -1) {
+                        tasks[tIndex].completed = !tasks[tIndex].completed;
+                        writeLocal(STORAGE_KEYS.tasks, tasks);
+                        renderTasks();
+                    }
+                });
+            });
+        }
+
+        function initData() {
+            tasks = readLocal(STORAGE_KEYS.tasks);
+            notifications = readLocal(STORAGE_KEYS.notifications);
+            renderTasks();
+            renderNotifications();
+        }
+
+        function initEvents() {
+            document.getElementById("addTaskBtn").addEventListener("click", () => {
+                document.getElementById("taskModal").classList.remove("is-hidden");
+            });
+            document.getElementById("taskModalClose").addEventListener("click", () => {
+                document.getElementById("taskModal").classList.add("is-hidden");
+            });
+
+            document.getElementById("taskForm").addEventListener("submit", (e) => {
+                e.preventDefault();
+                const newTask = {
+                    id: "t" + Date.now(),
+                    title: document.getElementById("taskTitle").value,
+                    dueDate: document.getElementById("taskDate").value,
+                    assignee: document.getElementById("taskAssignee").value,
+                    completed: false
+                };
+                tasks.push(newTask);
+                writeLocal(STORAGE_KEYS.tasks, tasks);
+
+                // 通知追加
+                notifications.unshift({
+                    id: "n" + Date.now(),
+                    text: `新しいタスク「${newTask.title}」が追加されました。`,
+                    time: "たった今",
+                    unread: true
+                });
+                writeLocal(STORAGE_KEYS.notifications, notifications);
+
+                document.getElementById("taskForm").reset();
+                document.getElementById("taskModal").classList.add("is-hidden");
+                renderTasks();
+                renderNotifications();
+            });
+
+            // 通知
+            const notifBtn = document.getElementById("notifBtn");
+            const notifDropdown = document.getElementById("notifDropdown");
+            notifBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                notifDropdown.classList.toggle("is-open");
+            });
+            document.addEventListener("click", (e) => {
+                if (!notifDropdown.contains(e.target) && e.target !== notifBtn) {
+                    notifDropdown.classList.remove("is-open");
+                }
+            });
+        }
+
+        function renderNotifications() {
+            const badge = document.getElementById("notifBadge");
+            const listEl = document.getElementById("notifList");
+            const unread = notifications.filter((n) => n.unread).length;
+
+            if (unread > 0) {
+                badge.textContent = unread > 9 ? "9+" : String(unread);
+                badge.classList.remove("is-hidden");
+            } else {
+                badge.classList.add("is-hidden");
+            }
+
+            if (notifications.length === 0) {
+                listEl.innerHTML = `<div class="notif__empty">通知はまだありません。</div>`;
+            } else {
+                listEl.innerHTML = notifications.map((n) => `
+                    <div class="notif__item">
+                        <span class="notif__dot"></span>
+                        <div>
+                            <div class="notif__item-text">${escapeHtml(n.text)}</div>
+                            <div class="notif__item-time">${escapeHtml(n.time || "")}</div>
+                        </div>
+                    </div>
+                `).join("");
+            }
+        }
+
+        initEvents();
+        initData();
+    </script>
+</body>
+
+</html>

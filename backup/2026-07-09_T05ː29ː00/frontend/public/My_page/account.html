@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>アカウント情報 | LUNAGS 管理システム</title>
+    <link rel="stylesheet" href="../reset.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="mypage.css">
+</head>
+
+<body>
+    <!-- SP用ハンバーガー -->
+    <button class="hamburger" id="hamburgerBtn">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <div class="page">
+        <!-- サイドバー -->
+        <aside class="sidebar" id="sidebar">
+
+            <img src="../images/logo_LUNAGS.png" class="logo-lunags" alt="Logo">
+
+            <div class="menu-list">
+
+                <a href="../Home_page/home.html" class="menu">
+                    <i class="fas fa-desktop"></i>
+                    管理ホーム
+                </a>
+
+                <a href="profile.html" class="menu">
+                    <i class="fas fa-user"></i>
+                    本人情報
+                </a>
+
+                <a href="account.html" class="menu active">
+                    <i class="fas fa-id-card"></i>
+                    アカウント情報
+                </a>
+
+                <a href="external.html" class="menu">
+                    <i class="fas fa-link"></i>
+                    外部サービス
+                </a>
+
+                <a href="platforms.html" class="menu">
+                    <i class="fas fa-cog"></i>
+                    連携サービス
+                </a>
+
+            </div>
+
+            <button class="btn logout-btn" id="logoutBtn">
+                ログアウト
+            </button>
+
+        </aside>
+
+        <!-- メイン -->
+        <main class="main fade-in">
+
+            <h1>ACCOUNT</h1>
+            <div class="sub">アカウント設定</div>
+
+            <!-- アカウント情報 -->
+            <div class="card">
+
+                <div class="section-title">
+                    アカウント情報
+                </div>
+
+                <div class="row">
+                    <div class="label">通知設定</div>
+
+                    <div class="value">
+                        <label class="switch">
+                            <input type="checkbox" id="notifyToggle">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="label">パスワード設定</div>
+
+                    <div class="value">
+                        <button id="resetPasswordBtn" class="btn edit-btn">
+                            設定する
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- SNS連携 -->
+            <div class="card">
+
+                <div class="section-title">
+                    SNS連携
+                </div>
+
+                <div class="sns-box">
+
+                    <div class="sns-left">
+
+                        <i class="fab fa-google google-icon"></i>
+
+                        <div class="sns-text">
+
+                            <div class="sns-name">
+                                Google
+                            </div>
+
+                            <div class="sns-email" id="googleEmail">
+                                読み込み中...
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="sns-right" id="googleStatus">
+                        読み込み中...
+                    </div>
+
+                    <button id="linkGoogleBtn" class="btn edit-btn">
+                        Google連携
+                    </button>
+
+                </div>
+
+            </div>
+
+            <!-- 退会 -->
+            <div class="card danger-card">
+
+                <div class="section-title danger">
+                    退会
+                </div>
+
+                <button class="danger-btn" id="deleteBtn">
+                    退会する
+                </button>
+
+            </div>
+
+        </main>
+
+    </div>
+
+    <!-- フッター -->
+    <footer class="footer">
+        <a href="#">利用規約</a>
+        <a href="#">FAQ</a>
+        <a href="#">運営会社</a>
+        <a href="#">Language: JA</a>
+    </footer>
+
+    <!-- Firebase -->
+    <script type="module">
+
+        import { auth } from "../firebase-config.js";
+        import {
+            onAuthStateChanged,
+            signOut,
+            deleteUser,
+            sendPasswordResetEmail,
+            GoogleAuthProvider,
+            linkWithPopup
+        } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+
+        // DOM
+        const googleEmail =
+            document.getElementById("googleEmail");
+
+        const googleStatus =
+            document.getElementById("googleStatus");
+
+        const logoutBtn =
+            document.getElementById("logoutBtn");
+
+        const deleteBtn =
+            document.getElementById("deleteBtn");
+
+        const hamburgerBtn =
+            document.getElementById("hamburgerBtn");
+
+        const sidebar =
+            document.getElementById("sidebar");
+
+        const linkGoogleBtn =
+            document.getElementById("linkGoogleBtn");
+
+
+        // パスワード再設定
+        const resetPasswordBtn =
+            document.getElementById("resetPasswordBtn");
+
+        resetPasswordBtn.addEventListener("click", () => {
+
+            window.location.href = "./password.html";
+
+        });
+
+        // SPメニュー
+        hamburgerBtn.addEventListener("click", () => {
+            sidebar.classList.toggle("open");
+        });
+
+        // 認証確認
+        onAuthStateChanged(auth, (user) => {
+
+            if (user) {
+
+                // メール表示
+                googleEmail.textContent =
+                    user.email || "未設定";
+
+                // Google連携確認
+                const isGoogle =
+                    user.providerData.some(
+                        provider =>
+                            provider.providerId === "google.com"
+                    );
+
+                // 状態表示
+                if (isGoogle) {
+
+                    googleStatus.innerHTML = `
+        <span class="status connected">
+            ● 連携済み
+        </span>
+    `;
+
+                    // Google連携済みならボタン非表示
+                    linkGoogleBtn.style.display = "none";
+
+                } else {
+
+                    googleStatus.innerHTML = `
+        <span class="status disconnected">
+            ● 未連携
+        </span>
+    `;
+
+                    // 未連携ならボタン表示
+                    linkGoogleBtn.style.display = "inline-block";
+
+                }
+
+            } else {
+                window.location.href = "../Login_page/login.html";
+            }
+
+            linkGoogleBtn.addEventListener("click", async () => {
+                const user = auth.currentUser;
+
+                if (!user) { alert("ログインしてください"); return; }
+
+                try {
+                    const provider = new GoogleAuthProvider();
+                    await linkWithPopup(user, provider);
+
+                    alert("Googleアカウントを連携しました");
+
+                    location.reload();
+
+                } catch (error) {
+                    console.error(error);
+
+                    if (
+                        error.code === "auth/provider-already-linked"
+                    ) {
+
+                        alert(
+                            "既にGoogle連携済みです"
+                        );
+
+                    } else if (
+                        error.code === "auth/credential-already-in-use"
+                    ) {
+
+                        alert(
+                            "このGoogleアカウントは別のユーザーに使用されています"
+                        );
+
+                    } else {
+
+                        alert(
+                            "Google連携に失敗しました"
+                        );
+
+                    }
+
+                }
+
+            });
+
+        });
+
+        // ログアウト
+        logoutBtn.addEventListener("click", async () => {
+
+            if (confirm("ログアウトしますか？")) {
+
+                try {
+
+                    await signOut(auth);
+
+                    window.location.href =
+                        "../Login_page/login.html";
+
+                } catch (error) {
+
+                    console.error(error);
+
+                }
+
+            }
+
+        });
+
+        // 退会
+        deleteBtn.addEventListener("click", async () => {
+
+            window.location.href =
+                "./close.html";
+
+        });
+
+    </script>
+
+</body>
+
+</html>

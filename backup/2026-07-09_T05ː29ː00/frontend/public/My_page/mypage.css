@@ -1,0 +1,539 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;800&display=swap');
+
+:root {
+    --main: #2bbcff;
+    --light: #dff6ff;
+    --text: #5d7ea5;
+    --white: #ffffff;
+    --bg-blur: rgba(255, 255, 255, 0.65);
+    --hover-glow: rgba(43, 188, 255, 0.4);
+}
+
+body {
+    margin: 0;
+    font-family: 'Noto Sans JP', sans-serif;
+    background: url("../images/hololiue-account_pc.jpg") center/cover fixed;
+    min-height: 100vh;
+    overflow-x: hidden;
+    color: var(--text);
+    letter-spacing: 0.05em;
+    display: flex;
+    flex-direction: column;
+}
+
+/* アニメーション */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.8s ease-out forwards;
+}
+
+/* 全体レイアウト */
+.page {
+    display: flex;
+    flex: 1;
+    flex-direction: row;
+}
+
+/* 左サイドバー */
+.sidebar {
+    width: 320px;
+    padding-top: 40px;
+    padding-left: 40px;
+    padding-right: 20px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    z-index: 10;
+}
+
+.logo-lunags {
+    width: 250px;
+    margin-top: 10px;
+    margin-bottom: 65px;
+    margin-left: 10px;
+}
+
+.logo-mixst {
+    width: 200px;
+    margin-top: 0px;
+    margin-bottom: 60px;
+    margin-left: 20px;
+}
+
+.menu-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 40px;
+}
+
+.menu {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 18px 26px;
+    border-radius: 999px;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.menu.active {
+    background: var(--white);
+    color: var(--main);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05), 0 0 15px var(--hover-glow);
+}
+
+.menu:hover:not(.active) {
+    background: rgba(255, 255, 255, 0.5);
+    color: var(--main);
+    box-shadow: 0 0 10px var(--hover-glow);
+}
+
+.hamburger {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 28px;
+    color: var(--main);
+    cursor: pointer;
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 100;
+}
+
+/* 右メインエリア */
+.main {
+    flex: 1;
+    padding: 80px 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    max-width: 800px;
+}
+
+h1 {
+    margin: 0;
+    font-size: 58px;
+    line-height: 1;
+    letter-spacing: 0.1em;
+    color: var(--main);
+    font-weight: 800;
+    text-shadow: 0 0 15px var(--hover-glow);
+}
+
+.sub {
+    color: var(--text);
+    font-size: 16px;
+    font-weight: bold;
+    margin-top: 10px;
+    margin-bottom: 40px;
+    letter-spacing: 0.05em;
+}
+
+/* ガラスUIカード */
+.card {
+    background: var(--bg-blur);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    width: 100%;
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05), inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+    box-sizing: border-box;
+    margin-bottom: 30px;
+}
+
+.row {
+    display: flex;
+    align-items: center;
+    padding: 20px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+.row:last-of-type {
+    border-bottom: none;
+    margin-bottom: 20px;
+}
+
+.label {
+    width: 150px;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.value {
+    flex: 1;
+    color: #334d6e;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+/* ボタン */
+.btn {
+    border: none;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #4dc3ff, var(--main));
+    color: var(--white);
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px var(--hover-glow);
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px var(--hover-glow);
+    opacity: 0.95;
+}
+
+.edit-btn {
+    width: 160px;
+    height: 48px;
+    float: right;
+    margin-top: 10px;
+}
+
+.logout-btn {
+    width: 160px;
+    height: 48px;
+    margin-top: auto;
+    margin-bottom: 40px;
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--text);
+    box-shadow: none;
+    align-self: center;
+}
+
+.logout-btn:hover {
+    background: rgba(255, 255, 255, 0.5);
+    color: var(--main);
+    border-color: var(--main);
+    transform: none;
+    box-shadow: 0 0 15px var(--hover-glow);
+}
+
+/* ユーザーIDカード */
+.id-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.id-value {
+    font-family: monospace;
+    font-size: 18px;
+    color: var(--main);
+    letter-spacing: 0.05em;
+}
+
+.copy-btn {
+    background: transparent;
+    border: none;
+    color: var(--main);
+    font-size: 20px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.copy-btn:hover {
+    text-shadow: 0 0 10px var(--hover-glow);
+    transform: scale(1.1);
+}
+
+/* モーダル */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(5px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.modal-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.modal-content {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    width: 90%;
+    max-width: 500px;
+    border-radius: 20px;
+    padding: 28px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1), inset 0 0 0 1px rgba(255, 255, 255, 0.8);
+    transform: translateY(20px);
+    transition: transform 0.3s ease;
+}
+
+.modal-overlay.active .modal-content {
+    transform: translateY(0);
+}
+
+.modal-content h2 {
+    color: var(--main);
+    margin-top: 0;
+    margin-bottom: 30px;
+}
+
+.form-group {
+    margin-bottom: 8px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 9px 14px;
+    border: 1px solid rgba(43, 188, 255, 0.3);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.8);
+    font-family: inherit;
+    font-size: 11px;
+    color: #334d6e;
+    outline: none;
+    transition: 0.3s;
+}
+
+g .form-group input:focus,
+.form-group select:focus {
+    border-color: var(--main);
+    box-shadow: 0 0 10px var(--hover-glow);
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    margin-top: 30px;
+}
+
+.cancel-btn {
+    background: transparent;
+    border: 1px solid var(--text);
+    color: var(--text);
+    padding: 0 25px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+.cancel-btn:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.save-btn {
+    width: 120px;
+    height: 45px;
+}
+
+/* フッター */
+.footer {
+    width: 100%;
+    padding: 30px;
+    margin-top: auto;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(10px);
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    box-sizing: border-box;
+}
+
+a {
+    text-decoration: none;
+}
+
+.footer a {
+    color: var(--text);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+.footer a:hover {
+    color: var(--main);
+    text-shadow: 0 0 8px var(--hover-glow);
+}
+
+/* account.html */
+.section-title {
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 25px;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 52px;
+    height: 28px;
+}
+
+.switch input {
+    display: none;
+}
+
+.slider {
+    position: absolute;
+    inset: 0;
+    background: #ccc;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: .2s;
+}
+
+.slider::before {
+    content: "";
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    left: 3px;
+    top: 3px;
+    background: white;
+    border-radius: 50%;
+    transition: .2s;
+}
+
+.switch input:checked+.slider {
+    background: #29a8ff;
+}
+
+.switch input:checked+.slider::before {
+    transform: translateX(24px);
+}
+
+.danger-card {
+    border: 1px solid #ffb8b8;
+}
+
+.danger {
+    color: #ff4d4d;
+}
+
+.danger-text {
+    color: #888;
+    margin-bottom: 20px;
+}
+
+.danger-btn {
+    background: #ff4d4d;
+    color: white;
+    border: none;
+    padding: 14px 24px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.danger-btn:hover {
+    opacity: 0.9;
+}
+
+.danger-description {
+    margin-bottom: 25px;
+    line-height: 1.9;
+}
+
+.action-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 8px;
+    background: #4f46e5;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+    transition: 0.2s;
+}
+
+.action-btn:hover {
+    opacity: 0.9;
+}
+
+.sns-box {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    width: 100%;
+}
+
+.sns-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+
+    min-width: 0;
+}
+
+.google-icon {
+    font-size: 26px;
+    color: #4285F4;
+
+    flex-shrink: 0;
+}
+
+.value input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px;
+    margin-top: 0px;
+    border-radius: 8px;
+    border: 1px solid #d9d9d9;
+    color: #333;
+    background-color: #fff;
+}
+
+.id-value {
+    font-family: monospace;
+    font-size: 18px;
+    color: var(--main);
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.id-value:hover {
+    text-shadow: 0 0 10px var(--hover-glow);
+}

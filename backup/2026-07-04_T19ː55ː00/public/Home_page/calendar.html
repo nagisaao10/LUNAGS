@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>カレンダー - LUNAGS 管理システム</title>
+    <link rel="stylesheet" href="home.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-shell">
+        <!-- サイドバー -->
+        <aside class="sidebar">
+            <div class="logo-container">
+                <img src="../images/logo_LUNAGS.png" alt="LUNAGS LOGO">
+            </div>
+            <nav class="menu-list">
+                <!-- ダッシュボード (ホーム) -->
+                <a href="home.html" class="menu-item">
+                    <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+                    ダッシュボード
+                </a>
+                <!-- カレンダー -->
+                <a href="calendar.html" class="menu-item active">
+                    <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/></svg>
+                    カレンダー
+                </a>
+                <!-- ポスト (投稿予定) -->
+                <a href="posts.html" class="menu-item">
+                    <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                    ポスト (投稿予定)
+                </a>
+                <!-- タスク -->
+                <a href="tasks.html" class="menu-item">
+                    <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 14l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                    タスク
+                </a>
+                <!-- 統計 -->
+                <a href="statistics.html" class="menu-item">
+                    <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
+                    統計
+                </a>
+                <!-- 設定 -->
+                <a href="settings.html" class="menu-item">
+                    <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .43-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.49-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+                    設定
+                </a>
+                <!-- マイページ -->
+                <a href="../My_page/profile.html" class="menu-item">
+                    <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                    マイページ
+                </a>
+            </nav>
+            <div class="logout-btn-container">
+                <button class="logout-btn" id="btn-logout">
+                    <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:currentColor;"><path d="M10.09 15.59L11.5 17l5-5-5-5-1.41 1.41L12.67 11H3v2h9.67l-2.58 2.59zM19 3H5c-1.11 0-2 .9-2 2v4h2V5h14v14H5v-4H3v4c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/></svg>
+                    ログアウト
+                </button>
+            </div>
+        </aside>
+
+        <!-- メインコンテンツ -->
+        <main class="content">
+            <!-- ヘッダーツールバー -->
+            <header class="toolbar">
+                <div class="page-title">カレンダー</div>
+                <div class="header-right">
+                    <!-- 予定検索 -->
+                    <div class="search-container">
+                        <svg class="search-icon" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+                        <input type="text" class="search-input" id="search-input" placeholder="予定を検索...">
+                    </div>
+                    
+                    <!-- 通知ベル -->
+                    <div class="bell-container" id="bell-container">
+                        <svg class="bell-icon" viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+                        <div class="bell-badge" id="bell-badge"></div>
+                    </div>
+                    
+                    <!-- Firestore 接続ステータス -->
+                    <div class="status-indicator online" id="status-indicator">
+                        <span class="status-dot"></span>
+                        <span id="status-text">Firestore オンライン</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- 通知ドロップダウン -->
+            <div class="notification-dropdown" id="notification-dropdown">
+                <div class="notification-header">
+                    <span>通知一覧</span>
+                    <span class="clear-notifications" id="btn-clear-notifications">すべて既読にする</span>
+                </div>
+                <div class="notification-list" id="notification-list">
+                    <div class="notification-empty">通知はありません</div>
+                </div>
+            </div>
+
+            <!-- メインパネル -->
+            <div class="main-panel">
+                <!-- 検索結果パネル (検索時のみ表示) -->
+                <section class="search-results-panel" id="search-results-panel">
+                    <div class="search-results-title">
+                        <span>検索結果</span>
+                        <span class="close-search" id="btn-close-search">閉じる</span>
+                    </div>
+                    <div class="table-container">
+                        <table class="responsive-table">
+                            <thead>
+                                <tr>
+                                    <th>区分</th>
+                                    <th>日付</th>
+                                    <th>時間/期限</th>
+                                    <th>担当者</th>
+                                    <th>タイトル</th>
+                                    <th>ステータス</th>
+                                </tr>
+                            </thead>
+                            <tbody id="search-results-body"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- カレンダーコントロール -->
+                <section class="calendar-controls">
+                    <div class="calendar-nav">
+                        <button class="calendar-btn" id="btn-prev">&lt;</button>
+                        <button class="calendar-btn" id="btn-today">今日</button>
+                        <button class="calendar-btn" id="btn-next">&gt;</button>
+                        <div class="calendar-title-text" id="calendar-title">2026年 6月</div>
+                    </div>
+                    <div class="calendar-view-selector">
+                        <button class="calendar-btn active" data-view="month">月</button>
+                        <button class="calendar-btn" data-view="week">週</button>
+                        <button class="calendar-btn" data-view="day">日</button>
+                        <button class="calendar-btn" data-view="year">年</button>
+                    </div>
+                </section>
+
+                <!-- カレンダー表示コンテナ -->
+                <section id="calendar-container">
+                    <!-- 月表示 (デフォルト) -->
+                    <div class="calendar-month-grid" id="calendar-month-view">
+                        <div class="calendar-weekdays">
+                            <div class="weekday">日</div>
+                            <div class="weekday">月</div>
+                            <div class="weekday">火</div>
+                            <div class="weekday">水</div>
+                            <div class="weekday">木</div>
+                            <div class="weekday">金</div>
+                            <div class="weekday">土</div>
+                        </div>
+                        <div class="calendar-days" id="calendar-days-container">
+                            <!-- JSで動的に構築されます -->
+                        </div>
+                    </div>
+
+                    <!-- リスト表示 (週、日表示用) -->
+                    <div class="calendar-list-view" id="calendar-list-view" style="display: none;">
+                        <div class="calendar-list-header" id="list-view-header">週の予定一覧</div>
+                        <div id="list-view-container">
+                            <!-- JSで動的に構築されます -->
+                        </div>
+                    </div>
+
+                    <!-- 年表示 -->
+                    <div class="calendar-year-grid" id="calendar-year-view" style="display: none;">
+                        <!-- JSで動的に12ヶ月分のミニカレンダーを構築します -->
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- 予定詳細・新規登録モーダル -->
+    <div class="modal-overlay" id="event-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="modal-title">2026-06-28 の予定</div>
+                <button class="modal-close-btn" id="btn-close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- 予定一覧 -->
+                <div id="modal-event-list" style="display: flex; flex-direction: column; gap: 8px;">
+                    <!-- その日の予定一覧が描画されます -->
+                </div>
+                
+                <hr style="border:none; border-top: 1px solid var(--color-border); margin: 8px 0;">
+                
+                <!-- クイック追加フォーム -->
+                <div class="form-group" style="gap: 12px;">
+                    <div style="font-weight: 700; font-size: 14px;">予定の追加</div>
+                    
+                    <div class="form-group">
+                        <label>区分</label>
+                        <select id="new-event-type">
+                            <option value="post">ポスト (投稿予定)</option>
+                            <option value="task">タスク</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>タイトル</label>
+                        <input type="text" id="new-event-title" placeholder="予定のタイトルを入力してください">
+                    </div>
+
+                    <div class="form-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 0;">
+                        <div class="form-group">
+                            <label>時間帯 (ポストのみ)</label>
+                            <input type="time" id="new-event-time" value="12:00">
+                        </div>
+                        <div class="form-group">
+                            <label>担当者</label>
+                            <select id="new-event-member">
+                                <option value="なぎさ">なぎさ</option>
+                                <option value="メンバーA">メンバーA</option>
+                                <option value="メンバーB">メンバーB</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary" id="btn-save-event" style="align-self: flex-end;">追加する</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- トースト通知 -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script type="module">
+        import { auth, db } from "../firebase-config.js";
+        import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+        import { collection, doc, getDoc, getDocs, setDoc, updateDoc, addDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+
+        // DOM Elements
+        const calendarTitle = document.getElementById("calendar-title");
+        const calendarDaysContainer = document.getElementById("calendar-days-container");
+        const btnPrev = document.getElementById("btn-prev");
+        const btnToday = document.getElementById("btn-today");
+        const btnNext = document.getElementById("btn-next");
+        const viewSelectorButtons = document.querySelectorAll(".calendar-view-selector button");
+        
+        const calendarMonthView = document.getElementById("calendar-month-view");
+        const calendarListView = document.getElementById("calendar-list-view");
+        const listViewHeader = document.getElementById("list-view-header");
+        const listViewContainer = document.getElementById("list-view-container");
+        const calendarYearView = document.getElementById("calendar-year-view");
+
+        const eventModal = document.getElementById("event-modal");
+        const modalTitle = document.getElementById("modal-title");
+        const modalEventList = document.getElementById("modal-event-list");
+        const btnCloseModal = document.getElementById("btn-close-modal");
+        const btnSaveEvent = document.getElementById("btn-save-event");
+
+        const newEventType = document.getElementById("new-event-type");
+        const newEventTitle = document.getElementById("new-event-title");
+        const newEventTime = document.getElementById("new-event-time");
+        const newEventMember = document.getElementById("new-event-member");
+
+        const searchInput = document.getElementById("search-input");
+        const searchResultsPanel = document.getElementById("search-results-panel");
+        const searchResultsBody = document.getElementById("search-results-body");
+        const btnCloseSearch = document.getElementById("btn-close-search");
+
+        const bellContainer = document.getElementById("bell-container");
+        const bellBadge = document.getElementById("bell-badge");
+        const notificationDropdown = document.getElementById("notification-dropdown");
+        const notificationList = document.getElementById("notification-list");
+        const btnClearNotifications = document.getElementById("btn-clear-notifications");
+        const statusIndicator = document.getElementById("status-indicator");
+        const statusText = document.getElementById("status-text");
+        const btnLogout = document.getElementById("btn-logout");
+
+        // Application State
+        let currentUser = null;
+        let isOnline = true;
+        let dbPosts = [];
+        let dbTasks = [];
+        let dbNotifications = [];
+        let currentView = "month"; // month, week, day, year
+        let currentDate = new Date();
+        let selectedDateStr = "";
+
+        // ログアウト
+        btnLogout.addEventListener("click", async () => {
+            if (confirm("ログアウトしますか？")) {
+                await signOut(auth);
+                window.location.href = "../Login_page/login.html";
+            }
+        });
+
+        // ログイン状態監視
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                initDataSync();
+            } else {
+                window.location.href = "../Login_page/login.html";
+            }
+        });
+
+        // データ同期初期化
+        async function initDataSync() {
+            try {
+                const testRef = doc(db, "system", "health");
+                await getDoc(testRef);
+                setOnlineStatus(true);
+
+                // 監視
+                onSnapshot(collection(db, "posts"), (snapshot) => {
+                    dbPosts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    localStorage.setItem("lunags_posts", JSON.stringify(dbPosts));
+                    renderCalendar();
+                });
+
+                onSnapshot(collection(db, "tasks"), (snapshot) => {
+                    dbTasks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    localStorage.setItem("lunags_tasks", JSON.stringify(dbTasks));
+                    renderCalendar();
+                });
+
+                onSnapshot(collection(db, "notifications"), (snapshot) => {
+                    const allNotifs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    dbNotifications = allNotifs.filter(n => n.recipientEmail === currentUser.email || n.recipientEmail === "all")
+                                               .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+                    localStorage.setItem("lunags_notifications", JSON.stringify(dbNotifications));
+                    updateNotificationsUI();
+                });
+            } catch (err) {
+                console.warn("Firestore error, entering local mode:", err);
+                fallbackToLocal();
+            }
+        }
+
+        function setOnlineStatus(online) {
+            isOnline = online;
+            if (online) {
+                statusIndicator.className = "status-indicator online";
+                statusText.textContent = "Firestore オンライン";
+            } else {
+                statusIndicator.className = "status-indicator offline";
+                statusText.textContent = "ローカルモード";
+            }
+        }
+
+        function fallbackToLocal() {
+            setOnlineStatus(false);
+            dbPosts = JSON.parse(localStorage.getItem("lunags_posts")) || [];
+            dbTasks = JSON.parse(localStorage.getItem("lunags_tasks")) || [];
+            dbNotifications = JSON.parse(localStorage.getItem("lunags_notifications")) || [];
+            renderCalendar();
+            updateNotificationsUI();
+        }
+
+        // カレンダーレンダリングのハブ
+        function renderCalendar() {
+            // 表示非表示
+            calendarMonthView.style.display = "none";
+            calendarListView.style.display = "none";
+            calendarYearView.style.display = "none";
+
+            if (currentView === "month") {
+                calendarMonthView.style.display = "block";
+                renderMonthView();
+            } else if (currentView === "week") {
+                calendarListView.style.display = "block";
+                renderWeekView();
+            } else if (currentView === "day") {
+                calendarListView.style.display = "block";
+                renderDayView();
+            } else if (currentView === "year") {
+                calendarYearView.style.display = "grid";
+                renderYearView();
+            }
+        }
+
+        // --- 月表示のレンダリング ---
+        function renderMonthView() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+
+            calendarTitle.textContent = `${year}年 ${month + 1}月`;
+            calendarDaysContainer.innerHTML = "";
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+            // 前月の日付
+            for (let i = firstDay - 1; i >= 0; i--) {
+                const day = daysInPrevMonth - i;
+                const prevMonthDate = new Date(year, month - 1, day);
+                createDayCell(prevMonthDate, true);
+            }
+
+            // 当月の日付
+            for (let day = 1; day <= daysInMonth; day++) {
+                const curMonthDate = new Date(year, month, day);
+                createDayCell(curMonthDate, false);
+            }
+
+            // 翌月の日付 (グリッドが6行=42セルになるように調整)
+            const totalCells = calendarDaysContainer.children.length;
+            const remainingCells = 42 - totalCells;
+            for (let day = 1; day <= remainingCells; day++) {
+                const nextMonthDate = new Date(year, month + 1, day);
+                createDayCell(nextMonthDate, true);
+            }
+        }
+
+        function createDayCell(date, isOtherMonth) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            const dateStr = `${y}-${m}-${d}`;
+
+            const cell = document.createElement("div");
+            cell.className = "calendar-day-cell";
+            if (isOtherMonth) cell.classList.add("other-month");
+
+            const today = new Date();
+            if (date.toDateString() === today.toDateString()) {
+                cell.classList.add("today");
+            }
+
+            cell.innerHTML = `<span class="calendar-day-number">${date.getDate()}</span>`;
+
+            // その日のイベントを追加
+            const eventListContainer = document.createElement("div");
+            eventListContainer.className = "calendar-event-list";
+
+            const dayPosts = dbPosts.filter(p => p.postDate === dateStr);
+            const dayTasks = dbTasks.filter(t => t.dueDate === dateStr);
+
+            dayPosts.forEach(post => {
+                const div = document.createElement("div");
+                div.className = `calendar-event post ${post.isDone ? 'done' : ''}`;
+                div.textContent = `${post.timeSlot || ''} ${post.title}`;
+                eventListContainer.appendChild(div);
+            });
+
+            dayTasks.forEach(task => {
+                const div = document.createElement("div");
+                div.className = `calendar-event task ${task.status === '完了' ? 'done' : ''}`;
+                div.textContent = `[T] ${task.taskName}`;
+                eventListContainer.appendChild(div);
+            });
+
+            cell.appendChild(eventListContainer);
+
+            // セルクリックイベント
+            cell.addEventListener("click", () => {
+                openEventModal(dateStr);
+            });
+
+            calendarDaysContainer.appendChild(cell);
+        }
+
+        // --- 週表示のレンダリング ---
+        function renderWeekView() {
+            const startOfWeek = new Date(currentDate);
+            startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
+            
+            const endOfWeek = new Date(startOfWeek);
+            endOfWeek.setDate(startOfWeek.getDate() + 6);
+
+            calendarTitle.textContent = `${startOfWeek.getFullYear()}年 ${startOfWeek.getMonth() + 1}月`;
+            listViewHeader.textContent = `${startOfWeek.toLocaleDateString('ja-JP')} 〜 ${endOfWeek.toLocaleDateString('ja-JP')} の予定`;
+            listViewContainer.innerHTML = "";
+
+            let eventCount = 0;
+
+            for (let i = 0; i < 7; i++) {
+                const date = new Date(startOfWeek);
+                date.setDate(startOfWeek.getDate() + i);
+                
+                const y = date.getFullYear();
+                const m = String(date.getMonth() + 1).padStart(2, '0');
+                const d = String(date.getDate()).padStart(2, '0');
+                const dateStr = `${y}-${m}-${d}`;
+
+                const dayPosts = dbPosts.filter(p => p.postDate === dateStr);
+                const dayTasks = dbTasks.filter(t => t.dueDate === dateStr);
+
+                if (dayPosts.length > 0 || dayTasks.length > 0) {
+                    dayPosts.forEach(post => {
+                        createListViewItem(date, post.timeSlot || "未定", post.title, "ポスト", post.isDone ? "badge-success" : "badge-warning", post.isDone ? "完了" : "未完了", dateStr);
+                        eventCount++;
+                    });
+                    dayTasks.forEach(task => {
+                        createListViewItem(date, "終日", task.taskName, "タスク", task.status === "完了" ? "badge-success" : "badge-warning", task.status, dateStr);
+                        eventCount++;
+                    });
+                }
+            }
+
+            if (eventCount === 0) {
+                listViewContainer.innerHTML = `<div style="text-align:center; padding:32px; color:var(--text-muted);">今週の予定はありません</div>`;
+            }
+        }
+
+        // --- 日表示のレンダリング ---
+        function renderDayView() {
+            const y = currentDate.getFullYear();
+            const m = String(currentDate.getMonth() + 1).padStart(2, '0');
+            const d = String(currentDate.getDate()).padStart(2, '0');
+            const dateStr = `${y}-${m}-${d}`;
+
+            calendarTitle.textContent = `${y}年 ${m}月 ${d}日`;
+            listViewHeader.textContent = `本日の予定`;
+            listViewContainer.innerHTML = "";
+
+            const dayPosts = dbPosts.filter(p => p.postDate === dateStr);
+            const dayTasks = dbTasks.filter(t => t.dueDate === dateStr);
+
+            if (dayPosts.length === 0 && dayTasks.length === 0) {
+                listViewContainer.innerHTML = `<div style="text-align:center; padding:32px; color:var(--text-muted);">本日の予定はありません</div>`;
+                return;
+            }
+
+            dayPosts.forEach(post => {
+                createListViewItem(currentDate, post.timeSlot || "未定", post.title, "ポスト", post.isDone ? "badge-success" : "badge-warning", post.isDone ? "完了" : "未完了", dateStr);
+            });
+            dayTasks.forEach(task => {
+                createListViewItem(currentDate, "終日", task.taskName, "タスク", task.status === "完了" ? "badge-success" : "badge-warning", task.status, dateStr);
+            });
+        }
+
+        function createListViewItem(date, time, title, type, badgeClass, badgeText, dateStr) {
+            const div = document.createElement("div");
+            div.className = "calendar-list-item";
+            div.innerHTML = `
+                <div class="calendar-list-date">${date.toLocaleDateString('ja-JP', { weekday: 'short', month: '2-digit', day: '2-digit' })}</div>
+                <div class="calendar-list-time">${time}</div>
+                <div class="calendar-list-title">${escapeHtml(title)}</div>
+                <div class="calendar-list-badge badge ${badgeClass}">${type} - ${badgeText}</div>
+            `;
+            div.addEventListener("click", () => openEventModal(dateStr));
+            listViewContainer.appendChild(div);
+        }
+
+        // --- 年表示のレンダリング ---
+        function renderYearView() {
+            const year = currentDate.getFullYear();
+            calendarTitle.textContent = `${year}年`;
+            calendarYearView.innerHTML = "";
+
+            for (let m = 0; m < 12; m++) {
+                const monthDiv = document.createElement("div");
+                monthDiv.className = "calendar-year-month";
+                monthDiv.innerHTML = `<div class="calendar-year-month-title">${m + 1}月</div>`;
+                
+                const grid = document.createElement("div");
+                grid.className = "calendar-year-days-grid";
+                
+                // 曜日ヘッダー
+                const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
+                weekdays.forEach(w => {
+                    grid.innerHTML += `<div class="calendar-year-day-name">${w}</div>`;
+                });
+
+                const firstDay = new Date(year, m, 1).getDay();
+                const daysInMonth = new Date(year, m + 1, 0).getDate();
+
+                // 空セル
+                for (let i = 0; i < firstDay; i++) {
+                    grid.innerHTML += `<div></div>`;
+                }
+
+                // 日
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const dateStr = `${year}-${String(m + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                    const hasEvents = dbPosts.some(p => p.postDate === dateStr) || dbTasks.some(t => t.dueDate === dateStr);
+                    
+                    const dayDiv = document.createElement("div");
+                    dayDiv.className = `calendar-year-day ${hasEvents ? 'has-events' : ''}`;
+                    dayDiv.textContent = day;
+                    
+                    dayDiv.addEventListener("click", () => {
+                        currentDate = new Date(year, m, day);
+                        currentView = "month";
+                        viewSelectorButtons.forEach(btn => btn.classList.toggle("active", btn.getAttribute("data-view") === "month"));
+                        renderCalendar();
+                    });
+
+                    grid.appendChild(dayDiv);
+                }
+
+                monthDiv.appendChild(grid);
+                calendarYearView.appendChild(monthDiv);
+            }
+        }
+
+        // --- ナビゲーション操作 ---
+        btnPrev.addEventListener("click", () => {
+            adjustDate(-1);
+            renderCalendar();
+        });
+
+        btnNext.addEventListener("click", () => {
+            adjustDate(1);
+            renderCalendar();
+        });
+
+        btnToday.addEventListener("click", () => {
+            currentDate = new Date();
+            renderCalendar();
+        });
+
+        function adjustDate(amount) {
+            if (currentView === "month") {
+                currentDate.setMonth(currentDate.getMonth() + amount);
+            } else if (currentView === "week") {
+                currentDate.setDate(currentDate.getDate() + amount * 7);
+            } else if (currentView === "day") {
+                currentDate.setDate(currentDate.getDate() + amount);
+            } else if (currentView === "year") {
+                currentDate.setFullYear(currentDate.getFullYear() + amount);
+            }
+        }
+
+        // ビュー切り替え
+        viewSelectorButtons.forEach(button => {
+            button.addEventListener("click", (e) => {
+                viewSelectorButtons.forEach(btn => btn.classList.remove("active"));
+                e.target.classList.add("active");
+                currentView = e.target.getAttribute("data-view");
+                renderCalendar();
+            });
+        });
+
+        // --- モーダル (イベント詳細 & 登録) ---
+        function openEventModal(dateStr) {
+            selectedDateStr = dateStr;
+            modalTitle.textContent = `${dateStr} の予定`;
+            modalEventList.innerHTML = "";
+
+            const dayPosts = dbPosts.filter(p => p.postDate === dateStr);
+            const dayTasks = dbTasks.filter(t => t.dueDate === dateStr);
+
+            if (dayPosts.length === 0 && dayTasks.length === 0) {
+                modalEventList.innerHTML = `<div style="color:var(--text-muted); font-size:13px; text-align:center;">この日の予定はありません</div>`;
+            } else {
+                dayPosts.forEach(post => {
+                    const item = document.createElement("div");
+                    item.className = "calendar-list-item";
+                    item.style.padding = "8px";
+                    item.innerHTML = `
+                        <div class="calendar-list-time" style="min-width:40px;">${post.timeSlot || ''}</div>
+                        <div class="calendar-list-title" style="font-size:13px;">${escapeHtml(post.title)} (担当: ${post.memberName})</div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" class="chk-modal-post" data-id="${post.id}" ${post.isDone ? 'checked' : ''}>
+                            <span class="slider"></span>
+                        </label>
+                    `;
+                    modalEventList.appendChild(item);
+                });
+
+                dayTasks.forEach(task => {
+                    const isDone = task.status === "完了";
+                    const item = document.createElement("div");
+                    item.className = "calendar-list-item";
+                    item.style.padding = "8px";
+                    item.innerHTML = `
+                        <div class="calendar-list-time" style="min-width:40px; color:var(--color-success)">タスク</div>
+                        <div class="calendar-list-title" style="font-size:13px;">${escapeHtml(task.taskName)} (担当: ${task.memberName})</div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" class="chk-modal-task" data-id="${task.id}" ${isDone ? 'checked' : ''}>
+                            <span class="slider"></span>
+                        </label>
+                    `;
+                    modalEventList.appendChild(item);
+                });
+
+                // モーダル内のトグルリスナー
+                document.querySelectorAll(".chk-modal-post").forEach(chk => {
+                    chk.addEventListener("change", async (e) => {
+                        const id = e.target.getAttribute("data-id");
+                        const checked = e.target.checked;
+                        if (isOnline) {
+                            await updateDoc(doc(db, "posts", id), { isDone: checked });
+                        } else {
+                            dbPosts = dbPosts.map(p => p.id === id ? { ...p, isDone: checked } : p);
+                            localStorage.setItem("lunags_posts", JSON.stringify(dbPosts));
+                            renderCalendar();
+                        }
+                    });
+                });
+
+                document.querySelectorAll(".chk-modal-task").forEach(chk => {
+                    chk.addEventListener("change", async (e) => {
+                        const id = e.target.getAttribute("data-id");
+                        const checked = e.target.checked;
+                        const status = checked ? "完了" : "未完了";
+                        if (isOnline) {
+                            await updateDoc(doc(db, "tasks", id), { status });
+                        } else {
+                            dbTasks = dbTasks.map(t => t.id === id ? { ...t, status } : t);
+                            localStorage.setItem("lunags_tasks", JSON.stringify(dbTasks));
+                            renderCalendar();
+                        }
+                    });
+                });
+            }
+
+            eventModal.classList.add("active");
+        }
+
+        // モーダル閉じる
+        btnCloseModal.addEventListener("click", () => eventModal.classList.remove("active"));
+        eventModal.addEventListener("click", (e) => {
+            if (e.target === eventModal) eventModal.classList.remove("active");
+        });
+
+        // 予定のクイック追加
+        btnSaveEvent.addEventListener("click", async () => {
+            const title = newEventTitle.value.trim();
+            if (!title) {
+                alert("タイトルを入力してください");
+                return;
+            }
+
+            const type = newEventType.value;
+            const time = newEventTime.value;
+            const member = newEventMember.value;
+
+            // メンション＆通知の送信先
+            // 担当者＝メンバー名。対応するメールアドレスを仮定（なぎさ->nagisa@example.com等、またはusersコレクションから検索）
+            // ここでは簡易的にメンバー名に対応した通知をリアルタイム送信します。
+            const memberEmails = {
+                "なぎさ": "nagisa@example.com",
+                "メンバーA": "memberA@example.com",
+                "メンバーB": "memberB@example.com"
+            };
+            const recipientEmail = memberEmails[member] || "all";
+
+            if (type === "post") {
+                const newPost = {
+                    title,
+                    postDate: selectedDateStr,
+                    timeSlot: time,
+                    memberName: member,
+                    isDone: false,
+                    thumbnailDone: false,
+                    createdAt: new Date().toISOString()
+                };
+
+                if (isOnline) {
+                    const docRef = await addDoc(collection(db, "posts"), newPost);
+                    
+                    // 担当者へ通知ドキュメントを追加 (メンション通知)
+                    await addDoc(collection(db, "notifications"), {
+                        recipientEmail,
+                        type: "mention",
+                        message: `${currentUser.email} があなたを投稿の担当に指定しました: 「${title}」`,
+                        link: "posts.html",
+                        read: false,
+                        createdAt: serverTimestamp()
+                    });
+                } else {
+                    const localPost = { id: "lp_" + Date.now(), ...newPost };
+                    dbPosts.push(localPost);
+                    localStorage.setItem("lunags_posts", JSON.stringify(dbPosts));
+                    renderCalendar();
+                }
+            } else {
+                const newTask = {
+                    taskName: title,
+                    dueDate: selectedDateStr,
+                    memberName: member,
+                    status: "未完了",
+                    createdAt: new Date().toISOString()
+                };
+
+                if (isOnline) {
+                    await addDoc(collection(db, "tasks"), newTask);
+                    
+                    // 担当者へ通知ドキュメントを追加 (タスク通知)
+                    await addDoc(collection(db, "notifications"), {
+                        recipientEmail,
+                        type: "new_task",
+                        message: `${currentUser.email} があなたに新しいタスクをアサインしました: 「${title}」`,
+                        link: "tasks.html",
+                        read: false,
+                        createdAt: serverTimestamp()
+                    });
+                } else {
+                    const localTask = { id: "lt_" + Date.now(), ...newTask };
+                    dbTasks.push(localTask);
+                    localStorage.setItem("lunags_tasks", JSON.stringify(dbTasks));
+                    renderCalendar();
+                }
+            }
+
+            // フォームクリアと閉じる
+            newEventTitle.value = "";
+            eventModal.classList.remove("active");
+        });
+
+        // HTMLエスケープ
+        function escapeHtml(str) {
+            if (!str) return "";
+            return str
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // --- 通知UI関係のロジック ---
+        bellContainer.addEventListener("click", (e) => {
+            e.stopPropagation();
+            notificationDropdown.classList.toggle("active");
+        });
+
+        document.addEventListener("click", () => {
+            notificationDropdown.classList.remove("active");
+        });
+
+        function updateNotificationsUI() {
+            const unreadCount = dbNotifications.filter(n => !n.read).length;
+            bellBadge.style.display = unreadCount > 0 ? "block" : "none";
+
+            notificationList.innerHTML = "";
+            if (dbNotifications.length === 0) {
+                notificationList.innerHTML = `<div class="notification-empty">通知はありません</div>`;
+            } else {
+                dbNotifications.forEach(notif => {
+                    const div = document.createElement("div");
+                    div.className = `notification-item ${notif.read ? '' : 'unread'}`;
+                    
+                    let dateStr = "日付不明";
+                    if (notif.createdAt) {
+                        const date = notif.createdAt.toDate ? notif.createdAt.toDate() : new Date(notif.createdAt);
+                        dateStr = date.toLocaleString('ja-JP', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+                    }
+
+                    div.innerHTML = `
+                        <div class="message">${escapeHtml(notif.message)}</div>
+                        <div class="time">${dateStr}</div>
+                    `;
+
+                    div.addEventListener("click", async () => {
+                        if (!notif.read) {
+                            if (isOnline) {
+                                await updateDoc(doc(db, "notifications", notif.id), { read: true });
+                            } else {
+                                dbNotifications = dbNotifications.map(n => n.id === notif.id ? { ...n, read: true } : n);
+                                localStorage.setItem("lunags_notifications", JSON.stringify(dbNotifications));
+                                updateNotificationsUI();
+                            }
+                        }
+                        if (notif.link) {
+                            window.location.href = notif.link;
+                        }
+                    });
+
+                    notificationList.appendChild(div);
+                });
+            }
+        }
+
+        btnClearNotifications.addEventListener("click", async () => {
+            const unreadList = dbNotifications.filter(n => !n.read);
+            for (const notif of unreadList) {
+                if (isOnline) {
+                    await updateDoc(doc(db, "notifications", notif.id), { read: true });
+                } else {
+                    dbNotifications = dbNotifications.map(n => n.id === notif.id ? { ...n, read: true } : n);
+                }
+            }
+            if (!isOnline) {
+                localStorage.setItem("lunags_notifications", JSON.stringify(dbNotifications));
+                updateNotificationsUI();
+            }
+        });
+
+        // 検索窓
+        searchInput.addEventListener("input", (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            if (query.length === 0) {
+                searchResultsPanel.classList.remove("active");
+                return;
+            }
+
+            searchResultsPanel.classList.add("active");
+            searchResultsBody.innerHTML = "";
+
+            const matchedPosts = dbPosts.filter(p => p.title.toLowerCase().includes(query) || (p.memberName && p.memberName.toLowerCase().includes(query)));
+            const matchedTasks = dbTasks.filter(t => t.taskName.toLowerCase().includes(query) || (t.memberName && t.memberName.toLowerCase().includes(query)));
+
+            if (matchedPosts.length === 0 && matchedTasks.length === 0) {
+                searchResultsBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-muted);">一致する予定は見つかりませんでした</td></tr>`;
+                return;
+            }
+
+            matchedPosts.forEach(post => {
+                const tr = document.createElement("tr");
+                tr.style.cursor = "pointer";
+                tr.innerHTML = `
+                    <td><span class="badge" style="background-color: var(--color-primary-light); color: var(--color-primary);">ポスト</span></td>
+                    <td>${post.postDate}</td>
+                    <td>${post.timeSlot || "未定"}</td>
+                    <td>${post.memberName || "-"}</td>
+                    <td>${post.title}</td>
+                    <td><span class="badge ${post.isDone ? 'badge-success' : 'badge-warning'}">${post.isDone ? '配信完了' : '予定通り'}</span></td>
+                `;
+                tr.addEventListener("click", () => {
+                    window.location.href = `posts.html?id=${post.id}`;
+                });
+                searchResultsBody.appendChild(tr);
+            });
+
+            matchedTasks.forEach(task => {
+                const tr = document.createElement("tr");
+                tr.style.cursor = "pointer";
+                tr.innerHTML = `
+                    <td><span class="badge badge-success">タスク</span></td>
+                    <td>${task.dueDate}</td>
+                    <td>終日</td>
+                    <td>${task.memberName || "-"}</td>
+                    <td>${task.taskName}</td>
+                    <td><span class="badge ${task.status === '完了' ? 'badge-success' : 'badge-warning'}">${task.status}</span></td>
+                `;
+                tr.addEventListener("click", () => {
+                    window.location.href = `tasks.html?id=${task.id}`;
+                });
+                searchResultsBody.appendChild(tr);
+            });
+        });
+
+        btnCloseSearch.addEventListener("click", () => {
+            searchInput.value = "";
+            searchResultsPanel.classList.remove("active");
+        });
+    </script>
+</body>
+</html>

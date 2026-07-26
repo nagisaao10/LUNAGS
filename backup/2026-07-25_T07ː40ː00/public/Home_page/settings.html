@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>設定 | LUNAGS 管理システム</title>
+    <link rel="stylesheet" href="../normalize.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Noto+Sans+JP:wght@400;500;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="./home.css">
+</head>
+
+<body>
+    <div class="app-shell">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar__brand">
+                <img src="../images/logo_LUNAGS.png" alt="LUNAGS">
+                <span class="sidebar__brand-subtitle">MANAGEMENT SYSTEM</span>
+            </div>
+
+            <div class="sidebar__div">
+                <a class="sidebar__link" href="home.html">
+                    <i class="fa-solid fa-house"></i>
+                    <span>ホーム</span>
+                </a>
+
+                <a class="sidebar__link" href="calendar.html">
+                    <i class="fa-solid fa-calendar-days"></i>
+                    <span>カレンダー</span>
+                </a>
+
+                <a class="sidebar__link" href="posts.html">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                    <span>ポスト</span>
+                </a>
+
+                <a class="sidebar__link" href="tasks.html">
+                    <i class="fa-solid fa-list-check"></i>
+                    <span>タスク</span>
+                </a>
+
+                <div class="sidebar__divider"></div>
+
+                <a class="sidebar__link" href="statistics.html">
+                    <i class="fa-solid fa-chart-column"></i>
+                    <span>統計</span>
+                </a>
+
+                <a class="sidebar__link is-active" href="settings.html">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>設定</span>
+                </a>
+            </div>
+
+            <div class="sidebar__footer">
+                <a class="sidebar__mypage-btn" href="../My_page/profile.html">
+                    <i class="fa-solid fa-user"></i>
+                    <span>マイページへ戻る</span>
+                </a>
+            </div>
+        </aside>
+
+        <main class="main">
+            <header class="topbar">
+                <div>
+                    <h1 class="topbar__title">SETTINGS</h1>
+                    <div class="topbar__date">通知とメンバー候補の基本設定</div>
+                </div>
+                <div class="topbar__right">
+                    <div class="notif">
+                        <button class="notif__btn" id="notifBtn" aria-label="通知"><svg class="icon" viewBox="0 0 24 24">
+                                <path d="M6 9a6 6 0 0 1 12 0c0 4 1.5 5.5 1.5 5.5H4.5S6 13 6 9Z" />
+                                <path d="M10 19a2 2 0 0 0 4 0" />
+                            </svg><span class="notif__badge is-hidden" id="notifBadge">0</span></button>
+                        <div class="notif__dropdown" id="notifDropdown">
+                            <div class="notif__dropdown-title">通知</div>
+                            <div id="notifList"></div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <section class="settings-grid">
+                <div class="card">
+                    <div class="card__head">
+                        <h2>基本設定</h2>
+                    </div>
+                    <form id="settingsForm" class="form-grid">
+                        <div class="form-group span-2"><label for="currentUser">現在の表示名</label><input class="field"
+                                id="currentUser" type="text" placeholder="例：なぎさ"></div>
+                        <div class="span-2 toolbar"><button class="btn-primary" type="submit">保存</button></div>
+                    </form>
+                    <p class="small-note">ここで登録した名前は、ポストとタスクの担当者入力候補、統計ページの集計対象として使われます。</p>
+                </div>
+
+                <div class="card">
+                    <div class="card__head">
+                        <h2>登録メンバー</h2><span class="count" id="memberCount">0人</span>
+                    </div>
+                    <div class="list-stack" id="memberList"></div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div class="toast-stack" id="toastStack"></div>
+
+    <script type="module">
+        import { auth, db } from "../firebase-config.js";
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+        import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+
+        const STORAGE_KEYS = { settings: "lunags_settings", notifications: "lunags_notifications" };
+        const fallbackSettings = { currentUser: "なぎさ", members: ["なぎさ", "みなみ", "あかり", "ゆづき"] };
+        let settings = readSettings();
+        let notifications = [];
+        const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
+
+        let currentUserAuth = null;
+        let currentUserId = null;
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUserAuth = user;
+                try {
+                    const mapSnap = await getDoc(doc(db, "uidMap", user.uid));
+                    if (mapSnap.exists()) {
+                        currentUserId = mapSnap.data().userId;
+                        const userSnap = await getDoc(doc(db, "users", currentUserId));
+                        if (userSnap.exists()) {
+                            const data = userSnap.data();
+                            if (data.displayName && data.displayName !== settings.currentUser) {
+                                const oldName = settings.currentUser;
+                                const newName = data.displayName;
+                                settings.currentUser = newName;
+
+                                const index = settings.members.indexOf(oldName);
+                                if (index !== -1) {
+                                    settings.members[index] = newName;
+                                } else if (!settings.members.includes(newName)) {
+                                    settings.members.unshift(newName);
+                                }
+                                writeSettings(false);
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error("Firebase読み込みエラー:", error);
+                }
+            } else {
+                window.location.href = '../Login_page/login.html';
+            }
+        });
+
+        function readLocal(key) {
+            try { return JSON.parse(localStorage.getItem(key) || "[]"); } catch { return []; }
+        }
+
+        function readSettings() {
+            try { return { ...fallbackSettings, ...(JSON.parse(localStorage.getItem(STORAGE_KEYS.settings) || "{}")) }; } catch { return fallbackSettings; }
+        }
+
+        function writeSettings(showToastMsg = true) {
+            settings.members = [...new Set(settings.members.map((name) => name.trim()).filter(Boolean))];
+            localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(settings));
+            renderSettings();
+            if (showToastMsg) showToast("設定を保存しました。");
+        }
+
+        function renderSettings() {
+            document.getElementById("currentUser").value = settings.currentUser || "";
+            document.getElementById("memberCount").textContent = `${settings.members.length}人`;
+            document.getElementById("memberList").innerHTML = settings.members.length ? settings.members.map((name) => `
+                <div class="member-row">
+                    <div><strong>${escapeHtml(name)}</strong>${name === settings.currentUser ? `<div class="small-note">現在の表示名</div>` : ""}</div>
+                    <button class="btn-secondary" data-remove="${escapeHtml(name)}" type="button">削除</button>
+                </div>
+            `).join("") : `<div class="empty-state">メンバーが登録されていません。</div>`;
+            document.querySelectorAll("[data-remove]").forEach((button) => {
+                button.addEventListener("click", () => {
+                    settings.members = settings.members.filter((name) => name !== button.dataset.remove);
+                    if (settings.currentUser === button.dataset.remove) settings.currentUser = settings.members[0] || "";
+                    writeSettings();
+                });
+            });
+        }
+
+        function renderNotifications() {
+            notifications = readLocal(STORAGE_KEYS.notifications);
+            const badge = document.getElementById("notifBadge");
+            const list = document.getElementById("notifList");
+            const unread = notifications.filter((item) => item.unread).length;
+            badge.textContent = unread > 9 ? "9+" : String(unread);
+            badge.classList.toggle("is-hidden", unread === 0);
+            list.innerHTML = notifications.length ? notifications.slice(0, 20).map((item) => `<div class="notif__item"><span class="notif__dot"></span><div><div class="notif__item-text">${escapeHtml(item.text || "")}</div><div class="notif__item-time">${escapeHtml(item.time || "")}</div></div></div>`).join("") : `<div class="notif__empty">通知はまだありません。</div>`;
+        }
+
+        function showToast(text) {
+            const stack = document.getElementById("toastStack");
+            const toast = document.createElement("div");
+            toast.className = "toast";
+            toast.textContent = text;
+            stack.appendChild(toast);
+            requestAnimationFrame(() => toast.classList.add("is-visible"));
+            setTimeout(() => { toast.classList.remove("is-visible"); setTimeout(() => toast.remove(), 220); }, 3200);
+        }
+
+        function initEvents() {
+            document.getElementById("settingsForm").addEventListener("submit", async (event) => {
+                event.preventDefault();
+                const oldName = settings.currentUser;
+                const newName = document.getElementById("currentUser").value.trim();
+
+                if (newName && newName !== oldName) {
+                    settings.currentUser = newName;
+
+                    const index = settings.members.indexOf(oldName);
+                    if (index !== -1) {
+                        settings.members[index] = newName;
+                    } else if (!settings.members.includes(newName)) {
+                        settings.members.unshift(newName);
+                    }
+                }
+
+                writeSettings();
+
+                // データベースにも保存する
+                if (currentUserAuth && currentUserId) {
+                    try {
+                        const userRef = doc(db, "users", currentUserId);
+                        await setDoc(userRef, { displayName: settings.currentUser }, { merge: true });
+                    } catch (error) {
+                        console.error("Firebaseの更新に失敗しました:", error);
+                    }
+                }
+            });
+            const notifBtn = document.getElementById("notifBtn");
+            const notifDropdown = document.getElementById("notifDropdown");
+            notifBtn.addEventListener("click", (event) => { event.stopPropagation(); notifDropdown.classList.toggle("is-open"); });
+            document.addEventListener("click", (event) => { if (!notifDropdown.contains(event.target) && event.target !== notifBtn) notifDropdown.classList.remove("is-open"); });
+        }
+
+        initEvents();
+        renderSettings();
+        renderNotifications();
+    </script>
+</body>
+
+</html>

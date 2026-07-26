@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>マイページ | LUNAGS 管理システム</title>
+    <link rel="stylesheet" href="../normalize.css">
+    <link rel="stylesheet" href="../common.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="mypage.css">
+</head>
+
+<body>
+    <!-- SP用ハンバーガー -->
+    <button class="hamburger" id="hamburgerBtn">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <div class="page">
+        <!-- 左サイドバー -->
+        <aside class="sidebar" id="sidebar">
+
+            <img src="../images/logo_LUNAGS.png" class="logo-lunags">
+
+            <div class="menu-list">
+
+                <!-- 管理システム -->
+                <a href="../Home_page/home.html" class="menu">
+                    <i class="fas fa-desktop"></i>
+                    管理ホーム
+                </a>
+
+                <!-- 本人情報 -->
+                <a href="profile.html" class="menu active">
+                    <i class="fas fa-user"></i>
+                    本人情報
+                </a>
+
+                <!-- アカウント情報 -->
+                <a href="account.html" class="menu">
+                    <i class="fas fa-id-card"></i>
+                    アカウント情報
+                </a>
+
+                <!-- 外部サービス -->
+                <a href="external.html" class="menu">
+                    <i class="fas fa-link"></i>
+                    外部サービス
+                </a>
+
+                <!-- 連携サービス -->
+                <a href="platforms.html" class="menu">
+                    <i class="fas fa-cog"></i>
+                    連携サービス
+                </a>
+
+            </div>
+
+            <button class="btn logout-btn" id="logoutBtn">
+                ログアウト
+            </button>
+
+        </aside>
+
+        <!-- 右メインコンテンツ -->
+        <main class="main fade-in">
+            <h1>PROFILE</h1>
+            <div class="sub">本人情報</div>
+            <div class="card">
+                <div class="row">
+                    <div class="label">表示名</div>
+                    <div class="value" id="dispNickname">-</div>
+                </div>
+
+                <div class="row">
+                    <div class="label">名前</div>
+                    <div class="value" id="dispName">-</div>
+                </div>
+
+                <div class="row">
+                    <div class="label">生年月日</div>
+                    <div class="value" id="dispBirthday">-</div>
+                </div>
+
+                <div class="row">
+                    <div class="label">性別</div>
+                    <div class="value" id="dispGender">-</div>
+                </div>
+
+                <div class="row">
+                    <div class="label">国と地域</div>
+                    <div class="value" id="dispCountry">-</div>
+                </div>
+
+                <div class="row">
+                    <div class="label">住所</div>
+                    <div class="value" id="dispAddress">-</div>
+                </div>
+
+                <div class="row">
+                    <div class="label">電話番号</div>
+                    <div class="value" id="dispPhone">-</div>
+                </div>
+
+                <button class="btn edit-btn" id="editBtn">編集する</button>
+                <div style="clear: both;"></div>
+            </div>
+
+            <div class="card id-card">
+                <div>
+                    <div class="label" style="margin-bottom: 5px;">ユーザーID</div>
+                    <div class="id-value" id="dispUserId">----------</div>
+                </div>
+                <button class="copy-btn" id="copyBtn" title="IDをコピー">
+                    <i class="far fa-copy"></i>
+                </button>
+            </div>
+        </main>
+
+        <!-- モーダルオーバーレイ -->
+        <div class="modal-overlay" id="editModal">
+            <div class="modal-content">
+                <h2>プロフィール編集</h2>
+
+                <div class="form-group">
+                    <label>表示名 (DisplayName)</label>
+                    <input type="text" id="editdisplayName" placeholder="タロー">
+                </div>
+                <div class="form-group">
+                    <label>名前 (Name)</label>
+                    <input type="text" id="editName" placeholder="山田 太郎">
+                </div>
+                <div class="form-group">
+                    <label>生年月日 (Birthday)</label>
+                    <input type="date" id="editBirthday" placeholder="2000-01-01" min="1900-01-01" max="9999-12-31">
+                </div>
+                <div class="form-group">
+                    <label>性別 (Gender)</label>
+                    <select id="editGender">
+                        <option value="男性">男性</option>
+                        <option value="女性">女性</option>
+                        <option value="その他">その他</option>
+                        <option value="回答しない">回答しない</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>国と地域 (Country)</label>
+                    <input type="text" id="editCountry" placeholder="日本">
+                </div>
+                <div class="form-group">
+                    <label>住所 (Address)</label>
+                    <input type="text" id="editAddress" placeholder="東京都...">
+                </div>
+                <div class="form-group">
+                    <label>電話番号 (Phone)</label>
+                    <input type="tel" id="editPhone" placeholder="090-XXXX-XXXX">
+                </div>
+                <div class="modal-actions">
+                    <button class="cancel-btn" id="cancelBtn">キャンセル</button>
+                    <button class="btn save-btn" id="saveBtn">保存する</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- フッター -->
+    <footer class="footer">
+        <a href="#">利用規約</a>
+        <a href="#">FAQ</a>
+        <a href="#">運営会社</a>
+        <a href="#">Language: JA</a>
+    </footer>
+
+    <!-- Firebase & Logic -->
+    <script type="module">
+        import { auth, db } from "../firebase-config.js";
+        import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+        import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+        import { serverTimestamp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+
+        // DOM要素
+        const dispName = document.getElementById('dispName');
+        const dispNickname = document.getElementById('dispNickname');
+        const dispBirthday = document.getElementById('dispBirthday');
+        const dispGender = document.getElementById('dispGender');
+        const dispCountry = document.getElementById('dispCountry');
+        const dispAddress = document.getElementById('dispAddress');
+        const dispPhone = document.getElementById('dispPhone');
+        const dispUserId = document.getElementById('dispUserId');
+
+        const editModal = document.getElementById('editModal');
+        const editBtn = document.getElementById('editBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const saveBtn = document.getElementById('saveBtn');
+
+        const editName = document.getElementById('editName');
+        const editNickname = document.getElementById('editdisplayName');
+        const editBirthday = document.getElementById('editBirthday');
+        const editGender = document.getElementById('editGender');
+        const editCountry = document.getElementById('editCountry');
+        const editAddress = document.getElementById('editAddress');
+        const editPhone = document.getElementById('editPhone');
+
+        const copyBtn = document.getElementById('copyBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+
+        const hamburgerBtn = document.getElementById('hamburgerBtn');
+        const sidebar = document.getElementById('sidebar');
+
+        let currentUser = null;
+
+        // SPメニュー開閉
+        hamburgerBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('open');
+        });
+
+        // モーダル外クリックで閉じる処理
+        editModal.addEventListener('click', (e) => {
+            if (e.target === editModal) {
+                editModal.classList.remove('active');
+            }
+        });
+
+        // 認証状態の監視
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+
+                try {
+
+                    const mapSnap = await getDoc(doc(db, "uidMap", user.uid));
+
+                    if (!mapSnap.exists()) {
+                        throw new Error("uidMap がありません");
+                    }
+
+                    const userId = mapSnap.data().userId;
+                    dispUserId.textContent = userId;
+
+                    const userSnap = await getDoc(doc(db, "users", userId));
+
+                    if (userSnap.exists()) {
+                        const data = userSnap.data();
+                        updateDisplay(data);
+                    }
+
+                } catch (error) {
+
+                    console.error(
+                        "プロフィール情報の取得に失敗しました:",
+                        error
+                    );
+
+                }
+            } else {
+                // 未ログイン時はログインページへリダイレクト
+                window.location.href = '../Login_page/login.html';
+            }
+        });
+
+        // 日付文字列を YYYY-MM-DD 形式（年4桁制限、月日2桁埋め）に変換するヘルパー
+        function formatToInputDate(dateStr) {
+            if (!dateStr || dateStr === '-') return '';
+            const parts = dateStr.split(/[\/\-]/);
+            if (parts.length === 3) {
+                let y = parts[0].trim();
+                let m = parts[1].trim();
+                let d = parts[2].trim();
+
+                // 年が4桁を超える（例: 002025）場合は下4桁を使用
+                if (y.length > 4) {
+                    y = y.slice(-4);
+                }
+
+                m = m.padStart(2, '0');
+                d = d.padStart(2, '0');
+
+                return `${y}-${m}-${d}`;
+            }
+            return '';
+        }
+
+        // 表示の更新
+        function updateDisplay(data) {
+            dispName.textContent = data.name || '-';
+            dispNickname.textContent = data.displayName || '-';
+
+            // 生年月日の年が6桁などの場合に4桁にフォーマットして表示
+            let birthdayDisp = '-';
+            if (data.birthday && data.birthday !== '-') {
+                const formatted = formatToInputDate(data.birthday);
+                if (formatted) {
+                    birthdayDisp = formatted.replace(/-/g, '/');
+                } else {
+                    birthdayDisp = data.birthday;
+                }
+            }
+            dispBirthday.textContent = birthdayDisp;
+
+            const genderMap = {
+                '男性': '男性',
+                '女性': '女性',
+                'その他': 'その他',
+                '回答しない': '回答しない'
+            };
+            dispGender.textContent = data.gender ? genderMap[data.gender] : '-';
+            dispCountry.textContent = data.country || '-';
+            dispAddress.textContent = data.address || '-';
+            dispPhone.textContent = data.phone || '-';
+        }
+
+        // モーダルを開く
+        editBtn.addEventListener('click', () => {
+
+            editNickname.value =
+                dispNickname.textContent === '-'
+                    ? ''
+                    : dispNickname.textContent;
+
+            editName.value =
+                dispName.textContent === '-'
+                    ? ''
+                    : dispName.textContent;
+
+            editBirthday.value =
+                dispBirthday.textContent === '-'
+                    ? ''
+                    : formatToInputDate(dispBirthday.textContent);
+
+            editGender.value =
+                dispGender.textContent === '-'
+                    ? '回答しない'
+                    : dispGender.textContent;
+
+            editCountry.value =
+                dispCountry.textContent === '-'
+                    ? ''
+                    : dispCountry.textContent;
+
+            editAddress.value =
+                dispAddress.textContent === '-'
+                    ? ''
+                    : dispAddress.textContent;
+
+            editPhone.value =
+                dispPhone.textContent === '-'
+                    ? ''
+                    : dispPhone.textContent;
+
+            editModal.classList.add('active');
+        });
+
+        // モーダルを閉じる
+        cancelBtn.addEventListener('click', () => {
+            editModal.classList.remove('active');
+        });
+
+        // 保存処理
+        saveBtn.addEventListener('click', async () => {
+            if (!currentUser) return;
+
+            const newData = {
+                name: editName.value.trim(),
+                displayName: editNickname.value.trim(),
+                birthday: editBirthday.value ? editBirthday.value.replace(/-/g, '/') : "",
+                gender: editGender.value,
+                country: editCountry.value.trim(),
+                address: editAddress.value.trim(),
+                phone: editPhone.value.trim(),
+                updatedAt: serverTimestamp()
+            };
+
+            saveBtn.textContent = '保存中...';
+            saveBtn.disabled = true;
+
+            try {
+                const mapSnap = await getDoc(doc(db, "uidMap", currentUser.uid));
+                const userId = mapSnap.data().userId;
+                const userRef = doc(db, "users", userId);
+                await setDoc(userRef, newData, { merge: true });
+                
+                // settings.html などのために localStorage の lunags_settings も更新
+                try {
+                    const settingsKey = "lunags_settings";
+                    let currentSettings = { currentUser: "なぎさ", members: ["なぎさ", "みなみ", "あかり", "ゆづき"] };
+                    try {
+                        const localData = localStorage.getItem(settingsKey);
+                        if (localData) {
+                            currentSettings = { ...currentSettings, ...JSON.parse(localData) };
+                        }
+                    } catch(e){}
+                    
+                    const oldName = currentSettings.currentUser;
+                    const newName = newData.displayName;
+                    
+                    if (newName && newName !== oldName) {
+                        currentSettings.currentUser = newName;
+                        
+                        const index = currentSettings.members.indexOf(oldName);
+                        if (index !== -1) {
+                            currentSettings.members[index] = newName;
+                        } else if (!currentSettings.members.includes(newName)) {
+                            currentSettings.members.unshift(newName);
+                        }
+                        localStorage.setItem(settingsKey, JSON.stringify(currentSettings));
+                    }
+                } catch(e) {
+                    console.error(e);
+                }
+
+                updateDisplay(newData);
+                editModal.classList.remove('active');
+            } catch (error) {
+                console.error("プロフィールの保存に失敗しました:", error);
+                alert("保存に失敗しました。");
+            } finally {
+                saveBtn.textContent = '保存する';
+                saveBtn.disabled = false;
+            }
+        });
+
+        // ユーザーIDコピー
+        async function copyUserId() {
+
+            if (!currentUser) return;
+
+            try {
+                await navigator.clipboard.writeText(dispUserId.textContent);
+                const icon = copyBtn.querySelector("i");
+
+                icon.className = "fas fa-check";
+
+                setTimeout(() => {
+                    icon.className = "far fa-copy";
+                }, 2000);
+
+                const originalTitle =
+                    copyBtn.title;
+
+                copyBtn.title =
+                    "コピーしました";
+
+                setTimeout(() => {
+
+                    icon.classList.replace(
+                        "fa-check",
+                        "fa-copy"
+                    );
+
+                    copyBtn.title =
+                        originalTitle;
+
+                }, 2000);
+
+            } catch (error) {
+
+                console.error(error);
+
+                alert("コピーに失敗しました");
+
+            }
+
+        }
+
+        // ボタンクリックでコピー
+        copyBtn.addEventListener(
+            "click",
+            copyUserId
+        );
+
+        // ユーザーID文字クリックでコピー
+        dispUserId.addEventListener(
+            "click",
+            copyUserId
+        );
+
+        // ログアウト
+        logoutBtn.addEventListener('click', async () => {
+            if (confirm("ログアウトしますか？")) {
+                try {
+                    await signOut(auth);
+
+                    window.location.href = "../Login_page/login.html";
+
+                } catch (error) {
+                    console.error("ログアウトに失敗しました:", error);
+                }
+            }
+        });
+
+    </script>
+</body>
+
+</html>

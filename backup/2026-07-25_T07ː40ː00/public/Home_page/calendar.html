@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>カレンダー | LUNAGS 管理システム</title>
+    <link rel="stylesheet" href="../normalize.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Noto+Sans+JP:wght@400;500;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="./home.css">
+</head>
+
+<body>
+    <div class="app-shell">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar__brand">
+                <img src="../images/logo_LUNAGS.png" alt="LUNAGS">
+                <span class="sidebar__brand-subtitle">MANAGEMENT SYSTEM</span>
+            </div>
+
+            <div class="sidebar__div">
+                <a class="sidebar__link" href="home.html">
+                    <i class="fa-solid fa-house"></i>
+                    <span>ホーム</span>
+                </a>
+
+                <a class="sidebar__link is-active" href="calendar.html">
+                    <i class="fa-solid fa-calendar-days"></i>
+                    <span>カレンダー</span>
+                </a>
+
+                <a class="sidebar__link" href="posts.html">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                    <span>ポスト</span>
+                </a>
+
+                <a class="sidebar__link" href="tasks.html">
+                    <i class="fa-solid fa-list-check"></i>
+                    <span>タスク</span>
+                </a>
+
+                <div class="sidebar__divider"></div>
+
+                <a class="sidebar__link" href="statistics.html">
+                    <i class="fa-solid fa-chart-column"></i>
+                    <span>統計</span>
+                </a>
+
+                <a class="sidebar__link" href="settings.html">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>設定</span>
+                </a>
+            </div>
+
+            <div class="sidebar__footer">
+                <a class="sidebar__mypage-btn" href="../My_page/profile.html">
+                    <i class="fa-solid fa-user"></i>
+                    <span>マイページへ戻る</span>
+                </a>
+            </div>
+        </aside>
+
+        <main class="main">
+            <header class="topbar">
+                <div>
+                    <h1 class="topbar__title">CALENDAR</h1>
+                    <div class="topbar__date" id="calendarLabel">投稿予定とタスク期限を統合表示</div>
+                </div>
+                <div class="topbar__right">
+                    <div class="view-toggles">
+                        <button class="view-toggle is-active" data-view="month">月</button>
+                        <button class="view-toggle" data-view="week">週</button>
+                        <button class="view-toggle" data-view="day">日</button>
+                        <button class="view-toggle" data-view="year">年</button>
+                    </div>
+                    <div class="notif">
+                        <button class="notif__btn" id="notifBtn" aria-label="通知"><svg class="icon" viewBox="0 0 24 24">
+                                <path d="M6 9a6 6 0 0 1 12 0c0 4 1.5 5.5 1.5 5.5H4.5S6 13 6 9Z" />
+                                <path d="M10 19a2 2 0 0 0 4 0" />
+                            </svg><span class="notif__badge is-hidden" id="notifBadge">0</span></button>
+                        <div class="notif__dropdown" id="notifDropdown">
+                            <div class="notif__dropdown-title">通知</div>
+                            <div id="notifList"></div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <section class="card calendar-card">
+                <div class="calendar-header">
+                    <button class="btn-icon" id="prevBtn" aria-label="前へ"><svg class="icon" viewBox="0 0 24 24">
+                            <path d="m15 18-6-6 6-6" />
+                        </svg></button>
+                    <h2 class="calendar-header__title" id="calendarTitle">読み込み中</h2>
+                    <button class="btn-icon" id="nextBtn" aria-label="次へ"><svg class="icon" viewBox="0 0 24 24">
+                            <path d="m9 18 6-6-6-6" />
+                        </svg></button>
+                    <button class="btn-secondary" id="todayBtn">今日</button>
+                </div>
+                <div id="weekdayHeader" class="calendar-grid-header">
+                    <div>日</div>
+                    <div>月</div>
+                    <div>火</div>
+                    <div>水</div>
+                    <div>木</div>
+                    <div>金</div>
+                    <div>土</div>
+                </div>
+                <div class="calendar-grid" id="calendarGrid"></div>
+            </section>
+        </main>
+    </div>
+
+    <div class="modal-overlay is-hidden" id="eventModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalTitle">予定詳細</h3>
+                <button class="modal-close" id="modalClose" aria-label="閉じる"><svg class="icon" viewBox="0 0 24 24">
+                        <path d="M18 6 6 18M6 6l12 12" />
+                    </svg></button>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+        </div>
+    </div>
+
+    <div class="toast-stack" id="toastStack"></div>
+
+    <script type="module">
+        import { auth } from "../firebase-config.js";
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                window.location.href = '../Login_page/login.html';
+            }
+        });
+
+        const STORAGE_KEYS = { posts: "lunags_posts", tasks: "lunags_tasks", notifications: "lunags_notifications" };
+        const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
+        const state = { posts: [], tasks: [], notifications: [], firestore: null, currentDate: new Date(), view: "month", seenNotifications: new Set() };
+        const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
+        const toDateKey = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+        const readLocal = (key) => { try { return JSON.parse(localStorage.getItem(key) || "[]"); } catch { return []; } };
+        const writeLocal = (key, value) => localStorage.setItem(key, JSON.stringify(value));
+
+        function seedLocalData() {
+            const today = toDateKey(new Date());
+            if (!localStorage.getItem(STORAGE_KEYS.posts)) writeLocal(STORAGE_KEYS.posts, [{ id: "post-sample-1", date: today, time: "12:00", platform: "YouTube", title: "新作動画の公開", assignee: "なぎさ", mentions: ["なぎさ"], completed: true, thumbDone: true }]);
+            if (!localStorage.getItem(STORAGE_KEYS.tasks)) writeLocal(STORAGE_KEYS.tasks, [{ id: "task-sample-1", dueDate: today, title: "台本の最終確認", assignee: "あかり", mentions: ["あかり"], completed: false }]);
+            if (!localStorage.getItem(STORAGE_KEYS.notifications)) writeLocal(STORAGE_KEYS.notifications, []);
+        }
+
+        async function initData() {
+            seedLocalData();
+            try {
+                const [{ db, serverTimestamp }, firestore] = await Promise.all([import("../firebase-config.js"), import("https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js")]);
+                state.firestore = { db, serverTimestamp, ...firestore };
+                ["posts", "tasks", "notifications"].forEach(watchFirestoreCollection);
+            } catch (error) {
+                console.info("[LUNAGS] Firestoreに接続できないためローカルデータで動作します。", error.message);
+                state.posts = readLocal(STORAGE_KEYS.posts);
+                state.tasks = readLocal(STORAGE_KEYS.tasks);
+                state.notifications = readLocal(STORAGE_KEYS.notifications);
+                renderAll();
+            }
+        }
+
+        function watchFirestoreCollection(name) {
+            const { db, collection, onSnapshot } = state.firestore;
+            onSnapshot(collection(db, name), (snapshot) => {
+                state[name] = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+                if (name === "notifications") notifyNewItems(state[name]);
+                renderAll();
+            }, () => {
+                state[name] = readLocal(STORAGE_KEYS[name]);
+                renderAll();
+            });
+        }
+
+        function notifyNewItems(items) {
+            items.forEach((item) => {
+                if (!state.seenNotifications.has(item.id)) {
+                    state.seenNotifications.add(item.id);
+                    if (item.unread) showToast(item.text || "新しい通知があります。");
+                }
+            });
+        }
+
+        function getEventsForDate(dateKey) {
+            const posts = state.posts.filter((post) => post.date === dateKey).map((post) => ({ type: "post", id: post.id, title: post.title, time: post.time || "", assignee: post.assignee, completed: !!post.completed, thumbDone: !!post.thumbDone, meta: post.platform || "投稿" }));
+            const tasks = state.tasks.filter((task) => task.dueDate === dateKey).map((task) => ({ type: "task", id: task.id, title: task.title, time: "", assignee: task.assignee, completed: !!task.completed, thumbDone: null, meta: "期限日" }));
+            return [...posts, ...tasks].sort((a, b) => `${a.time}${a.title}`.localeCompare(`${b.time}${b.title}`, "ja"));
+        }
+
+        function renderAll() {
+            renderCalendar();
+            renderNotifications();
+        }
+
+        function renderCalendar() {
+            const grid = document.getElementById("calendarGrid");
+            const header = document.getElementById("weekdayHeader");
+            grid.innerHTML = "";
+            grid.className = `calendar-grid is-${state.view}`;
+            header.classList.toggle("is-hidden", state.view === "year" || state.view === "day");
+            if (state.view === "month") renderMonthView(grid);
+            if (state.view === "week") renderWeekView(grid);
+            if (state.view === "day") renderDayView(grid);
+            if (state.view === "year") renderYearView(grid);
+        }
+
+        function renderMonthView(grid) {
+            const year = state.currentDate.getFullYear();
+            const month = state.currentDate.getMonth();
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            document.getElementById("calendarTitle").textContent = `${year}年 ${month + 1}月`;
+            document.getElementById("calendarLabel").textContent = `${year}年${month + 1}月のポスト・タスク`;
+            for (let index = 0; index < firstDay; index++) grid.insertAdjacentHTML("beforeend", `<div class="calendar-cell empty"></div>`);
+            for (let day = 1; day <= daysInMonth; day++) grid.insertAdjacentHTML("beforeend", buildDayCell(new Date(year, month, day)));
+            bindEventBadges();
+        }
+
+        function renderWeekView(grid) {
+            const current = state.currentDate;
+            const start = new Date(current.getFullYear(), current.getMonth(), current.getDate() - current.getDay());
+            const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 6);
+            document.getElementById("calendarTitle").textContent = `${start.getMonth() + 1}/${start.getDate()} - ${end.getMonth() + 1}/${end.getDate()}`;
+            document.getElementById("calendarLabel").textContent = `${start.getFullYear()}年の週表示`;
+            for (let index = 0; index < 7; index++) grid.insertAdjacentHTML("beforeend", buildDayCell(new Date(start.getFullYear(), start.getMonth(), start.getDate() + index), true));
+            bindEventBadges();
+        }
+
+        function renderDayView(grid) {
+            const date = state.currentDate;
+            document.getElementById("calendarTitle").textContent = `${date.getFullYear()}年 ${date.getMonth() + 1}月${date.getDate()}日`;
+            document.getElementById("calendarLabel").textContent = `${WEEKDAYS[date.getDay()]}曜日の予定`;
+            grid.insertAdjacentHTML("beforeend", buildDayCell(date, true));
+            bindEventBadges();
+        }
+
+        function renderYearView(grid) {
+            const year = state.currentDate.getFullYear();
+            document.getElementById("calendarTitle").textContent = `${year}年`;
+            document.getElementById("calendarLabel").textContent = `${year}年の年間俯瞰`;
+            for (let month = 0; month < 12; month++) {
+                const days = new Date(year, month + 1, 0).getDate();
+                let html = `<div class="year-month"><h3>${month + 1}月</h3><div class="year-days">`;
+                for (let day = 1; day <= days; day++) {
+                    const key = toDateKey(new Date(year, month, day));
+                    html += `<button class="year-day ${getEventsForDate(key).length ? "has-event" : ""}" data-jump="${key}">${day}</button>`;
+                }
+                html += `</div></div>`;
+                grid.insertAdjacentHTML("beforeend", html);
+            }
+            document.querySelectorAll("[data-jump]").forEach((button) => {
+                button.addEventListener("click", () => {
+                    state.currentDate = parseDateKey(button.dataset.jump);
+                    state.view = "day";
+                    updateViewButtons();
+                    renderCalendar();
+                });
+            });
+        }
+
+        function buildDayCell(date, showWeekday = false) {
+            const key = toDateKey(date);
+            const todayClass = key === toDateKey(new Date()) ? "is-today" : "";
+            const events = getEventsForDate(key);
+            const eventHtml = events.length ? events.map((event) => `
+                <div class="event-badge ${event.type === "post" ? "event-post" : "event-task"}" data-event="${event.type}:${event.id}">
+                    ${escapeHtml(event.time ? `${event.time} ` : "")}${escapeHtml(event.title)}
+                </div>
+            `).join("") : `<div class="small-note">予定なし</div>`;
+            return `<div class="calendar-cell ${todayClass}"><div class="calendar-cell__date">${showWeekday ? `${date.getDate()} ${WEEKDAYS[date.getDay()]}` : date.getDate()}</div><div class="calendar-cell__events">${eventHtml}</div></div>`;
+        }
+
+        function bindEventBadges() {
+            document.querySelectorAll("[data-event]").forEach((badge) => {
+                badge.addEventListener("click", () => {
+                    const [type, id] = badge.dataset.event.split(":");
+                    openEventModal(type, id);
+                });
+            });
+        }
+
+        function openEventModal(type, id) {
+            const collectionName = type === "post" ? "posts" : "tasks";
+            const item = state[collectionName].find((entry) => entry.id === id);
+            if (!item) return;
+            document.getElementById("modalTitle").textContent = type === "post" ? "ポスト詳細" : "タスク詳細";
+            document.getElementById("modalBody").innerHTML = `
+                <div class="event-detail">
+                    <p><strong>タイトル：</strong>${escapeHtml(item.title)}</p>
+                    <p><strong>日付：</strong>${escapeHtml(type === "post" ? item.date : item.dueDate)} ${escapeHtml(item.time || "")}</p>
+                    <p><strong>担当者：</strong>${escapeHtml(item.assignee || "未設定")}</p>
+                    <p><strong>詳細：</strong>${escapeHtml(item.detail || "未入力")}</p>
+                    <div class="toolbar">
+                        <button class="btn-secondary" id="toggleCompleted">${item.completed ? "未完了に戻す" : "完了にする"}</button>
+                        ${type === "post" ? `<button class="btn-secondary" id="toggleThumb">${item.thumbDone ? "サムネ未完了に戻す" : "サムネ完了にする"}</button>` : ""}
+                    </div>
+                </div>
+            `;
+            document.getElementById("toggleCompleted").addEventListener("click", () => updateItem(collectionName, id, { completed: !item.completed }));
+            const thumbButton = document.getElementById("toggleThumb");
+            if (thumbButton) thumbButton.addEventListener("click", () => updateItem(collectionName, id, { thumbDone: !item.thumbDone }));
+            document.getElementById("eventModal").classList.remove("is-hidden");
+        }
+
+        async function updateItem(collectionName, id, patch) {
+            const key = STORAGE_KEYS[collectionName];
+            state[collectionName] = state[collectionName].map((item) => item.id === id ? { ...item, ...patch } : item);
+            writeLocal(key, state[collectionName]);
+            document.getElementById("eventModal").classList.add("is-hidden");
+            renderAll();
+            if (!state.firestore) return;
+            try {
+                const { db, doc, updateDoc } = state.firestore;
+                await updateDoc(doc(db, collectionName, id), patch);
+            } catch (error) {
+                console.info("[LUNAGS] Firestore更新をローカルにフォールバックしました。", error.message);
+            }
+        }
+
+        function parseDateKey(key) {
+            const [year, month, day] = key.split("-").map(Number);
+            return new Date(year, month - 1, day);
+        }
+
+        function moveDate(amount) {
+            const date = state.currentDate;
+            if (state.view === "month") state.currentDate = new Date(date.getFullYear(), date.getMonth() + amount, 1);
+            if (state.view === "week") state.currentDate = new Date(date.getFullYear(), date.getMonth(), date.getDate() + amount * 7);
+            if (state.view === "day") state.currentDate = new Date(date.getFullYear(), date.getMonth(), date.getDate() + amount);
+            if (state.view === "year") state.currentDate = new Date(date.getFullYear() + amount, date.getMonth(), date.getDate());
+            renderCalendar();
+        }
+
+        function updateViewButtons() {
+            document.querySelectorAll("[data-view]").forEach((button) => button.classList.toggle("is-active", button.dataset.view === state.view));
+        }
+
+        function renderNotifications() {
+            const badge = document.getElementById("notifBadge");
+            const list = document.getElementById("notifList");
+            const sorted = [...state.notifications].sort((a, b) => getTimeValue(b) - getTimeValue(a));
+            const unread = sorted.filter((item) => item.unread).length;
+            badge.textContent = unread > 9 ? "9+" : String(unread);
+            badge.classList.toggle("is-hidden", unread === 0);
+            list.innerHTML = sorted.length ? sorted.slice(0, 20).map((item) => `<div class="notif__item"><span class="notif__dot"></span><div><div class="notif__item-text">${escapeHtml(item.text || "")}</div><div class="notif__item-time">${escapeHtml(formatRelativeTime(item))}</div></div></div>`).join("") : `<div class="notif__empty">通知はまだありません。</div>`;
+        }
+
+        function getTimeValue(item) {
+            if (typeof item.createdAtLocal === "number") return item.createdAtLocal;
+            if (item.createdAt?.toMillis) return item.createdAt.toMillis();
+            return 0;
+        }
+
+        function formatRelativeTime(item) {
+            const value = getTimeValue(item);
+            if (!value) return item.time || "";
+            const diff = Math.max(1, Math.round((Date.now() - value) / 60000));
+            if (diff < 60) return `${diff}分前`;
+            if (diff < 1440) return `${Math.round(diff / 60)}時間前`;
+            return `${Math.round(diff / 1440)}日前`;
+        }
+
+        function showToast(text) {
+            const stack = document.getElementById("toastStack");
+            const toast = document.createElement("div");
+            toast.className = "toast";
+            toast.textContent = text;
+            stack.appendChild(toast);
+            requestAnimationFrame(() => toast.classList.add("is-visible"));
+            setTimeout(() => { toast.classList.remove("is-visible"); setTimeout(() => toast.remove(), 220); }, 4200);
+        }
+
+        function initEvents() {
+            document.getElementById("prevBtn").addEventListener("click", () => moveDate(-1));
+            document.getElementById("nextBtn").addEventListener("click", () => moveDate(1));
+            document.getElementById("todayBtn").addEventListener("click", () => { state.currentDate = new Date(); renderCalendar(); });
+            document.querySelectorAll("[data-view]").forEach((button) => {
+                button.addEventListener("click", () => {
+                    state.view = button.dataset.view;
+                    updateViewButtons();
+                    renderCalendar();
+                });
+            });
+            document.getElementById("modalClose").addEventListener("click", () => document.getElementById("eventModal").classList.add("is-hidden"));
+            const notifBtn = document.getElementById("notifBtn");
+            const notifDropdown = document.getElementById("notifDropdown");
+            notifBtn.addEventListener("click", (event) => { event.stopPropagation(); notifDropdown.classList.toggle("is-open"); });
+            document.addEventListener("click", (event) => { if (!notifDropdown.contains(event.target) && event.target !== notifBtn) notifDropdown.classList.remove("is-open"); });
+        }
+
+        initEvents();
+        initData();
+    </script>
+</body>
+
+</html>

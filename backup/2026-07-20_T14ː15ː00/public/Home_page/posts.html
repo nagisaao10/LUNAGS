@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ポスト | LUNAGS 管理システム</title>
+    <link rel="stylesheet" href="../normalize.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="../common.css">
+    <link rel="stylesheet" href="./home.css">
+</head>
+
+<body>
+    <div class="app-shell">
+        <!-- ========== サイドバー ========== -->
+        <aside class="sidebar">
+            <div class="sidebar__brand">
+                <img src="../images/logo_LUNAGS.png" alt="LUNAGS">
+                <span class="sidebar__brand-subtitle">
+                    MANAGEMENT SYSTEM
+                </span>
+            </div>
+
+            <nav class="sidebar__nav">
+                <a class="sidebar__link" href="home.html">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M4 11.5 12 4l8 7.5" />
+                        <path d="M6 10v9a1 1 0 0 0 1 1h4v-6h2v6h4a1 1 0 0 0 1-1v-9" />
+                    </svg>ホーム
+                </a>
+                <a class="sidebar__link" href="calendar.html">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <rect x="3.5" y="5" width="17" height="15" rx="2.5" />
+                        <path d="M3.5 9.5h17" />
+                        <path d="M8 3v3.5M16 3v3.5" />
+                    </svg>カレンダー
+                </a>
+                <a class="sidebar__link is-active" href="posts.html">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <rect x="4" y="4" width="16" height="16" rx="3" />
+                        <path d="M8 9h8M8 13h8M8 17h4" />
+                    </svg>ポスト
+                </a>
+                <a class="sidebar__link" href="tasks.html">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M5 7h1.5l1 1.5L9 7h10" />
+                        <path d="M5 12h1.5l1 1.5L9 12h10" />
+                        <path d="M5 17h1.5l1 1.5L9 17h10" />
+                    </svg>タスク
+                </a>
+                <div class="sidebar__divider"></div>
+                <a class="sidebar__link" href="statistics.html">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M4 20V10M11 20V4M18 20v-7" />
+                    </svg>統計
+                </a>
+                <a class="sidebar__link" href="settings.html">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="3" />
+                        <path
+                            d="M19 12a7 7 0 0 0-.1-1.2l2-1.6-2-3.4-2.4.7a7 7 0 0 0-2-1.2L14 3h-4l-.5 2.3a7 7 0 0 0-2 1.2l-2.4-.7-2 3.4 2 1.6a7 7 0 0 0 0 2.4l-2 1.6 2 3.4 2.4-.7a7 7 0 0 0 2 1.2L10 21h4l.5-2.3a7 7 0 0 0 2-1.2l2.4.7 2-3.4-2-1.6c.067-.4.1-.8.1-1.2Z" />
+                    </svg>設定
+                </a>
+            </nav>
+            <div class="sidebar__footer">
+                <a class="sidebar__mypage-btn" href="../../My_page/profile.html">
+                    <svg class="icon" viewBox="0 0 24 24" style="width:14px;height:14px;">
+                        <circle cx="12" cy="8" r="3.5" />
+                        <path d="M5 20c0-3.6 3.1-6.5 7-6.5s7 2.9 7 6.5" />
+                    </svg>マイページへ戻る
+                </a>
+            </div>
+        </aside>
+
+        <!-- ========== メイン ========== -->
+        <main class="main">
+            <header class="topbar">
+                <div>
+                    <h1 class="topbar__title">ポスト</h1>
+                    <div class="topbar__date">投稿予定の管理</div>
+                </div>
+
+                <div class="topbar__right">
+                    <button class="btn-primary" id="addPostBtn">
+                        <svg class="icon" viewBox="0 0 24 24">
+                            <path d="M12 5v14M5 12h14" />
+                        </svg>
+                        新規ポスト作成
+                    </button>
+                    <div class="notif">
+                        <button class="notif__btn" id="notifBtn" aria-label="通知">
+                            <svg class="icon" viewBox="0 0 24 24">
+                                <path d="M6 9a6 6 0 0 1 12 0c0 4 1.5 5.5 1.5 5.5H4.5S6 13 6 9Z" />
+                                <path d="M10 19a2 2 0 0 0 4 0" />
+                            </svg>
+                            <span class="notif__badge is-hidden" id="notifBadge">0</span>
+                        </button>
+                        <div class="notif__dropdown" id="notifDropdown">
+                            <div class="notif__dropdown-title">通知</div>
+                            <div id="notifList"></div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <section class="card">
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>日付</th>
+                                <th>時間</th>
+                                <th>プラットフォーム</th>
+                                <th>タイトル</th>
+                                <th>担当者</th>
+                                <th>完了</th>
+                            </tr>
+                        </thead>
+                        <tbody id="postsList">
+                            <tr>
+                                <td colspan="6" class="text-center">読み込み中…</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- ポスト追加モーダル -->
+    <div class="modal-overlay is-hidden" id="postModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">新規ポスト作成</h3>
+                <button class="modal-close" id="postModalClose">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M18 6 6 18M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="postForm" class="form-grid">
+                    <div class="form-group">
+                        <label>タイトル</label>
+                        <input type="text" id="postTitle" required placeholder="例: 新作動画">
+                    </div>
+                    <div class="form-group">
+                        <label>日付</label>
+                        <input type="date" id="postDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label>時間</label>
+                        <input type="time" id="postTime">
+                    </div>
+                    <div class="form-group">
+                        <label>担当者 (@メンション)</label>
+                        <input type="text" id="postAssignee" placeholder="例: @なぎさ">
+                    </div>
+                    <button type="submit" class="btn-primary" style="margin-top: 10px;">保存</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        const STORAGE_KEYS = { posts: "lunags_posts", notifications: "lunags_notifications" };
+        function readLocal(key) { try { return JSON.parse(localStorage.getItem(key) || "[]"); } catch { return []; } }
+        function writeLocal(key, data) { localStorage.setItem(key, JSON.stringify(data)); }
+        function escapeHtml(str) { return String(str ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+
+        let posts = [];
+        let notifications = [];
+
+        function renderPosts() {
+            const listEl = document.getElementById("postsList");
+            if (posts.length === 0) {
+                listEl.innerHTML = `<tr><td colspan="6" class="text-center">予定はありません。</td></tr>`;
+                return;
+            }
+
+            // 日付でソート
+            const sortedPosts = [...posts].sort((a, b) => a.date.localeCompare(b.date));
+
+            listEl.innerHTML = sortedPosts.map(p => `
+                <tr>
+                    <td>${escapeHtml(p.date)}</td>
+                    <td>${escapeHtml(p.time || "-")}</td>
+                    <td><span class="badge badge--post">${escapeHtml(p.platform || "その他")}</span></td>
+                    <td class="fw-bold">${escapeHtml(p.title)}</td>
+                    <td>${escapeHtml(p.assignee || "未設定")}</td>
+                    <td>
+                        <button class="check-toggle ${p.completed ? "is-checked" : ""}" data-id="${p.id}">
+                            <svg viewBox="0 0 24 24"><path d="M4 12l6 6L20 6"/></svg>
+                        </button>
+                    </td>
+                </tr>
+            `).join("");
+
+            document.querySelectorAll(".check-toggle").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    const id = btn.dataset.id;
+                    const pIndex = posts.findIndex(p => p.id === id);
+                    if (pIndex !== -1) {
+                        posts[pIndex].completed = !posts[pIndex].completed;
+                        writeLocal(STORAGE_KEYS.posts, posts);
+                        renderPosts();
+                    }
+                });
+            });
+        }
+
+        function initData() {
+            posts = readLocal(STORAGE_KEYS.posts);
+            notifications = readLocal(STORAGE_KEYS.notifications);
+            renderPosts();
+            renderNotifications();
+        }
+
+        function initEvents() {
+            document.getElementById("addPostBtn").addEventListener("click", () => {
+                document.getElementById("postModal").classList.remove("is-hidden");
+            });
+            document.getElementById("postModalClose").addEventListener("click", () => {
+                document.getElementById("postModal").classList.add("is-hidden");
+            });
+
+            document.getElementById("postForm").addEventListener("submit", (e) => {
+                e.preventDefault();
+                const newPost = {
+                    id: "p" + Date.now(),
+                    title: document.getElementById("postTitle").value,
+                    date: document.getElementById("postDate").value,
+                    time: document.getElementById("postTime").value,
+                    assignee: document.getElementById("postAssignee").value,
+                    platform: "未分類",
+                    completed: false,
+                    thumbDone: false
+                };
+                posts.push(newPost);
+                writeLocal(STORAGE_KEYS.posts, posts);
+
+                // 通知追加
+                notifications.unshift({
+                    id: "n" + Date.now(),
+                    text: `新しいポスト「${newPost.title}」が追加されました。`,
+                    time: "たった今",
+                    unread: true
+                });
+                writeLocal(STORAGE_KEYS.notifications, notifications);
+
+                document.getElementById("postForm").reset();
+                document.getElementById("postModal").classList.add("is-hidden");
+                renderPosts();
+                renderNotifications();
+            });
+
+            // 通知
+            const notifBtn = document.getElementById("notifBtn");
+            const notifDropdown = document.getElementById("notifDropdown");
+            notifBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                notifDropdown.classList.toggle("is-open");
+            });
+            document.addEventListener("click", (e) => {
+                if (!notifDropdown.contains(e.target) && e.target !== notifBtn) {
+                    notifDropdown.classList.remove("is-open");
+                }
+            });
+        }
+
+        function renderNotifications() {
+            const badge = document.getElementById("notifBadge");
+            const listEl = document.getElementById("notifList");
+            const unread = notifications.filter((n) => n.unread).length;
+
+            if (unread > 0) {
+                badge.textContent = unread > 9 ? "9+" : String(unread);
+                badge.classList.remove("is-hidden");
+            } else {
+                badge.classList.add("is-hidden");
+            }
+
+            if (notifications.length === 0) {
+                listEl.innerHTML = `<div class="notif__empty">通知はまだありません。</div>`;
+            } else {
+                listEl.innerHTML = notifications.map((n) => `
+                    <div class="notif__item">
+                        <span class="notif__dot"></span>
+                        <div>
+                            <div class="notif__item-text">${escapeHtml(n.text)}</div>
+                            <div class="notif__item-time">${escapeHtml(n.time || "")}</div>
+                        </div>
+                    </div>
+                `).join("");
+            }
+        }
+
+        initEvents();
+        initData();
+    </script>
+</body>
+
+</html>

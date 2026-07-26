@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>カレンダー | LUNAGS 管理システム</title>
+    <link rel="stylesheet" href="../normalize.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="../common.css">
+    <link rel="stylesheet" href="./home.css">
+</head>
+
+<body>
+    <div class="app-shell">
+
+        <!-- ========== サイドバー ========== -->
+        <aside class="sidebar">
+            <div class="sidebar__brand">
+                <img src="../images/logo_LUNAGS.png" alt="LUNAGS">
+                <span class="sidebar__brand-subtitle">
+                    MANAGEMENT SYSTEM
+                </span>
+            </div>
+
+            <nav class="sidebar__nav">
+                <a class="sidebar__link" href="home.html">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M4 11.5 12 4l8 7.5" />
+                        <path d="M6 10v9a1 1 0 0 0 1 1h4v-6h2v6h4a1 1 0 0 0 1-1v-9" />
+                    </svg>
+                    ホーム
+                </a>
+                <a class="sidebar__link is-active" href="calendar.html">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <rect x="3.5" y="5" width="17" height="15" rx="2.5" />
+                        <path d="M3.5 9.5h17" />
+                        <path d="M8 3v3.5M16 3v3.5" />
+                    </svg>
+                    カレンダー
+                </a>
+                <a class="sidebar__link" href="posts.html">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <rect x="4" y="4" width="16" height="16" rx="3" />
+                        <path d="M8 9h8M8 13h8M8 17h4" />
+                    </svg>
+                    ポスト
+                </a>
+                <a class="sidebar__link" href="tasks.html">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M5 7h1.5l1 1.5L9 7h10" />
+                        <path d="M5 12h1.5l1 1.5L9 12h10" />
+                        <path d="M5 17h1.5l1 1.5L9 17h10" />
+                    </svg>
+                    タスク
+                </a>
+
+                <div class="sidebar__divider"></div>
+
+                <a class="sidebar__link" href="statistics.html">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M4 20V10M11 20V4M18 20v-7" />
+                    </svg>
+                    統計
+                </a>
+                <a class="sidebar__link" href="settings.html">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="3" />
+                        <path
+                            d="M19 12a7 7 0 0 0-.1-1.2l2-1.6-2-3.4-2.4.7a7 7 0 0 0-2-1.2L14 3h-4l-.5 2.3a7 7 0 0 0-2 1.2l-2.4-.7-2 3.4 2 1.6a7 7 0 0 0 0 2.4l-2 1.6 2 3.4 2.4-.7a7 7 0 0 0 2 1.2L10 21h4l.5-2.3a7 7 0 0 0 2-1.2l2.4.7 2-3.4-2-1.6c.067-.4.1-.8.1-1.2Z" />
+                    </svg>
+                    設定
+                </a>
+            </nav>
+
+            <div class="sidebar__footer">
+                <a class="sidebar__mypage-btn" href="../../My_page/profile.html">
+                    <svg class="icon" viewBox="0 0 24 24" style="width:14px;height:14px;">
+                        <circle cx="12" cy="8" r="3.5" />
+                        <path d="M5 20c0-3.6 3.1-6.5 7-6.5s7 2.9 7 6.5" />
+                    </svg>
+                    マイページへ戻る
+                </a>
+            </div>
+        </aside>
+
+        <!-- ========== メイン ========== -->
+        <main class="main">
+            <header class="topbar">
+                <div>
+                    <h1 class="topbar__title">カレンダー</h1>
+                    <div class="topbar__date" id="calendarMonthLabel">読み込み中…</div>
+                </div>
+
+                <div class="topbar__right">
+                    <button class="btn-primary" id="addEventBtn" style="margin-right: 16px;">
+                        <svg class="icon" viewBox="0 0 24 24">
+                            <path d="M12 5v14M5 12h14" />
+                        </svg>
+                        予定を追加
+                    </button>
+                    <div class="view-toggles">
+                        <button class="view-toggle is-active" data-view="month">月</button>
+                        <button class="view-toggle" data-view="week">週</button>
+                        <button class="view-toggle" data-view="day">日</button>
+                    </div>
+
+                    <div class="notif">
+                        <button class="notif__btn" id="notifBtn" aria-label="通知">
+                            <svg class="icon" viewBox="0 0 24 24">
+                                <path d="M6 9a6 6 0 0 1 12 0c0 4 1.5 5.5 1.5 5.5H4.5S6 13 6 9Z" />
+                                <path d="M10 19a2 2 0 0 0 4 0" />
+                            </svg>
+                            <span class="notif__badge is-hidden" id="notifBadge">0</span>
+                        </button>
+                        <div class="notif__dropdown" id="notifDropdown">
+                            <div class="notif__dropdown-title">通知</div>
+                            <div id="notifList"></div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <section class="card calendar-card">
+                <div class="calendar-header">
+                    <button class="btn-icon" id="prevMonth" aria-label="前の月">
+                        <svg class="icon" viewBox="0 0 24 24">
+                            <path d="m15 18-6-6 6-6" />
+                        </svg>
+                    </button>
+                    <h2 class="calendar-header__title" id="calendarTitle">2026年 7月</h2>
+                    <button class="btn-icon" id="nextMonth" aria-label="次の月">
+                        <svg class="icon" viewBox="0 0 24 24">
+                            <path d="m9 18 6-6-6-6" />
+                        </svg>
+                    </button>
+                    <button class="btn-secondary" id="todayBtn" style="margin-left: 12px;">今日</button>
+                </div>
+
+                <div class="calendar-grid-container">
+                    <div class="calendar-grid-header">
+                        <div>日</div>
+                        <div>月</div>
+                        <div>火</div>
+                        <div>水</div>
+                        <div>木</div>
+                        <div>金</div>
+                        <div>土</div>
+                    </div>
+                    <div class="calendar-grid" id="calendarGrid"></div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- 予定追加モーダル -->
+    <div class="modal-overlay is-hidden" id="addEventModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">新しい予定</h3>
+                <button class="modal-close" id="addEventClose">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M18 6 6 18M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="addEventForm" class="form-grid">
+                    <div class="form-group">
+                        <label>タイトル</label>
+                        <input type="text" id="addEventTitle" required placeholder="例: ミーティング">
+                    </div>
+                    <div class="form-group">
+                        <label>日付</label>
+                        <input type="date" id="addEventDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label>時間（任意）</label>
+                        <input type="time" id="addEventTime">
+                    </div>
+                    <div class="form-group">
+                        <label>カラー</label>
+                        <input type="color" id="addEventColor" value="#3B6FE8"
+                            style="width: 100%; height: 40px; border: 1px solid #ddd; border-radius: 4px; padding: 0; cursor: pointer;">
+                    </div>
+                    <button type="submit" class="btn-primary" style="margin-top: 10px;">追加</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- モーダルポップアップ -->
+    <div class="modal-overlay is-hidden" id="eventModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalTitle">予定詳細</h3>
+                <button class="modal-close" id="modalClose">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M18 6 6 18M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- 動的コンテンツ -->
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-stack" id="toastStack"></div>
+
+    <script type="module">
+        const STORAGE_KEYS = { posts: "lunags_posts", tasks: "lunags_tasks", notifications: "lunags_notifications", events: "lunags_events" };
+
+        function readLocal(key) { try { return JSON.parse(localStorage.getItem(key) || "[]"); } catch { return []; } }
+        function writeLocal(key, data) { localStorage.setItem(key, JSON.stringify(data)); }
+        function escapeHtml(str) { return String(str ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+
+        let posts = [];
+        let tasks = [];
+        let notifications = [];
+        let events = [];
+        let currentDate = new Date();
+        let currentView = "month";
+
+        function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            const date = currentDate.getDate();
+
+            const grid = document.getElementById("calendarGrid");
+            grid.innerHTML = "";
+            grid.className = currentView === "week" ? "calendar-grid is-week" : "calendar-grid";
+
+            if (currentView === "month") {
+                document.getElementById("calendarTitle").textContent = `${year}年 ${month + 1}月`;
+                document.getElementById("calendarMonthLabel").textContent = `${year}年 ${month + 1}月の予定`;
+
+                const firstDay = new Date(year, month, 1).getDay();
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+                for (let i = 0; i < firstDay; i++) {
+                    grid.innerHTML += `<div class="calendar-cell empty"></div>`;
+                }
+
+                for (let day = 1; day <= daysInMonth; day++) {
+                    renderDayCell(grid, year, month, day);
+                }
+            } else if (currentView === "week") {
+                const dayOfWeek = currentDate.getDay();
+                const startOfWeek = new Date(year, month, date - dayOfWeek);
+                const endOfWeek = new Date(startOfWeek.getFullYear(), startOfWeek.getMonth(), startOfWeek.getDate() + 6);
+
+                document.getElementById("calendarTitle").textContent = `${startOfWeek.getFullYear()}年 ${startOfWeek.getMonth() + 1}月`;
+                document.getElementById("calendarMonthLabel").textContent = `${startOfWeek.getMonth() + 1}/${startOfWeek.getDate()} 〜 ${endOfWeek.getMonth() + 1}/${endOfWeek.getDate()}の予定`;
+
+                for (let i = 0; i < 7; i++) {
+                    const d = new Date(startOfWeek.getFullYear(), startOfWeek.getMonth(), startOfWeek.getDate() + i);
+                    renderDayCell(grid, d.getFullYear(), d.getMonth(), d.getDate());
+                }
+            } else {
+                // Day view could go here, but omitted for now
+            }
+
+            document.querySelectorAll(".event-badge").forEach(badge => {
+                badge.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    const [type, id] = badge.dataset.id.split(":");
+                    openEventModal(type, id);
+                });
+            });
+        }
+
+        function renderDayCell(grid, year, month, day) {
+            const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+
+            const dayPosts = posts.filter(p => p.date === dateStr);
+            const dayTasks = tasks.filter(t => t.dueDate === dateStr);
+            const dayEvents = events.filter(e => e.date === dateStr);
+
+            const postHtml = dayPosts.map(p => `<div class="event-badge event-post" data-id="post:${p.id}">${escapeHtml(p.title)}</div>`).join("");
+            const taskHtml = dayTasks.map(t => `<div class="event-badge event-task" data-id="task:${t.id}">${escapeHtml(t.title)}</div>`).join("");
+            const eventHtml = dayEvents.map(e => {
+                const colorValue = e.color && e.color.startsWith('event-color-') ? 'var(--' + e.color + ', #3B6FE8)' : e.color;
+                return `<div class="event-badge event-custom" style="background-color: ${escapeHtml(colorValue)}; color: #fff;" data-id="event:${e.id}">${escapeHtml(e.time ? e.time + " " : "")}${escapeHtml(e.title)}</div>`;
+            }).join("");
+
+            const todayClass = dateStr === new Date().toISOString().split("T")[0] ? "is-today" : "";
+
+            grid.innerHTML += `
+                <div class="calendar-cell ${todayClass}">
+                    <div class="calendar-cell__date">${day}</div>
+                    <div class="calendar-cell__events">
+                        ${eventHtml}
+                        ${postHtml}
+                        ${taskHtml}
+                    </div>
+                </div>
+            `;
+        }
+
+        function openEventModal(type, id) {
+            const modal = document.getElementById("eventModal");
+            const modalBody = document.getElementById("modalBody");
+
+            let item;
+            if (type === "post") {
+                item = posts.find(p => p.id === id);
+                if (item) {
+                    modalBody.innerHTML = `
+                        <div class="event-detail">
+                            <p><strong>種類：</strong>ポスト</p>
+                            <p><strong>タイトル：</strong>${escapeHtml(item.title)}</p>
+                            <p><strong>日時：</strong>${escapeHtml(item.date).replace(/-/g, '/')} ${escapeHtml(item.time || "")}</p>
+                            <p><strong>担当者：</strong>${escapeHtml(item.assignee)}</p>
+                            <p><strong>完了状態：</strong>${item.completed ? "完了" : "未完了"}</p>
+                        </div>
+                    `;
+                }
+            } else if (type === "task") {
+                item = tasks.find(t => t.id === id);
+                if (item) {
+                    modalBody.innerHTML = `
+                        <div class="event-detail">
+                            <p><strong>種類：</strong>タスク</p>
+                            <p><strong>タイトル：</strong>${escapeHtml(item.title)}</p>
+                            <p><strong>期限：</strong>${escapeHtml(item.dueDate).replace(/-/g, '/')}</p>
+                            <p><strong>担当者：</strong>${escapeHtml(item.assignee)}</p>
+                            <p><strong>完了状態：</strong>${item.completed ? "完了" : "未完了"}</p>
+                        </div>
+                    `;
+                }
+            } else if (type === "event") {
+                item = events.find(e => e.id === id);
+                if (item) {
+                    modalBody.innerHTML = `
+                        <div class="event-detail">
+                            <p><strong>種類：</strong>予定</p>
+                            <p><strong>タイトル：</strong>${escapeHtml(item.title)}</p>
+                            <p><strong>日時：</strong>${escapeHtml(item.date).replace(/-/g, '/')} ${escapeHtml(item.time || "")}</p>
+                            <div style="margin-top: 16px; text-align: right;">
+                                <button class="btn-secondary" style="color: #E83B46; border-color: #E83B46;" id="deleteEventBtn">削除</button>
+                            </div>
+                        </div>
+                    `;
+                    setTimeout(() => {
+                        const deleteBtn = document.getElementById("deleteEventBtn");
+                        if (deleteBtn) {
+                            deleteBtn.addEventListener("click", () => {
+                                if (confirm("この予定を削除しますか？")) {
+                                    events = events.filter(e => e.id !== item.id);
+                                    writeLocal(STORAGE_KEYS.events, events);
+                                    renderCalendar();
+                                    document.getElementById("eventModal").classList.add("is-hidden");
+                                }
+                            });
+                        }
+                    }, 0);
+                }
+            }
+
+            modal.classList.remove("is-hidden");
+        }
+
+        function initData() {
+            posts = readLocal(STORAGE_KEYS.posts);
+            tasks = readLocal(STORAGE_KEYS.tasks);
+            notifications = readLocal(STORAGE_KEYS.notifications);
+            events = readLocal(STORAGE_KEYS.events);
+            renderCalendar();
+            renderNotifications();
+        }
+
+        function initEvents() {
+            document.getElementById("prevMonth").addEventListener("click", () => {
+                if (currentView === "month") {
+                    currentDate.setMonth(currentDate.getMonth() - 1);
+                } else if (currentView === "week") {
+                    currentDate.setDate(currentDate.getDate() - 7);
+                }
+                renderCalendar();
+            });
+            document.getElementById("nextMonth").addEventListener("click", () => {
+                if (currentView === "month") {
+                    currentDate.setMonth(currentDate.getMonth() + 1);
+                } else if (currentView === "week") {
+                    currentDate.setDate(currentDate.getDate() + 7);
+                }
+                renderCalendar();
+            });
+            document.getElementById("todayBtn").addEventListener("click", () => {
+                currentDate = new Date();
+                renderCalendar();
+            });
+            document.getElementById("modalClose").addEventListener("click", () => {
+                document.getElementById("eventModal").classList.add("is-hidden");
+            });
+
+            // View Toggles
+            document.querySelectorAll(".view-toggle").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    document.querySelectorAll(".view-toggle").forEach(b => b.classList.remove("is-active"));
+                    btn.classList.add("is-active");
+                    currentView = btn.dataset.view;
+                    renderCalendar();
+                });
+            });
+
+            // Add Event Modal
+            document.getElementById("addEventBtn").addEventListener("click", () => {
+                document.getElementById("addEventDate").value = new Date().toISOString().split("T")[0];
+                document.getElementById("addEventModal").classList.remove("is-hidden");
+            });
+            document.getElementById("addEventClose").addEventListener("click", () => {
+                document.getElementById("addEventModal").classList.add("is-hidden");
+            });
+
+            // Add Event Form
+            document.getElementById("addEventForm").addEventListener("submit", (e) => {
+                e.preventDefault();
+                const newEvent = {
+                    id: "e" + Date.now(),
+                    title: document.getElementById("addEventTitle").value,
+                    date: document.getElementById("addEventDate").value,
+                    time: document.getElementById("addEventTime").value,
+                    color: document.getElementById("addEventColor").value
+                };
+                events.push(newEvent);
+                writeLocal(STORAGE_KEYS.events, events);
+
+                document.getElementById("addEventForm").reset();
+                document.getElementById("addEventColor").value = "#3B6FE8";
+                document.getElementById("addEventModal").classList.add("is-hidden");
+                renderCalendar();
+            });
+
+            // 通知
+            const notifBtn = document.getElementById("notifBtn");
+            const notifDropdown = document.getElementById("notifDropdown");
+            notifBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                notifDropdown.classList.toggle("is-open");
+            });
+            document.addEventListener("click", (e) => {
+                if (!notifDropdown.contains(e.target) && e.target !== notifBtn) {
+                    notifDropdown.classList.remove("is-open");
+                }
+            });
+        }
+
+        function renderNotifications() {
+            const badge = document.getElementById("notifBadge");
+            const listEl = document.getElementById("notifList");
+            const unread = notifications.filter((n) => n.unread).length;
+
+            if (unread > 0) {
+                badge.textContent = unread > 9 ? "9+" : String(unread);
+                badge.classList.remove("is-hidden");
+            } else {
+                badge.classList.add("is-hidden");
+            }
+
+            if (notifications.length === 0) {
+                listEl.innerHTML = `<div class="notif__empty">通知はまだありません。</div>`;
+            } else {
+                listEl.innerHTML = notifications.map((n) => `
+                    <div class="notif__item">
+                        <span class="notif__dot"></span>
+                        <div>
+                            <div class="notif__item-text">${escapeHtml(n.text)}</div>
+                            <div class="notif__item-time">${escapeHtml(n.time || "")}</div>
+                        </div>
+                    </div>
+                `).join("");
+            }
+        }
+
+        initEvents();
+        initData();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新規登録 | LUNAGS 管理システム</title>
+    <link rel="stylesheet" href="../normalize.css">
+    <link rel="stylesheet" href="../common.css">
+    <link rel="stylesheet" href="login.css">
+</head>
+
+<body>
+    <div class="box">
+        <h2>新規登録</h2>
+        <p>名前とメールアドレスを入力すると、6桁の確認コードを送信します。</p>
+
+        <input id="name" type="text" placeholder="ユーザー名">
+        <input id="email" type="email" placeholder="メールアドレス">
+
+        <div id="message" class="message"></div>
+
+        <button type="button" id="submitButton" onclick="startSignup(event)">
+            確認コードを送信
+        </button>
+
+        <button class="secondary" onclick="location.href='login.html'">
+            ログインへ戻る
+        </button>
+    </div>
+
+    <script type="module">
+        console.log("JS動いてる");
+        import {
+            auth,
+            db,
+            serverTimestamp,
+            VERIFICATION_COLLECTION,
+            CODE_TTL_MS,
+            MAX_ATTEMPTS,
+            RESEND_COOLDOWN_MS,
+            normalizeEmail,
+            generateCode,
+            sha256,
+            sendVerificationEmail,
+            savePendingSignup,
+            saveLocalVerification,
+            withTimeout,
+            isOfflineDocumentError,
+            getFriendlyErrorMessage
+        } from "../firebase-config.js";
+
+        import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+
+        import {
+            fetchSignInMethodsForEmail,
+            GoogleAuthProvider,
+            signInWithPopup
+        } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+
+        const provider = new GoogleAuthProvider();
+
+        function setMessage(text, type = "") {
+            const message = document.getElementById("message");
+            message.className = `message ${type}`;
+            message.innerText = text;
+        }
+
+        window.signup = async () => { };
+
+        // メール登録
+        window.startSignup = async (event) => {
+            event.preventDefault();
+
+            const button = document.getElementById("submitButton");
+            const name = document.getElementById("name").value.trim();
+            const email = normalizeEmail(document.getElementById("email").value);
+
+            if (!name) return setMessage("ユーザー名を入力してください", "error");
+            if (!email) return setMessage("メールアドレスを入力してください", "error");
+
+            button.disabled = true;
+            setMessage("確認コードを発行しています...");
+
+            try {
+                let offline = false;
+
+                // 既存チェック
+                try {
+                    const methods = await withTimeout(fetchSignInMethodsForEmail(auth, email));
+                    if (methods.length > 0) {
+                        throw new Error("このメールアドレスはすでに登録されています");
+                    }
+                } catch (e) {
+                    if (!isOfflineDocumentError(e)) throw e;
+                    offline = true;
+                }
+
+                const ref = doc(db, VERIFICATION_COLLECTION, email);
+
+                const code = generateCode();
+                const codeHash = await sha256(code);
+
+                await setDoc(doc(db, VERIFICATION_COLLECTION, email),
+                    {
+                        name,
+                        email,
+                        codeHash,
+                        verified: false,
+                        attemptCount: 0,
+                        maxAttempts: MAX_ATTEMPTS,
+                        expiresAt: Date.now() + CODE_TTL_MS,
+                        createdAt: serverTimestamp(),
+                        updatedAt: serverTimestamp()
+                    }
+                );
+
+                await sendVerificationEmail({ email, code, name });
+
+                savePendingSignup({ name, email });
+
+                setMessage("確認コードを送信しました", "success");
+
+                setTimeout(() => {
+                    window.location.href = "verify.html";
+                }, 800);
+
+            } catch (error) {
+                console.error(error);
+
+                setMessage(
+                    getFriendlyErrorMessage(error, "送信に失敗しました"),
+                    "error"
+                );
+            } finally {
+                button.disabled = false;
+            }
+        };
+    </script>
+</body>
+
+</html>

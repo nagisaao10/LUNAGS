@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>外部サービス | LUNAGS 管理システム</title>
+    <link rel="stylesheet" href="../reset.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="mypage.css">
+</head>
+
+<body>
+    <!-- SP用ハンバーガー -->
+    <button class="hamburger" id="hamburgerBtn">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <div class="page">
+        <!-- サイドバー -->
+        <aside class="sidebar" id="sidebar">
+
+            <img src="../images/logo_LUNAGS.png" class="logo-lunags" alt="Logo">
+
+            <div class="menu-list">
+
+                <a href="../Home_page/home.html" class="menu">
+                    <i class="fas fa-desktop"></i>
+                    管理ホーム
+                </a>
+
+                <a href="profile.html" class="menu">
+                    <i class="fas fa-user"></i>
+                    本人情報
+                </a>
+
+                <a href="account.html" class="menu">
+                    <i class="fas fa-id-card"></i>
+                    アカウント情報
+                </a>
+
+                <a href="external.html" class="menu active">
+                    <i class="fas fa-link"></i>
+                    外部サービス
+                </a>
+
+                <a href="platforms.html" class="menu">
+                    <i class="fas fa-cog"></i>
+                    連携サービス
+                </a>
+
+            </div>
+
+            <button class="btn logout-btn" id="logoutBtn">
+                ログアウト
+            </button>
+
+        </aside>
+
+        <!-- メイン -->
+        <main class="main fade-in">
+
+            <h1>EXTERNAL</h1>
+            <div class="sub">外部サービス</div>
+
+            <!-- YouTube -->
+            <div class="card">
+
+                <div class="section-title">
+                    YouTube
+                </div>
+
+                <div class="row">
+                    <div class="label">
+                        <i class="fa-brands fa-youtube"></i>
+                        接続状態
+                    </div>
+
+                    <div class="value" id="youtubeStatus">
+                        未接続
+                    </div>
+                </div>
+
+                <button class="btn edit-btn" id="youtubeConnectBtn">
+                    接続する
+                </button>
+
+                <div style="clear: both;"></div>
+
+            </div>
+
+            <!-- X -->
+            <div class="card">
+                <div class="section-title">
+                    X (Twitter)
+                </div>
+
+                <div class="row">
+                    <div class="label">
+                        <i class="fa-brands fa-x-twitter"></i>
+                        接続状態
+                    </div>
+
+                    <div class="value" id="xStatus">
+                        未接続
+                    </div>
+                </div>
+
+                <button class="btn edit-btn" id="xConnectBtn">
+                    接続する
+                </button>
+
+                <div style="clear: both;"></div>
+
+            </div>
+
+            <!-- Discord -->
+            <div class="card">
+
+                <div class="section-title">
+                    Discord
+                </div>
+
+                <div class="row">
+                    <div class="label">
+                        <i class="fab fa-discord"></i>
+                        接続状態
+                    </div>
+
+                    <div class="value" id="discordStatus">
+                        未接続
+                    </div>
+
+                </div>
+
+                <button class="btn edit-btn" id="discordConnectBtn">
+                    接続する
+                </button>
+
+                <div style="clear: both;"></div>
+
+            </div>
+
+        </main>
+
+    </div>
+
+    <!-- フッター -->
+    <footer class="footer">
+        <a href="#">利用規約</a>
+        <a href="#">FAQ</a>
+        <a href="#">運営会社</a>
+        <a href="#">Language: JA</a>
+    </footer>
+
+    <script src="https://accounts.google.com/gsi/client"></script>
+
+    <script type="module">
+
+        import { auth, db } from "../firebase-config.js";
+        import {
+            signOut,
+            TwitterAuthProvider,
+            linkWithPopup,
+            unlink,
+            onAuthStateChanged
+        } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+
+        import {
+            doc,
+            getDoc,
+            setDoc,
+            updateDoc,
+            deleteField
+        } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+
+        const hamburgerBtn =
+            document.getElementById("hamburgerBtn");
+
+        const sidebar =
+            document.getElementById("sidebar");
+
+        const logoutBtn =
+            document.getElementById("logoutBtn");
+
+        hamburgerBtn.addEventListener("click", () => {
+            sidebar.classList.toggle("open");
+        });
+
+        // 共通関数
+        async function getUserId() {
+
+            const user = auth.currentUser;
+
+            if (!user) {
+                throw new Error("ログインしていません");
+            }
+
+            const uidMapSnap = await getDoc(
+                doc(db, "uidMap", user.uid)
+            );
+
+            if (!uidMapSnap.exists()) {
+                throw new Error("uidMapが見つかりません");
+            }
+
+            return uidMapSnap.data().userId;
+        }
+
+        // ===============================
+        // YouTube連携
+        // ===============================
+        const youtubeConnectBtn =
+            document.getElementById("youtubeConnectBtn");
+
+        const tokenClient =
+            google.accounts.oauth2.initTokenClient({
+
+                client_id:
+                    "1039501095200-0q31k87u88o42ucg9pie2a282v243o7d.apps.googleusercontent.com",
+
+                scope: [
+                    "https://www.googleapis.com/auth/youtube.readonly",
+                    "https://www.googleapis.com/auth/userinfo.email",
+                    "openid",
+                    "email"
+                ].join(" "),
+
+                callback: async (tokenResponse) => {
+
+                    try {
+
+                        const user = auth.currentUser;
+                        if (!user) throw new Error("Googleでログインしていません");
+
+                        const accessToken = tokenResponse.access_token;
+
+                        // ユーザー情報取得
+                        const userInfoRes = await fetch(
+                            "https://www.googleapis.com/oauth2/v3/userinfo",
+                            {
+                                headers: {
+                                    Authorization: `Bearer ${accessToken}`
+                                }
+                            }
+                        );
+
+                        const userInfo = await userInfoRes.json();
+
+                        // YouTubeチャンネル取得
+                        const youtubeRes = await fetch(
+                            "https://www.googleapis.com/youtube/v3/channels?part=snippet&mine=true",
+                            {
+                                headers: {
+                                    Authorization: `Bearer ${accessToken}`
+                                }
+                            }
+                        );
+
+                        const youtubeData = await youtubeRes.json();
+
+                        if (!youtubeData.items?.length) {
+                            throw new Error("YouTubeチャンネルが見つかりません");
+                        }
+
+                        const channel = youtubeData.items[0];
+
+                        // ===============================
+                        // 🔥 Firebase保存（統一構造）
+                        // ===============================
+                        await setDoc(doc(db, "users", await getUserId()), {
+                            external: {
+                                youtube: {
+                                    connected: true,
+                                    channelId: channel.id,
+                                    channelName: channel.snippet.title,
+                                    email: userInfo.email,
+                                    thumbnail: channel.snippet.thumbnails.default.url
+                                }
+                            }
+                        }, { merge: true });
+
+                        document.getElementById("youtubeStatus").textContent =
+                            "接続済み";
+
+                        youtubeConnectBtn.textContent =
+                            "解除する";
+
+                        alert(`YouTube連携完了\n${channel.snippet.title}`);
+
+                    } catch (error) {
+                        console.error("YouTube連携エラー", error);
+                        alert(error.message || "YouTube連携に失敗しました");
+                    }
+                }
+            });
+
+        youtubeConnectBtn.addEventListener("click", async () => {
+
+            const user = auth.currentUser;
+
+            if (!user) {
+                alert("ログインしていません");
+                return;
+            }
+
+            const userDoc =
+                await getDoc(doc(db, "users", await getUserId()));
+
+            const connected =
+                userDoc.data()?.external?.youtube?.connected;
+
+            // 解除
+            if (connected) {
+
+                if (!confirm("YouTube連携を解除しますか？")) {
+                    return;
+                }
+
+                await updateDoc(
+                    doc(db, "users", await getUserId()),
+                    {
+                        "external.youtube": deleteField()
+                    }
+                );
+
+                document.getElementById("youtubeStatus")
+                    .textContent = "未接続";
+
+                youtubeConnectBtn.textContent =
+                    "接続する";
+
+                alert("YouTube連携を解除しました");
+
+                return;
+            }
+
+            // 接続
+            tokenClient.requestAccessToken();
+        });
+
+        // X（Twitter）連携・解除
+        const xConnectBtn =
+            document.getElementById("xConnectBtn");
+
+        xConnectBtn.addEventListener("click", async () => {
+
+            try {
+
+                const user = auth.currentUser;
+
+                if (!user) {
+                    alert("ログインしていません");
+                    return;
+                }
+
+                const userDoc =
+                    await getDoc(doc(db, "users", await getUserId()));
+
+                const connected =
+                    userDoc.data()?.external?.x?.connected;
+
+                // 解除
+                if (connected) {
+
+                    if (!confirm("X連携を解除しますか？")) {
+                        return;
+                    }
+
+                    if (
+                        user.providerData.some(
+                            p => p.providerId === "twitter.com"
+                        )
+                    ) {
+                        await unlink(user, "twitter.com");
+                    }
+
+                    await updateDoc(
+                        doc(db, "users", await getUserId()),
+                        {
+                            "external.x": deleteField()
+                        }
+                    );
+
+                    document.getElementById("xStatus")
+                        .textContent = "未接続";
+
+                    xConnectBtn.textContent =
+                        "接続する";
+
+                    alert("X連携を解除しました");
+
+                    return;
+                }
+
+                // 接続
+                const provider =
+                    new TwitterAuthProvider();
+
+                await linkWithPopup(user, provider);
+
+                await setDoc(
+                    doc(db, "users", await getUserId()),
+                    {
+                        external: {
+                            x: {
+                                connected: true
+                            }
+                        }
+                    },
+                    { merge: true }
+                );
+
+                document.getElementById("xStatus")
+                    .textContent = "接続済み";
+
+                xConnectBtn.textContent =
+                    "解除する";
+
+                alert("X連携完了");
+
+            } catch (error) {
+
+                console.error(error);
+
+                alert(
+                    error.message ||
+                    "X連携処理に失敗しました"
+                );
+            }
+        });
+
+        // Discord OAuth処理
+        const CLIENT_ID = "1512435364814524446";
+        const REDIRECT_URI =
+            "https://lunags-management-system.web.app/My_page/external.html";
+
+        const discordConnectBtn =
+            document.getElementById("discordConnectBtn");
+
+        discordConnectBtn.addEventListener("click", async () => {
+
+            const user = auth.currentUser;
+
+            if (!user) {
+                alert("ログインしていません");
+                return;
+            }
+
+            const userDoc =
+                await getDoc(doc(db, "users", await getUserId()));
+
+            const connected =
+                userDoc.data()?.external?.discord?.connected;
+
+            // 解除
+            if (connected) {
+
+                if (!confirm("Discord連携を解除しますか？")) {
+                    return;
+                }
+
+                await updateDoc(
+                    doc(db, "users", await getUserId()),
+                    {
+                        "external.discord": deleteField()
+                    }
+                );
+
+                document.getElementById("discordStatus")
+                    .textContent = "未接続";
+
+                discordConnectBtn.textContent =
+                    "接続する";
+
+                alert("Discord連携を解除しました");
+
+                return;
+            }
+
+            // 接続
+            const url =
+                `https://discord.com/oauth2/authorize` +
+                `?client_id=${CLIENT_ID}` +
+                `&response_type=token` +
+                `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
+                `&scope=identify`;
+
+            location.href = url;
+        });
+
+        // Discord 戻り処理
+        const fragment =
+            new URLSearchParams(window.location.hash.slice(1));
+
+        const accessToken = fragment.get("access_token");
+        const tokenType = fragment.get("token_type");
+
+        if (accessToken) {
+
+            fetch("https://discord.com/api/users/@me", {
+                headers: {
+                    authorization: `${tokenType} ${accessToken}`
+                }
+            })
+                .then(res => res.json())
+                .then(data => {
+
+                    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+
+                        if (!user) return;
+
+                        await setDoc(doc(db, "users", await getUserId()), {
+                            external: {
+                                discord: {
+                                    connected: true,
+                                    id: data.id,
+                                    username: data.username,
+                                    globalName: data.global_name || data.username
+                                }
+                            }
+                        }, { merge: true });
+
+                        document.getElementById("discordStatus")
+                            .textContent = "接続済み";
+
+                        document.getElementById("discordConnectBtn")
+                            .textContent = "解除する";
+
+                        window.history.replaceState(
+                            null,
+                            null,
+                            window.location.pathname
+                        );
+
+                        location.reload();
+                        unsubscribe();
+                    });
+                })
+                .catch(console.error);
+        }
+
+
+        // 状態表示（Firestore統一）
+        onAuthStateChanged(auth, async (user) => {
+
+            if (!user) {
+                location.href = "../Login_page/login.html";
+                return;
+            }
+
+            const userDoc = await getDoc(doc(db, "users", await getUserId()));
+            const data = userDoc.data()?.external || {};
+
+            // YouTube
+            const youtubeConnected =
+                data.youtube?.connected;
+
+            document.getElementById("youtubeStatus").textContent =
+                youtubeConnected ? "接続済み" : "未接続";
+
+            document.getElementById("youtubeConnectBtn").textContent =
+                youtubeConnected ? "解除する" : "接続する";
+
+            // X
+            const xConnected =
+                data.x?.connected;
+
+            document.getElementById("xStatus").textContent =
+                xConnected ? "接続済み" : "未接続";
+
+            document.getElementById("xConnectBtn").textContent =
+                xConnected ? "解除する" : "接続する";
+
+            // Discord
+            const discordConnected =
+                data.discord?.connected;
+
+            document.getElementById("discordStatus").textContent =
+                discordConnected ? "接続済み" : "未接続";
+
+            document.getElementById("discordConnectBtn").textContent =
+                discordConnected ? "解除する" : "接続する";
+        });
+
+        logoutBtn.addEventListener("click", async () => {
+
+            if (confirm("ログアウトしますか？")) {
+
+                await signOut(auth);
+
+                window.location.href =
+                    "../Login_page/login.html";
+
+            }
+
+        });
+
+    </script>
+
+</body>
+
+</html>

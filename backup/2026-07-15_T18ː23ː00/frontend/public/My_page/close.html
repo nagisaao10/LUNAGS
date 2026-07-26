@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>退会 | LUNAGS 管理システム</title>
+    <link rel="stylesheet" href="../normalize.css">
+    <link rel="stylesheet" href="../common.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="mypage.css">
+
+    <style>
+        /* モーダル */
+        .modal {
+            position: fixed;
+            inset: 0;
+
+            background: rgba(0, 0, 0, 0.6);
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            opacity: 0;
+            pointer-events: none;
+
+            transition: 0.25s;
+            z-index: 9999;
+        }
+
+        .modal.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-box {
+            width: 90%;
+            max-width: 420px;
+
+            background: #1e1e1e;
+            color: white;
+
+            border-radius: 18px;
+
+            padding: 28px;
+
+            box-shadow:
+                0 10px 30px rgba(0, 0, 0, 0.4);
+
+            animation: modalPop 0.2s ease;
+        }
+
+        @keyframes modalPop {
+            from {
+                transform: scale(0.95);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .modal-title {
+            font-size: 24px;
+            font-weight: bold;
+
+            margin-bottom: 12px;
+        }
+
+        .modal-text {
+            color: #cfcfcf;
+            line-height: 1.7;
+
+            margin-bottom: 24px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .modal-buttons button {
+            flex: 1;
+            height: 46px;
+
+            border: none;
+            border-radius: 12px;
+
+            cursor: pointer;
+
+            font-size: 15px;
+            font-weight: bold;
+
+            transition: 0.2s;
+        }
+
+        .cancel-btn {
+            background: #2f2f2f;
+            color: white;
+        }
+
+        .cancel-btn:hover {
+            background: #3a3a3a;
+        }
+
+        .confirm-btn {
+            background: #ff3b5c;
+            color: white;
+        }
+
+        .confirm-btn:hover {
+            background: #ff2349;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- SP用ハンバーガー -->
+    <button class="hamburger" id="hamburgerBtn">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <div class="page">
+
+        <!-- サイドバー -->
+        <aside class="sidebar" id="sidebar">
+
+            <img src="../images/logo_LUNAGS.png" class="logo-lunags" alt="Logo">
+
+            <div class="menu-list">
+
+                <a href="../Home_page/home.html" class="menu">
+                    <i class="fas fa-desktop"></i>
+                    管理ホーム
+                </a>
+
+                <a href="profile.html" class="menu">
+                    <i class="fas fa-user"></i>
+                    本人情報
+                </a>
+
+                <a href="account.html" class="menu active">
+                    <i class="fas fa-id-card"></i>
+                    アカウント情報
+                </a>
+
+                <a href="external.html" class="menu">
+                    <i class="fas fa-link"></i>
+                    外部サービス
+                </a>
+
+                <a href="platforms.html" class="menu">
+                    <i class="fas fa-cog"></i>
+                    連携サービス
+                </a>
+
+            </div>
+
+            <button class="btn logout-btn" id="logoutBtn">
+                ログアウト
+            </button>
+        </aside>
+
+        <!-- メイン -->
+        <main class="main fade-in">
+
+            <h1>CLOSE ACCOUNT</h1>
+            <div class="sub">退会</div>
+
+            <!-- 退会 -->
+            <div class="card danger-card">
+
+                <div class="section-title danger">
+                    退会
+                </div>
+
+                <div class="danger-description">
+                    LUNAGSアカウントを退会すると、以下の内容が失われます。
+                    <br>
+                    　登録情報およびサービス利用履歴連携中の外部サービスに関する情報
+                    <br>
+                    　会員に対して付与される特典・サービスの権利
+                    <br>
+                    また、同じメールアドレスを使ったアカウントは今後作成することが出来ません。
+                    <br>
+                    <br>
+                    これらを理解して、本当に退会しますか？
+                </div>
+
+                <div class="danger-confirm">
+                    <button class="danger-btn" id="deleteBtn">
+                        退会する
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- モーダル -->
+    <div class="modal" id="deleteModal">
+
+        <div class="modal-box">
+
+            <div class="modal-title">
+                本当に退会しますか？
+            </div>
+
+            <div class="modal-text">
+                アカウント情報は削除されます。<br>
+                この操作は元に戻せません。
+            </div>
+
+            <div class="modal-buttons">
+
+                <button class="cancel-btn" id="cancelDelete">
+                    キャンセル
+                </button>
+
+                <button class="confirm-btn" id="confirmDelete">
+                    退会する
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- フッター -->
+    <footer class="footer">
+        <a href="#">利用規約</a>
+        <a href="#">FAQ</a>
+        <a href="#">運営会社</a>
+        <a href="#">Language: JA</a>
+    </footer>
+
+    <!-- Firebase -->
+    <script type="module">
+
+        import { auth } from "../firebase-config.js";
+
+        import {
+            onAuthStateChanged,
+            signOut,
+            deleteUser,
+
+            GoogleAuthProvider,
+            OAuthProvider,
+
+            reauthenticateWithPopup,
+
+            EmailAuthProvider,
+            reauthenticateWithCredential
+
+        } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+
+        const googleProvider =
+            new GoogleAuthProvider();
+
+        const appleProvider =
+            new OAuthProvider("apple.com");
+
+        // DOM
+        const googleEmail =
+            document.getElementById("googleEmail");
+
+        const googleStatus =
+            document.getElementById("googleStatus");
+
+        const logoutBtn =
+            document.getElementById("logoutBtn");
+
+        const deleteBtn =
+            document.getElementById("deleteBtn");
+
+        const hamburgerBtn =
+            document.getElementById("hamburgerBtn");
+
+        const sidebar =
+            document.getElementById("sidebar");
+
+        const deleteModal =
+            document.getElementById("deleteModal");
+
+        const cancelDelete =
+            document.getElementById("cancelDelete");
+
+        const confirmDelete =
+            document.getElementById("confirmDelete");
+
+        // SPメニュー
+        hamburgerBtn.addEventListener("click", () => {
+            sidebar.classList.toggle("open");
+        });
+
+        // 認証確認
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+
+                googleEmail.textContent = user.email || "未設定";
+
+                const isGoogle =
+                    user.providerData.some(
+                        provider =>
+                            provider.providerId === "google.com"
+                    );
+
+                if (isGoogle) {
+                    googleStatus.innerHTML = `
+                    <span class="status connected">
+                        ● 連携済み
+                    </span>
+                    `;
+
+                } else {
+                    googleStatus.innerHTML = `
+                    <span class="status disconnected">
+                        ● 未連携
+                    </span>
+                    `;
+                }
+
+            } else {
+                window.location.href = "../Login_page/login.html";
+            }
+        });
+
+        // ログアウト
+        logoutBtn.addEventListener("click", async () => {
+            if (confirm("ログアウトしますか？")) {
+
+                try {
+                    await signOut(auth);
+
+                    window.location.href = "../Login_page/login.html";
+
+                } catch (error) {
+                    console.error(error);
+                }
+            }
+        });
+
+        // モーダル表示
+        deleteBtn.addEventListener("click", () => {
+            deleteModal.classList.add("show");
+        });
+
+        // キャンセル
+        cancelDelete.addEventListener("click", () => {
+            deleteModal.classList.remove("show");
+        });
+
+        // 本当に退会
+        confirmDelete.addEventListener("click", async () => {
+
+            try {
+                const user = auth.currentUser;
+
+                if (!user) {
+                    alert("ログイン情報がありません"); return;
+                }
+
+                // Provider確認
+                const providerIds = user.providerData.map(provider => provider.providerId);
+
+                // Google
+                if (providerIds.includes("google.com")) {
+
+                    await reauthenticateWithPopup(
+                        user,
+                        googleProvider
+                    );
+
+                }
+
+                // メール
+                else if (
+                    providerIds.includes("password")
+                ) {
+
+                    const password = prompt(
+                        "本人確認のためパスワードを入力してください"
+                    );
+
+                    if (!password) return;
+
+                    const credential =
+                        EmailAuthProvider.credential(user.email, password);
+
+                    await reauthenticateWithCredential(user, credential);
+                }
+
+                // アカウント削除
+                await deleteUser(user);
+
+                alert("アカウントを削除しました");
+
+                window.location.href = "./close.html";
+
+            } catch (error) {
+
+                console.error(error);
+
+                alert("退会に失敗しました");
+
+            }
+        });
+
+    </script>
+</body>
+
+</html>

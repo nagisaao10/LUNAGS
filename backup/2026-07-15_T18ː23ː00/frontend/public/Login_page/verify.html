@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>確認コード認証 | LUNAGS 管理システム</title>
+    <link rel="stylesheet" href="../normalize.css">
+    <link rel="stylesheet" href="../common.css">
+    <link rel="stylesheet" href="login.css">
+</head>
+
+<body>
+    <div class="box">
+        <h2>確認コード認証</h2>
+        <p id="emailLabel"></p>
+        <input id="code" inputmode="numeric" maxlength="6" placeholder="6桁コード">
+        <div id="message" class="message"></div>
+        <button id="verifyButton">認証する</button>
+        <button class="secondary" onclick="location.href='signup.html'">新規登録へ戻る</button>
+    </div>
+
+    <script type="module">
+        import {
+            doc,
+            getDoc,
+            runTransaction
+        } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+
+        import {
+            db,
+            VERIFICATION_COLLECTION,
+            sha256,
+            loadPendingSignup,
+            saveLocalVerification,
+            clearLocalVerification,
+            withTimeout,
+            getFriendlyErrorMessage
+        } from "../firebase-config.js";
+
+        function setMessage(text, type = "") {
+            const message = document.getElementById("message");
+            message.className = `message ${type}`;
+            message.innerText = text;
+        }
+
+        async function verifyLocalCode(inputHash, email) {
+            const ref = doc(db, VERIFICATION_COLLECTION, email);
+            const snap = await getDoc(ref);
+
+            if (!snap.exists()) {
+                return { ok: false, message: "確認コードが見つかりません", cleanup: true };
+            }
+
+            const data = snap.data();
+
+            if (data.verified) {
+                return { ok: true, message: "すでに認証済みです" };
+            }
+
+            if (Date.now() > data.expiresAt) {
+                clearLocalVerification(email);
+                return { ok: false, message: "有効期限切れ", cleanup: true };
+            }
+
+            if (data.attemptCount >= data.maxAttempts) {
+                clearLocalVerification(email);
+                return { ok: false, message: "試行回数上限", cleanup: true };
+            }
+
+            if (data.codeHash !== inputHash) {
+
+                const next = data.attemptCount + 1;
+
+                if (next >= data.maxAttempts) {
+                    clearLocalVerification(email);
+                    return { ok: false, message: "試行回数上限", cleanup: true };
+                }
+
+                saveLocalVerification(email, {
+                    ...data,
+                    attemptCount: next,
+                    updatedAt: Date.now()
+                });
+
+                return {
+                    ok: false,
+                    message: `コードが違います（残り ${data.maxAttempts - next} 回）`
+                };
+            }
+
+            saveLocalVerification(email, {
+                ...data,
+                verified: true,
+                verifiedAt: Date.now(),
+                updatedAt: Date.now()
+            });
+
+            return { ok: true, message: "認証が完了しました" };
+        }
+
+        window.addEventListener("DOMContentLoaded", () => {
+
+            const pendingSignup = loadPendingSignup();
+
+            if (!pendingSignup?.email) {
+                window.location.href = "signup.html";
+                return;
+            }
+
+            const email = pendingSignup.email;
+            document.getElementById("emailLabel").innerText = email;
+
+            window.verifyCode = async () => {
+
+                const button = document.getElementById("verifyButton");
+                const inputCode = document.getElementById("code").value.trim();
+
+                if (!/^\d{6}$/.test(inputCode)) {
+                    setMessage("6桁の数字を入力してください", "error");
+                    return;
+                }
+
+                button.disabled = true;
+                setMessage("コードを確認しています...");
+
+                try {
+                    const inputHash = await sha256(inputCode);
+
+                    const ref = doc(db, VERIFICATION_COLLECTION, email);
+
+                    const result = await withTimeout(
+                        runTransaction(db, async (transaction) => {
+
+                            const snap = await transaction.get(ref);
+
+                            if (!snap.exists()) {
+                                return { ok: false, message: "確認コードが見つかりません", cleanup: true };
+                            }
+
+                            const data = snap.data() || {};
+
+                            if (data.verified) {
+                                return { ok: true, message: "すでに認証済みです" };
+                            }
+
+                            if (Date.now() > data.expiresAt) {
+                                transaction.delete(ref);
+                                return { ok: false, message: "有効期限切れ", cleanup: true };
+                            }
+
+                            if (data.attemptCount >= data.maxAttempts) {
+                                transaction.delete(ref);
+                                return { ok: false, message: "試行回数上限", cleanup: true };
+                            }
+
+                            if (data.codeHash !== inputHash) {
+
+                                const next = data.attemptCount + 1;
+
+                                if (next >= data.maxAttempts) {
+                                    transaction.delete(ref);
+                                    return { ok: false, message: "試行回数上限", cleanup: true };
+                                }
+
+                                transaction.update(ref, {
+                                    attemptCount: next,
+                                    updatedAt: Date.now()
+                                });
+
+                                return {
+                                    ok: false,
+                                    message: `コードが違います（残り ${data.maxAttempts - next} 回）`
+                                };
+                            }
+
+                            transaction.update(ref, {
+                                verified: true,
+                                verifiedAt: Date.now(),
+                                updatedAt: Date.now()
+                            });
+
+                            return { ok: true, message: "認証完了" };
+                        })
+                    );
+
+                    if (!result.ok) {
+                        setMessage(result.message, "error");
+
+                        if (result.cleanup) {
+                            setTimeout(() => {
+                                window.location.href = "signup.html";
+                            }, 1200);
+                        }
+                        return;
+                    }
+
+                    setMessage(result.message, "success");
+
+                    setTimeout(() => {
+                        window.location.href = "set-password.html";
+                    }, 800);
+
+                } catch (error) {
+                    setMessage(
+                        getFriendlyErrorMessage(error, "確認コード認証に失敗しました"),
+                        "error"
+                    );
+                } finally {
+                    button.disabled = false;
+                }
+            };
+
+            document.getElementById("verifyButton")
+                .addEventListener("click", window.verifyCode);
+        });
+    </script>
+</body>
+
+</html>

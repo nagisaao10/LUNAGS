@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>連携サービス | LUNAGS 管理システム</title>
+    <link rel="stylesheet" href="../normalize.css">
+    <link rel="stylesheet" href="../common.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="mypage.css">
+</head>
+
+<body>
+    <!-- ハンバーガー -->
+    <button class="hamburger" id="hamburgerBtn">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <div class="page">
+
+        <!-- 左サイドバー -->
+        <aside class="sidebar" id="sidebar">
+
+            <div class="sidebar__brand">
+                <img src="../images/logo_LUNAGS.png" alt="LUNAGS">
+                <span class="sidebar__brand-subtitle">MANAGEMENT SYSTEM</span>
+            </div>
+
+            <div class="menu-list">
+
+                <!-- 管理ホーム -->
+                <a href="../Home_page/home.html" class="menu">
+                    <i class="fas fa-desktop"></i>
+                    <span>管理ホーム</span>
+                </a>
+
+                <!-- 本人情報 -->
+                <a href="profile.html" class="menu">
+                    <i class="fas fa-user"></i>
+                    <span>本人情報</span>
+                </a>
+
+                <!-- アカウント情報 -->
+                <a href="account.html" class="menu">
+                    <i class="fas fa-id-card"></i>
+                    <span>アカウント情報</span>
+                </a>
+
+                <!-- 外部サービス -->
+                <a href="external.html" class="menu">
+                    <i class="fas fa-link"></i>
+                    <span>外部サービス</span>
+                </a>
+
+                <!-- 連携サービス -->
+                <a href="platforms.html" class="menu active">
+                    <i class="fas fa-cog"></i>
+                    <span>連携サービス</span>
+                </a>
+
+            </div>
+
+            <button class="btn logout-btn" id="logoutBtn">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                <span>ログアウト</span>
+            </button>
+
+        </aside>
+
+        <!-- メイン -->
+        <main class="main fade-in">
+
+            <h1>PLATFORMS</h1>
+
+            <div class="sub">
+                連携サービス
+            </div>
+
+            <!-- Firebase -->
+            <div class="card">
+
+                <div class="section-title">
+                    Firebase
+                </div>
+
+                <div class="row">
+
+                    <div class="label">
+                        Hosting
+                    </div>
+
+                    <div class="value">
+                        Connected
+                    </div>
+
+                </div>
+
+                <div class="row">
+
+                    <div class="label">
+                        Firestore
+                    </div>
+
+                    <div class="value">
+                        Active
+                    </div>
+
+                </div>
+
+            </div>
+
+        </main>
+
+    </div>
+
+    <script type="module">
+
+        import { auth }
+            from "../firebase-config.js";
+
+        import {
+            signOut
+        } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+
+        const hamburgerBtn =
+            document.getElementById("hamburgerBtn");
+
+        const sidebar =
+            document.getElementById("sidebar");
+
+        const logoutBtn =
+            document.getElementById("logoutBtn");
+
+        hamburgerBtn.addEventListener("click", () => {
+            sidebar.classList.toggle("open");
+        });
+
+        logoutBtn.addEventListener("click", async () => {
+
+            if (confirm("ログアウトしますか？")) {
+
+                await signOut(auth);
+
+                window.location.href =
+                    "../Login_page/login.html";
+
+            }
+
+        });
+
+    </script>
+
+</body>
+
+</html>
