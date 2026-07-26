@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>統計 | LUNAGS 管理システム</title>
+    <link rel="stylesheet" href="../normalize.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Noto+Sans+JP:wght@400;500;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="./home.css">
+</head>
+
+<body>
+
+    <button class="hamburger" id="hamburgerBtn">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <div class="app-shell">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar__brand">
+                <img src="../images/logo_LUNAGS.png" alt="LUNAGS">
+                <span class="sidebar__brand-subtitle">MANAGEMENT SYSTEM</span>
+            </div>
+
+            <div class="sidebar__div">
+                <a class="sidebar__link" href="home.html">
+                    <i class="fa-solid fa-house"></i>
+                    <span>ホーム</span>
+                </a>
+
+                <a class="sidebar__link" href="calendar.html">
+                    <i class="fa-solid fa-calendar-days"></i>
+                    <span>カレンダー</span>
+                </a>
+
+                <a class="sidebar__link" href="posts.html">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                    <span>ポスト</span>
+                </a>
+
+                <a class="sidebar__link" href="tasks.html">
+                    <i class="fa-solid fa-list-check"></i>
+                    <span>タスク</span>
+                </a>
+
+                <div class="sidebar__divider"></div>
+
+                <a class="sidebar__link is-active href=" statistics.html">
+                    <i class="fa-solid fa-chart-column"></i>
+                    <span>統計</span>
+                </a>
+
+                <a class="sidebar__link" href="settings.html">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>設定</span>
+                </a>
+            </div>
+
+            <div class="sidebar__footer">
+                <a class="sidebar__mypage-btn" href="../My_page/profile.html">
+                    <i class="fa-solid fa-user"></i>
+                    <span>マイページへ戻る</span>
+                </a>
+            </div>
+        </aside>
+
+        <main class="main">
+            <header class="topbar">
+                <div>
+                    <h1 class="topbar__title">STATISTICS</h1>
+                    <div class="topbar__date">投稿予定とタスクの進行を集計</div>
+                </div>
+                <div class="topbar__right">
+                    <div class="notif">
+                        <button class="notif__btn" id="notifBtn" aria-label="通知"><svg class="icon" viewBox="0 0 24 24">
+                                <path d="M6 9a6 6 0 0 1 12 0c0 4 1.5 5.5 1.5 5.5H4.5S6 13 6 9Z" />
+                                <path d="M10 19a2 2 0 0 0 4 0" />
+                            </svg><span class="notif__badge is-hidden" id="notifBadge">0</span></button>
+                        <div class="notif__dropdown" id="notifDropdown">
+                            <div class="notif__dropdown-title">通知</div>
+                            <div id="notifList"></div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <section class="metrics-grid">
+                <div class="metric">
+                    <div class="metric__label">総予定</div>
+                    <div class="metric__value" id="metricTotal">0</div>
+                    <div class="metric__note">ポスト・タスク合計</div>
+                </div>
+                <div class="metric">
+                    <div class="metric__label">完了率</div>
+                    <div class="metric__value" id="metricRate">0%</div>
+                    <div class="metric__note">全期間</div>
+                </div>
+                <div class="metric">
+                    <div class="metric__label">投稿予定</div>
+                    <div class="metric__value" id="metricPosts">0</div>
+                    <div class="metric__note">公開管理</div>
+                </div>
+                <div class="metric">
+                    <div class="metric__label">未完了タスク</div>
+                    <div class="metric__value" id="metricOpenTasks">0</div>
+                    <div class="metric__note">対応待ち</div>
+                </div>
+            </section>
+
+            <section class="dashboard-grid">
+                <div class="card">
+                    <div class="card__head">
+                        <h2>メンバー別達成率</h2>
+                    </div>
+                    <div class="progress-list" id="memberProgress"></div>
+                </div>
+                <div class="card">
+                    <div class="card__head">
+                        <h2>配信先別ポスト数</h2>
+                    </div>
+                    <div class="progress-list" id="platformProgress"></div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script type="module">
+        import { auth } from "../firebase-config.js";
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                window.location.href = '../Login_page/login.html';
+            }
+        });
+
+        const STORAGE_KEYS = { posts: "lunags_posts", tasks: "lunags_tasks", notifications: "lunags_notifications", settings: "lunags_settings" };
+        const state = { posts: [], tasks: [], notifications: [], firestore: null };
+        const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
+        const readLocal = (key) => { try { return JSON.parse(localStorage.getItem(key) || "[]"); } catch { return []; } };
+
+        async function initData() {
+            try {
+                const [{ db }, firestore] = await Promise.all([import("../firebase-config.js"), import("https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js")]);
+                state.firestore = { db, ...firestore };
+                ["posts", "tasks", "notifications"].forEach(watchFirestoreCollection);
+            } catch (error) {
+                console.info("[LUNAGS] Firestoreに接続できないためローカルデータで動作します。", error.message);
+                state.posts = readLocal(STORAGE_KEYS.posts);
+                state.tasks = readLocal(STORAGE_KEYS.tasks);
+                state.notifications = readLocal(STORAGE_KEYS.notifications);
+                renderAll();
+            }
+        }
+
+        function watchFirestoreCollection(name) {
+            const { db, collection, onSnapshot } = state.firestore;
+            onSnapshot(collection(db, name), (snapshot) => {
+                state[name] = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+                renderAll();
+            }, () => {
+                state[name] = readLocal(STORAGE_KEYS[name]);
+                renderAll();
+            });
+        }
+
+        function readSettings() {
+            const fallback = { members: ["なぎさ", "みなみ", "あかり", "ゆづき"] };
+            try { return { ...fallback, ...(JSON.parse(localStorage.getItem(STORAGE_KEYS.settings) || "{}")) }; } catch { return fallback; }
+        }
+
+        function renderAll() {
+            const total = state.posts.length + state.tasks.length;
+            const done = state.posts.filter((post) => post.completed).length + state.tasks.filter((task) => task.completed).length;
+            document.getElementById("metricTotal").textContent = total;
+            document.getElementById("metricRate").textContent = `${total ? Math.round(done / total * 100) : 0}%`;
+            document.getElementById("metricPosts").textContent = state.posts.length;
+            document.getElementById("metricOpenTasks").textContent = state.tasks.filter((task) => !task.completed).length;
+            renderMemberProgress();
+            renderPlatformProgress();
+            renderNotifications();
+        }
+
+        function renderMemberProgress() {
+            const members = readSettings().members;
+            document.getElementById("memberProgress").innerHTML = members.map((member) => {
+                const items = [...state.posts, ...state.tasks].filter((item) => item.assignee === member);
+                const done = items.filter((item) => item.completed).length;
+                const percent = items.length ? Math.round(done / items.length * 100) : 0;
+                return `<div class="progress-row"><div class="progress-row__head"><span>${escapeHtml(member)}</span><span>${percent}%</span></div><div class="progress-bar"><span style="width:${percent}%"></span></div></div>`;
+            }).join("") || `<div class="empty-state">集計対象のメンバーがありません。</div>`;
+        }
+
+        function renderPlatformProgress() {
+            const counts = state.posts.reduce((map, post) => {
+                const key = post.platform || "その他";
+                map[key] = (map[key] || 0) + 1;
+                return map;
+            }, {});
+            const max = Math.max(1, ...Object.values(counts));
+            document.getElementById("platformProgress").innerHTML = Object.keys(counts).length ? Object.entries(counts).map(([name, count]) => {
+                const percent = Math.round(count / max * 100);
+                return `<div class="progress-row"><div class="progress-row__head"><span>${escapeHtml(name)}</span><span>${count}件</span></div><div class="progress-bar"><span style="width:${percent}%"></span></div></div>`;
+            }).join("") : `<div class="empty-state">投稿予定を追加すると集計されます。</div>`;
+        }
+
+        function renderNotifications() {
+            const badge = document.getElementById("notifBadge");
+            const list = document.getElementById("notifList");
+            const unread = state.notifications.filter((item) => item.unread).length;
+            badge.textContent = unread > 9 ? "9+" : String(unread);
+            badge.classList.toggle("is-hidden", unread === 0);
+            list.innerHTML = state.notifications.length ? state.notifications.slice(0, 20).map((item) => `<div class="notif__item"><span class="notif__dot"></span><div><div class="notif__item-text">${escapeHtml(item.text || "")}</div><div class="notif__item-time">${escapeHtml(item.time || "")}</div></div></div>`).join("") : `<div class="notif__empty">通知はまだありません。</div>`;
+        }
+
+        function initEvents() {
+            const notifBtn = document.getElementById("notifBtn");
+            const notifDropdown = document.getElementById("notifDropdown");
+            notifBtn.addEventListener("click", (event) => { event.stopPropagation(); notifDropdown.classList.toggle("is-open"); });
+            document.addEventListener("click", (event) => { if (!notifDropdown.contains(event.target) && event.target !== notifBtn) notifDropdown.classList.remove("is-open"); });
+            document.addEventListener("click", (event) => { if (window.innerWidth <= 760 && !sidebar.contains(event.target) && !hamburgerBtn.contains(event.target)) sidebar.classList.remove("open"); });
+        }
+
+        initEvents();
+        initData();
+
+        const hamburgerBtn = document.getElementById("hamburgerBtn");
+        const sidebar = document.getElementById("sidebar");
+
+        hamburgerBtn.addEventListener("click", () => {
+            sidebar.classList.toggle("open");
+        });
+    </script>
+</body>
+
+</html>
