@@ -126,6 +126,7 @@
 
         let currentUserAuth = null;
         let currentUserId = null;
+        let unsubscribeMembers = null;
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
@@ -155,11 +156,14 @@
                 } catch (error) {
                     console.error("Firebase読み込みエラー:", error);
                 }
-                watchMembers();
+
+                if (!unsubscribeMembers) {
+                    unsubscribeMembers = watchMembers();
+                }
+
             } else {
-                window.location.href = '../Login_page/login.html';
+                window.location.href = "../Login_page/login.html";
             }
-            await loadMembers();
         });
 
         function readLocal(key) {
@@ -190,25 +194,27 @@
         }
 
         function watchMembers() {
-            onSnapshot(collection(db, "users"), (snapshot) => {
+            return onSnapshot(
+                collection(db, "users"),
+                (snapshot) => {
+                    settings.members = [];
 
-                settings.members = [];
+                    snapshot.forEach((docSnap) => {
+                        const data = docSnap.data();
 
-                snapshot.forEach((docSnap) => {
-                    const data = docSnap.data();
+                        if (data.displayName) {
+                            settings.members.push(data.displayName);
+                        }
+                    });
 
-                    if (data.displayName) {
-                        settings.members.push(data.displayName);
-                    }
-                });
+                    settings.members.sort((a, b) => a.localeCompare(b, "ja"));
 
-                settings.members.sort((a, b) => a.localeCompare(b, "ja"));
-
-                renderSettings();
-
-            }, (error) => {
-                console.error("メンバー取得エラー:", error);
-            });
+                    renderSettings();
+                },
+                (error) => {
+                    console.error("メンバー取得エラー:", error);
+                }
+            );
         }
 
         function renderNotifications() {
