@@ -116,7 +116,7 @@
     <script type="module">
         import { auth, db } from "../firebase-config.js";
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
-        import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+        import { doc, getDoc, setDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
         const STORAGE_KEYS = { settings: "lunags_settings", notifications: "lunags_notifications" };
         const fallbackSettings = { currentUser: "なぎさ", members: ["なぎさ", "みなみ", "あかり", "ゆづき"] };
@@ -155,9 +155,11 @@
                 } catch (error) {
                     console.error("Firebase読み込みエラー:", error);
                 }
+                watchMembers();
             } else {
                 window.location.href = '../Login_page/login.html';
             }
+            await loadMembers();
         });
 
         function readLocal(key) {
@@ -169,7 +171,6 @@
         }
 
         function writeSettings(showToastMsg = true) {
-            settings.members = [...new Set(settings.members.map((name) => name.trim()).filter(Boolean))];
             localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(settings));
             renderSettings();
             if (showToastMsg) showToast("設定を保存しました。");
@@ -180,16 +181,33 @@
             document.getElementById("memberCount").textContent = `${settings.members.length}人`;
             document.getElementById("memberList").innerHTML = settings.members.length ? settings.members.map((name) => `
                 <div class="member-row">
-                    <div><strong>${escapeHtml(name)}</strong>${name === settings.currentUser ? `<div class="small-note">現在の表示名</div>` : ""}</div>
-                    <button class="btn-secondary" data-remove="${escapeHtml(name)}" type="button">削除</button>
-                </div>
+    <div>
+        <strong>${escapeHtml(name)}</strong>
+        ${name === settings.currentUser ? `<div class="small-note">現在の表示名</div>` : ""}
+    </div>
+</div>
             `).join("") : `<div class="empty-state">メンバーが登録されていません。</div>`;
-            document.querySelectorAll("[data-remove]").forEach((button) => {
-                button.addEventListener("click", () => {
-                    settings.members = settings.members.filter((name) => name !== button.dataset.remove);
-                    if (settings.currentUser === button.dataset.remove) settings.currentUser = settings.members[0] || "";
-                    writeSettings();
+        }
+
+        function watchMembers() {
+            onSnapshot(collection(db, "users"), (snapshot) => {
+
+                settings.members = [];
+
+                snapshot.forEach((docSnap) => {
+                    const data = docSnap.data();
+
+                    if (data.displayName) {
+                        settings.members.push(data.displayName);
+                    }
                 });
+
+                settings.members.sort((a, b) => a.localeCompare(b, "ja"));
+
+                renderSettings();
+
+            }, (error) => {
+                console.error("メンバー取得エラー:", error);
             });
         }
 
