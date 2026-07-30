@@ -75,16 +75,18 @@
                     <div class="topbar__date">投稿予定、担当者、サムネ進行の管理</div>
                 </div>
                 <div class="topbar__right">
-                    <button class="btn-primary" id="addPostBtn"><svg class="icon" viewBox="0 0 24 24">
-                            <path d="M12 5v14M5 12h14" />
-                        </svg>新規ポスト</button>
+                    <button class="btn-primary" id="addPostBtn"><i class="fa-solid fa-plus"></i> 新規ポスト</button>
                     <div class="notif">
-                        <button class="notif__btn" id="notifBtn" aria-label="通知"><svg class="icon" viewBox="0 0 24 24">
-                                <path d="M6 9a6 6 0 0 1 12 0c0 4 1.5 5.5 1.5 5.5H4.5S6 13 6 9Z" />
-                                <path d="M10 19a2 2 0 0 0 4 0" />
-                            </svg><span class="notif__badge is-hidden" id="notifBadge">0</span></button>
+                        <button class="notif__btn" id="notifBtn" aria-label="通知"><i class="fa-solid fa-bell"
+                                style="font-size: 1.25rem;"></i><span class="notif__badge is-hidden"
+                                id="notifBadge">0</span></button>
                         <div class="notif__dropdown" id="notifDropdown">
-                            <div class="notif__dropdown-title">通知</div>
+                            <div class="notif__dropdown-title"
+                                style="display: flex; justify-content: space-between; align-items: center;">
+                                通知
+                                <button id="markAllReadBtn" class="btn-secondary"
+                                    style="font-size: 0.75rem; min-height: 24px; padding: 0 8px;">すべて既読</button>
+                            </div>
                             <div id="notifList"></div>
                         </div>
                     </div>
@@ -146,17 +148,15 @@
     <div class="modal-overlay is-hidden" id="postModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 class="modal-title">新規ポスト</h3><button class="modal-close" id="postModalClose" aria-label="閉じる"><svg
-                        class="icon" viewBox="0 0 24 24">
-                        <path d="M18 6 6 18M6 6l12 12" />
-                    </svg></button>
+                <h3 class="modal-title">新規ポスト</h3><button class="modal-close" id="postModalClose" aria-label="閉じる"><i
+                        class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="modal-body">
                 <form id="postForm" class="form-grid">
                     <div class="form-group span-2"><label for="postTitle">タイトル</label><input class="field" type="text"
                             id="postTitle" required placeholder="例：新作動画の公開"></div>
                     <div class="form-group"><label for="postDate">日付</label><input class="field" type="date"
-                            id="postDate" required></div>
+                            id="postDate" required max="9999-12-31"></div>
                     <div class="form-group"><label for="postTime">配信時間</label><input class="field" type="time"
                             id="postTime"></div>
                     <div class="form-group"><label for="postPlatform">配信先</label><select class="select"
@@ -169,8 +169,8 @@
                         </select></div>
                     <div class="form-group"><label for="postAssignee">担当者</label><input class="field" type="text"
                             id="postAssignee" list="memberList" placeholder="例：ミク"></div>
-                    <div class="form-group span-2"><label for="postDetail">詳細</label><textarea class="textarea"
-                            id="postDetail" placeholder="詳細な内容を記載してください"></textarea></div>
+                    <div class="form-group span-2"><label for="postDetail">内容・概要欄</label><textarea class="textarea"
+                            id="postDetail" placeholder="内容・概要欄を記載してください"></textarea></div>
                     <div class="form-group span-2"><label>参加者</label>
                         <div id="postParticipantsContainer" placeholder="参加者を選択"
                             style="display: flex; flex-wrap: wrap; gap: 10px; padding: 0.5rem 0;"></div>
@@ -192,6 +192,7 @@
     <script type="module">
         import { auth } from "../firebase-config.js";
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+        import { getUnreadCount, markAllAsRead, sortNotifications, createNotificationHTML } from "./notification.js";
 
         onAuthStateChanged(auth, (user) => {
             if (!user) {
@@ -200,7 +201,7 @@
         });
 
         const STORAGE_KEYS = { posts: "lunags_posts", notifications: "lunags_notifications", settings: "lunags_settings" };
-        const state = { posts: [], notifications: [], firestore: null, seenNotifications: new Set() };
+        const state = { posts: [], notifications: [], members: [], firestore: null, seenNotifications: new Set() };
         const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
         const toDateKey = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
         const readLocal = (key) => { try { return JSON.parse(localStorage.getItem(key) || "[]"); } catch { return []; } };
@@ -218,6 +219,7 @@
                 const [{ db, serverTimestamp }, firestore] = await Promise.all([import("../firebase-config.js"), import("https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js")]);
                 state.firestore = { db, serverTimestamp, ...firestore };
                 ["posts", "notifications"].forEach(watchFirestoreCollection);
+                watchMembers();
             } catch (error) {
                 console.info("[LUNAGS] Firestoreに接続できないためローカルデータで動作します。", error.message);
                 state.posts = readLocal(STORAGE_KEYS.posts);
@@ -238,12 +240,26 @@
             });
         }
 
+        function watchMembers() {
+            const { db, collection, onSnapshot } = state.firestore;
+            onSnapshot(collection(db, "users"), (snapshot) => {
+                state.members = snapshot.docs
+                    .map(doc => doc.data().displayName || "未設定")
+                    .sort((a, b) => a.localeCompare(b, "ja"));
+                renderMemberList();
+            }, (error) => {
+                console.error("メンバー取得エラー:", error);
+                state.members = readSettings().members;
+                renderMemberList();
+            });
+        }
+
         function renderMemberList() {
-            const settings = readSettings();
-            document.getElementById("memberList").innerHTML = settings.members.map((name) => `<option value="${escapeHtml(name)}"></option>`).join("");
+            const members = state.members && state.members.length > 0 ? state.members : readSettings().members;
+            document.getElementById("memberList").innerHTML = members.map((name) => `<option value="${escapeHtml(name)}"></option>`).join("");
             const container = document.getElementById("postParticipantsContainer");
             if (container) {
-                container.innerHTML = settings.members.map((name) => `
+                container.innerHTML = members.map((name) => `
                     <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
                         <input type="checkbox" name="postParticipants" value="${escapeHtml(name)}">
                         ${escapeHtml(name)}
@@ -278,8 +294,8 @@
                     <td><span class="badge badge--post">${escapeHtml(post.platform || "その他")}</span></td>
                     <td class="fw-bold">${escapeHtml(post.title || "")}</td>
                     <td>${escapeHtml(post.assignee || "未設定")}</td>
-                    <td><button class="check-toggle ${post.completed ? "is-checked" : ""}" data-toggle="completed:${post.id}" aria-label="完了を切り替え"><svg viewBox="0 0 24 24"><path d="M4 12l6 6L20 6"/></svg></button></td>
-                    <td><button class="check-toggle ${post.thumbDone ? "is-checked" : ""}" data-toggle="thumbDone:${post.id}" aria-label="サムネ状態を切り替え"><svg viewBox="0 0 24 24"><path d="M4 12l6 6L20 6"/></svg></button></td>
+                    <td><button class="check-toggle ${post.completed ? "is-checked" : ""}" data-toggle="completed:${post.id}" aria-label="完了を切り替え"><i class="fa-solid fa-check"></i></button></td>
+                    <td><button class="check-toggle ${post.thumbDone ? "is-checked" : ""}" data-toggle="thumbDone:${post.id}" aria-label="サムネ状態を切り替え"><i class="fa-solid fa-check"></i></button></td>
                     <td>
                         <button class="btn-secondary btn-sm" data-edit="${post.id}">編集</button>
                         <button class="btn-secondary btn-sm" data-delete="${post.id}">削除</button>
@@ -400,27 +416,14 @@
         function renderNotifications() {
             const badge = document.getElementById("notifBadge");
             const list = document.getElementById("notifList");
-            const sorted = [...state.notifications].sort((a, b) => getTimeValue(b) - getTimeValue(a));
-            const unread = sorted.filter((item) => item.unread).length;
-            badge.textContent = unread > 9 ? "9+" : String(unread);
-            badge.classList.toggle("is-hidden", unread === 0);
-            list.innerHTML = sorted.length ? sorted.slice(0, 20).map((item) => `<div class="notif__item"><span class="notif__dot"></span><div><div class="notif__item-text">${escapeHtml(item.text || "")}</div><div class="notif__item-time">${escapeHtml(formatRelativeTime(item))}</div></div></div>`).join("") : `<div class="notif__empty">通知はまだありません。</div>`;
+            const sorted = sortNotifications(state.notifications);
+            const unreadCount = getUnreadCount(sorted);
+            badge.textContent = unreadCount > 9 ? "9+" : String(unreadCount);
+            badge.classList.toggle("is-hidden", unreadCount === 0);
+            list.innerHTML = createNotificationHTML(sorted.slice(0, 20), escapeHtml);
         }
 
-        function getTimeValue(item) {
-            if (typeof item.createdAtLocal === "number") return item.createdAtLocal;
-            if (item.createdAt?.toMillis) return item.createdAt.toMillis();
-            return 0;
-        }
-
-        function formatRelativeTime(item) {
-            const value = getTimeValue(item);
-            if (!value) return item.time || "";
-            const diff = Math.max(1, Math.round((Date.now() - value) / 60000));
-            if (diff < 60) return `${diff}分前`;
-            if (diff < 1440) return `${Math.round(diff / 60)}時間前`;
-            return `${Math.round(diff / 1440)}日前`;
-        }
+        // getTimeValue and formatRelativeTime moved to notification.js
 
         function showToast(text) {
             const stack = document.getElementById("toastStack");
@@ -468,6 +471,21 @@
         }
 
         function initEvents() {
+            document.getElementById("markAllReadBtn").addEventListener("click", async (event) => {
+                event.stopPropagation();
+                state.notifications = markAllAsRead(state.notifications);
+                writeLocal(STORAGE_KEYS.notifications, state.notifications);
+                renderNotifications();
+                if (state.firestore) {
+                    try {
+                        const { db, doc, updateDoc } = state.firestore;
+                        const updates = state.notifications.map(n => updateDoc(doc(db, "notifications", n.id), { unread: false }));
+                        await Promise.all(updates);
+                    } catch (error) {
+                        console.error(error);
+                    }
+                }
+            });
             document.getElementById("addPostBtn").addEventListener("click", openModal);
             document.getElementById("postModalClose").addEventListener("click", closeModal);
             document.getElementById("postFormCancel").addEventListener("click", closeModal);

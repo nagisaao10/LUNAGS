@@ -82,12 +82,12 @@
                         <button class="view-toggle" data-view="year">年</button>
                     </div>
                     <div class="notif">
-                        <button class="notif__btn" id="notifBtn" aria-label="通知"><svg class="icon" viewBox="0 0 24 24">
-                                <path d="M6 9a6 6 0 0 1 12 0c0 4 1.5 5.5 1.5 5.5H4.5S6 13 6 9Z" />
-                                <path d="M10 19a2 2 0 0 0 4 0" />
-                            </svg><span class="notif__badge is-hidden" id="notifBadge">0</span></button>
+                        <button class="notif__btn" id="notifBtn" aria-label="通知"><i class="fa-solid fa-bell" style="font-size: 1.25rem;"></i><span class="notif__badge is-hidden" id="notifBadge">0</span></button>
                         <div class="notif__dropdown" id="notifDropdown">
-                            <div class="notif__dropdown-title">通知</div>
+                            <div class="notif__dropdown-title" style="display: flex; justify-content: space-between; align-items: center;">
+                                通知
+                                <button id="markAllReadBtn" class="btn-secondary" style="font-size: 0.75rem; min-height: 24px; padding: 0 8px;">すべて既読</button>
+                            </div>
                             <div id="notifList"></div>
                         </div>
                     </div>
@@ -96,13 +96,9 @@
 
             <section class="card calendar-card">
                 <div class="calendar-header">
-                    <button class="btn-icon" id="prevBtn" aria-label="前へ"><svg class="icon" viewBox="0 0 24 24">
-                            <path d="m15 18-6-6 6-6" />
-                        </svg></button>
+                    <button class="btn-icon" id="prevBtn" aria-label="前へ"><i class="fa-solid fa-chevron-left"></i></button>
                     <h2 class="calendar-header__title" id="calendarTitle">読み込み中</h2>
-                    <button class="btn-icon" id="nextBtn" aria-label="次へ"><svg class="icon" viewBox="0 0 24 24">
-                            <path d="m9 18 6-6-6-6" />
-                        </svg></button>
+                    <button class="btn-icon" id="nextBtn" aria-label="次へ"><i class="fa-solid fa-chevron-right"></i></button>
                     <button class="btn-secondary" id="todayBtn">今日</button>
                 </div>
                 <div id="weekdayHeader" class="calendar-grid-header">
@@ -123,9 +119,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 class="modal-title" id="modalTitle">予定詳細</h3>
-                <button class="modal-close" id="modalClose" aria-label="閉じる"><svg class="icon" viewBox="0 0 24 24">
-                        <path d="M18 6 6 18M6 6l12 12" />
-                    </svg></button>
+                <button class="modal-close" id="modalClose" aria-label="閉じる"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="modal-body" id="modalBody"></div>
         </div>
@@ -136,6 +130,7 @@
     <script type="module">
         import { auth } from "../firebase-config.js";
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+        import { getUnreadCount, markAllAsRead, sortNotifications, createNotificationHTML } from "./notification.js";
 
         onAuthStateChanged(auth, (user) => {
             if (!user) {
@@ -351,27 +346,14 @@
         function renderNotifications() {
             const badge = document.getElementById("notifBadge");
             const list = document.getElementById("notifList");
-            const sorted = [...state.notifications].sort((a, b) => getTimeValue(b) - getTimeValue(a));
-            const unread = sorted.filter((item) => item.unread).length;
-            badge.textContent = unread > 9 ? "9+" : String(unread);
-            badge.classList.toggle("is-hidden", unread === 0);
-            list.innerHTML = sorted.length ? sorted.slice(0, 20).map((item) => `<div class="notif__item"><span class="notif__dot"></span><div><div class="notif__item-text">${escapeHtml(item.text || "")}</div><div class="notif__item-time">${escapeHtml(formatRelativeTime(item))}</div></div></div>`).join("") : `<div class="notif__empty">通知はまだありません。</div>`;
+            const sorted = sortNotifications(state.notifications);
+            const unreadCount = getUnreadCount(sorted);
+            badge.textContent = unreadCount > 9 ? "9+" : String(unreadCount);
+            badge.classList.toggle("is-hidden", unreadCount === 0);
+            list.innerHTML = createNotificationHTML(sorted.slice(0, 20), escapeHtml);
         }
 
-        function getTimeValue(item) {
-            if (typeof item.createdAtLocal === "number") return item.createdAtLocal;
-            if (item.createdAt?.toMillis) return item.createdAt.toMillis();
-            return 0;
-        }
-
-        function formatRelativeTime(item) {
-            const value = getTimeValue(item);
-            if (!value) return item.time || "";
-            const diff = Math.max(1, Math.round((Date.now() - value) / 60000));
-            if (diff < 60) return `${diff}分前`;
-            if (diff < 1440) return `${Math.round(diff / 60)}時間前`;
-            return `${Math.round(diff / 1440)}日前`;
-        }
+        // getTimeValue and formatRelativeTime moved to notification.js
 
         function showToast(text) {
             const stack = document.getElementById("toastStack");
@@ -384,6 +366,21 @@
         }
 
         function initEvents() {
+            document.getElementById("markAllReadBtn").addEventListener("click", async (event) => {
+                event.stopPropagation();
+                state.notifications = markAllAsRead(state.notifications);
+                writeLocal(STORAGE_KEYS.notifications, state.notifications);
+                renderNotifications();
+                if (state.firestore) {
+                    try {
+                        const { db, doc, updateDoc } = state.firestore;
+                        const updates = state.notifications.map(n => updateDoc(doc(db, "notifications", n.id), { unread: false }));
+                        await Promise.all(updates);
+                    } catch (error) {
+                        console.error(error);
+                    }
+                }
+            });
             document.getElementById("prevBtn").addEventListener("click", () => moveDate(-1));
             document.getElementById("nextBtn").addEventListener("click", () => moveDate(1));
             document.getElementById("todayBtn").addEventListener("click", () => { state.currentDate = new Date(); renderCalendar(); });

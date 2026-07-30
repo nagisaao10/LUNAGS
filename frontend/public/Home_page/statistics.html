@@ -76,12 +76,12 @@
                 </div>
                 <div class="topbar__right">
                     <div class="notif">
-                        <button class="notif__btn" id="notifBtn" aria-label="通知"><svg class="icon" viewBox="0 0 24 24">
-                                <path d="M6 9a6 6 0 0 1 12 0c0 4 1.5 5.5 1.5 5.5H4.5S6 13 6 9Z" />
-                                <path d="M10 19a2 2 0 0 0 4 0" />
-                            </svg><span class="notif__badge is-hidden" id="notifBadge">0</span></button>
+                        <button class="notif__btn" id="notifBtn" aria-label="通知"><i class="fa-solid fa-bell" style="font-size: 1.25rem;"></i><span class="notif__badge is-hidden" id="notifBadge">0</span></button>
                         <div class="notif__dropdown" id="notifDropdown">
-                            <div class="notif__dropdown-title">通知</div>
+                            <div class="notif__dropdown-title" style="display: flex; justify-content: space-between; align-items: center;">
+                                通知
+                                <button id="markAllReadBtn" class="btn-secondary" style="font-size: 0.75rem; min-height: 24px; padding: 0 8px;">すべて既読</button>
+                            </div>
                             <div id="notifList"></div>
                         </div>
                     </div>
@@ -131,6 +131,7 @@
     <script type="module">
         import { auth } from "../firebase-config.js";
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+        import { getUnreadCount, markAllAsRead, sortNotifications, createNotificationHTML } from "./notification.js";
 
         onAuthStateChanged(auth, (user) => {
             if (!user) {
@@ -139,15 +140,17 @@
         });
 
         const STORAGE_KEYS = { posts: "lunags_posts", tasks: "lunags_tasks", notifications: "lunags_notifications", settings: "lunags_settings" };
-        const state = { posts: [], tasks: [], notifications: [], firestore: null };
+        const state = { posts: [], tasks: [], notifications: [], members: [], firestore: null };
         const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
         const readLocal = (key) => { try { return JSON.parse(localStorage.getItem(key) || "[]"); } catch { return []; } };
+        const writeLocal = (key, value) => localStorage.setItem(key, JSON.stringify(value));
 
         async function initData() {
             try {
                 const [{ db }, firestore] = await Promise.all([import("../firebase-config.js"), import("https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js")]);
                 state.firestore = { db, ...firestore };
                 ["posts", "tasks", "notifications"].forEach(watchFirestoreCollection);
+                watchMembers();
             } catch (error) {
                 console.info("[LUNAGS] Firestoreに接続できないためローカルデータで動作します。", error.message);
                 state.posts = readLocal(STORAGE_KEYS.posts);
@@ -165,6 +168,20 @@
             }, () => {
                 state[name] = readLocal(STORAGE_KEYS[name]);
                 renderAll();
+            });
+        }
+
+        function watchMembers() {
+            const { db, collection, onSnapshot } = state.firestore;
+            onSnapshot(collection(db, "users"), (snapshot) => {
+                state.members = snapshot.docs
+                    .map(doc => doc.data().displayName || "未設定")
+                    .sort((a, b) => a.localeCompare(b, "ja"));
+                renderMemberProgress();
+            }, (error) => {
+                console.error("メンバー取得エラー:", error);
+                state.members = readSettings().members;
+                renderMemberProgress();
             });
         }
 
@@ -186,7 +203,7 @@
         }
 
         function renderMemberProgress() {
-            const members = readSettings().members;
+            const members = state.members && state.members.length > 0 ? state.members : readSettings().members;
             document.getElementById("memberProgress").innerHTML = members.map((member) => {
                 const items = [...state.posts, ...state.tasks].filter((item) => item.assignee === member);
                 const done = items.filter((item) => item.completed).length;
@@ -211,13 +228,29 @@
         function renderNotifications() {
             const badge = document.getElementById("notifBadge");
             const list = document.getElementById("notifList");
-            const unread = state.notifications.filter((item) => item.unread).length;
-            badge.textContent = unread > 9 ? "9+" : String(unread);
-            badge.classList.toggle("is-hidden", unread === 0);
-            list.innerHTML = state.notifications.length ? state.notifications.slice(0, 20).map((item) => `<div class="notif__item"><span class="notif__dot"></span><div><div class="notif__item-text">${escapeHtml(item.text || "")}</div><div class="notif__item-time">${escapeHtml(item.time || "")}</div></div></div>`).join("") : `<div class="notif__empty">通知はまだありません。</div>`;
+            const sorted = sortNotifications(state.notifications);
+            const unreadCount = getUnreadCount(sorted);
+            badge.textContent = unreadCount > 9 ? "9+" : String(unreadCount);
+            badge.classList.toggle("is-hidden", unreadCount === 0);
+            list.innerHTML = createNotificationHTML(sorted.slice(0, 20), escapeHtml);
         }
 
         function initEvents() {
+            document.getElementById("markAllReadBtn").addEventListener("click", async (event) => {
+                event.stopPropagation();
+                state.notifications = markAllAsRead(state.notifications);
+                writeLocal(STORAGE_KEYS.notifications, state.notifications);
+                renderNotifications();
+                if (state.firestore) {
+                    try {
+                        const { db, doc, updateDoc } = state.firestore;
+                        const updates = state.notifications.map(n => updateDoc(doc(db, "notifications", n.id), { unread: false }));
+                        await Promise.all(updates);
+                    } catch (error) {
+                        console.error(error);
+                    }
+                }
+            });
             const notifBtn = document.getElementById("notifBtn");
             const notifDropdown = document.getElementById("notifDropdown");
             notifBtn.addEventListener("click", (event) => { event.stopPropagation(); notifDropdown.classList.toggle("is-open"); });
