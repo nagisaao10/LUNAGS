@@ -23,6 +23,7 @@
         <aside class="sidebar" id="sidebar">
             <div class="sidebar__brand">
                 <img src="../images/logo_LUNAGS.png" alt="LUNAGS">
+                <div class="sidebar__brand-divider"></div>
                 <span class="sidebar__brand-subtitle">MANAGEMENT SYSTEM</span>
             </div>
 
@@ -76,11 +77,15 @@
                 </div>
                 <div class="topbar__right">
                     <div class="notif">
-                        <button class="notif__btn" id="notifBtn" aria-label="通知"><i class="fa-solid fa-bell" style="font-size: 1.25rem;"></i><span class="notif__badge is-hidden" id="notifBadge">0</span></button>
+                        <button class="notif__btn" id="notifBtn" aria-label="通知"><i class="fa-solid fa-bell"
+                                style="font-size: 1.25rem;"></i><span class="notif__badge is-hidden"
+                                id="notifBadge">0</span></button>
                         <div class="notif__dropdown" id="notifDropdown">
-                            <div class="notif__dropdown-title" style="display: flex; justify-content: space-between; align-items: center;">
+                            <div class="notif__dropdown-title"
+                                style="display: flex; justify-content: space-between; align-items: center;">
                                 通知
-                                <button id="markAllReadBtn" class="btn-secondary" style="font-size: 0.75rem; min-height: 24px; padding: 0 8px;">すべて既読</button>
+                                <button id="markAllReadBtn" class="btn-secondary"
+                                    style="font-size: 0.75rem; min-height: 24px; padding: 0 8px;">すべて既読</button>
                             </div>
                             <div id="notifList"></div>
                         </div>

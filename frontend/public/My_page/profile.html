@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>マイページ | LUNAGS 管理システム</title>
+    <title>本人情報 | LUNAGS Account</title>
     <link rel="stylesheet" href="../normalize.css">
     <link rel="stylesheet" href="../common.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -23,7 +23,8 @@
 
             <div class="sidebar__brand">
                 <img src="../images/logo_LUNAGS.png" alt="LUNAGS">
-                <span class="sidebar__brand-subtitle">MANAGEMENT SYSTEM</span>
+                <div class="sidebar__brand-divider"></div>
+                <span class="sidebar__brand-subtitle">ACCOUNT</span>
             </div>
 
             <div class="menu-list">
@@ -217,6 +218,20 @@
                 editModal.classList.remove('active');
             }
         });
+
+
+        // // サイドバーの文字間隔を広げる
+        // const subtitle = document.querySelector(".sidebar__brand-subtitle");
+        // const text = subtitle.textContent.trim();
+
+        // subtitle.innerHTML = "";
+
+        // for (const ch of text) {
+        //     const span = document.createElement("span");
+        //     span.textContent = ch;
+        //     subtitle.appendChild(span);
+        // }
+
 
         // 認証状態の監視
         onAuthStateChanged(auth, async (user) => {

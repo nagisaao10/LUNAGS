@@ -674,6 +674,28 @@ select:focus-visible {
   height: auto;
 }
 
+/* 中央のワンポイント */
+.sidebar__brand-divider::after {
+  content: "✦";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  padding: 0 10px;
+  background: #1d3975;
+  /* サイドバー背景色 */
+  color: rgba(255, 255, 255, .65);
+  font-size: 10px;
+}
+
+.sidebar__brand-divider {
+  position: relative;
+  width: 140px;
+  height: 1px;
+  margin: 2px 0;
+  background: rgba(255, 255, 255, .18);
+}
+
 .menu span {
   line-height: 1;
 }
