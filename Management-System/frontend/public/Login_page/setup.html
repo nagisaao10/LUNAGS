@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>会員情報 | LUNAGS 管理システム</title>
+    <link rel="stylesheet" href="../normalize.css">
+    <link rel="stylesheet" href="../common.css">
+    <link rel="stylesheet" href="login.css">
+</head>
+
+<body>
+
+    <div class="card">
+
+        <h2>本人情報</h2>
+
+        <input type="text" id="name" placeholder="名前">
+
+        <input type="text" id="displayName" placeholder="表示名">
+
+        <!-- 誕生日 -->
+        <div class="birthday-group">
+
+            <select id="birthYear" required>
+                <option value="" disabled selected hidden>年</option>
+            </select>
+
+            <select id="birthMonth" required>
+                <option value="" disabled selected hidden>月</option>
+            </select>
+
+            <select id="birthDay" required>
+                <option value="" disabled selected hidden>日</option>
+            </select>
+
+        </div>
+
+        <select id="gender">
+            <option value="">性別を選択してください</option>
+            <option value="男性">男性</option>
+            <option value="女性">女性</option>
+            <option value="その他">その他</option>
+            <option value="回答しない">回答しない</option>
+        </select>
+
+        <input type="text" id="country" placeholder="国と地域">
+
+        <input type="text" id="address" placeholder="住所">
+
+        <input type="tel" id="phone" placeholder="電話番号">
+
+        <button id="saveBtn">
+            保存
+        </button>
+
+    </div>
+
+    <script type="module">
+
+        import { auth, db, withTimeout, getFriendlyErrorMessage } from "../firebase-config.js";
+        import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+
+        const yearSelect = document.getElementById("birthYear");
+        const monthSelect = document.getElementById("birthMonth");
+        const daySelect = document.getElementById("birthDay");
+
+        // 年
+        for (let year = 2025; year >= 1900; year--) {
+            yearSelect.innerHTML += `
+        <option value="${year}">
+            ${year}年
+        </option>
+    `;
+        }
+
+        // 月
+        for (let month = 1; month <= 12; month++) {
+            monthSelect.innerHTML += `
+        <option value="${month}">
+            ${month}月
+        </option>
+    `;
+        }
+
+        // 日
+        for (let day = 1; day <= 31; day++) {
+            daySelect.innerHTML += `
+        <option value="${day}">
+            ${day}日
+        </option>
+    `;
+        }
+
+        const saveBtn = document.getElementById("saveBtn");
+        let currentUser = null;
+
+        onAuthStateChanged(auth, (user) => {
+            // ログインしてない場合
+            if (!user) { location.href = "login.html"; return; }
+            currentUser = user;
+        });
+
+        // 保存ボタンのクリックイベント
+        saveBtn.addEventListener("click", async () => {
+            if (!currentUser) {
+                alert("ログイン状態を確認しています。少々お待ちください。");
+                return;
+            }
+
+            // バリデーション
+            const name = document.getElementById("name").value.trim();
+            const displayName = document.getElementById("displayName").value.trim();
+            const gender = document.getElementById("gender").value;
+            
+            if (!name || !displayName) {
+                alert("名前と表示名は必須です。");
+                return;
+            }
+            if (!yearSelect.value || !monthSelect.value || !daySelect.value) {
+                alert("生年月日を選択してください。");
+                return;
+            }
+            if (!gender) {
+                alert("性別を選択してください。");
+                return;
+            }
+
+            console.log("保存開始");
+            // 二重送信防止とフィードバック
+            saveBtn.disabled = true;
+            const originalText = saveBtn.innerText;
+            saveBtn.innerText = "保存中...";
+
+            try {
+                const mapSnap = await getDoc(
+                    doc(db, "uidMap", currentUser.uid)
+                );
+
+                if (!mapSnap.exists()) {
+                    throw new Error("uidMap が見つかりません");
+                }
+
+                const userId = mapSnap.data().userId;
+
+                await withTimeout(setDoc(doc(db, "users", userId),
+                    {
+                        name: document.getElementById("name").value,
+                        displayName: document.getElementById("displayName").value,
+                        birthday:
+                            `${yearSelect.value}/${monthSelect.value}/${daySelect.value}`,
+                        gender: document.getElementById("gender").value,
+                        country: document.getElementById("country").value,
+                        address: document.getElementById("address").value,
+                        phone: document.getElementById("phone").value
+                    },
+                    { merge: true }
+                ));
+
+                alert("保存しました");
+                console.log("保存成功");
+                // 役職設定へ移動
+                location.href = "role_setup.html";
+
+            } catch (error) {
+                console.error("Firestore save error:", error);
+
+                alert(`
+message: ${error.message}
+code: ${error.code}
+`);
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerText = originalText;
+            }
+        });
+
+    </script>
+
+</body>
+
+</html>

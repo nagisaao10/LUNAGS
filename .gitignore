@@ -1,0 +1,10 @@
+node_modules/
+.firebase/
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+Thumbs.db
+Management-System/backup/
+Management-System/functions/client_secret_*.json

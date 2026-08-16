@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ログイン | LUNAGS 管理システム</title>
+    <link rel="stylesheet" href="../normalize.css">
+    <link rel="stylesheet" href="../common.css">
+    <link rel="stylesheet" href="login.css">
+</head>
+
+<body>
+
+    <div class="box">
+
+        <h2>ログイン</h2>
+
+        <button class="secondary" onclick="googleLogin()">
+            Googleでログイン
+        </button>
+
+        <input id="email" type="email" placeholder="メールアドレス">
+        <input id="password" type="password" placeholder="パスワード">
+
+        <div id="message" class="message"></div>
+
+        <button onclick="login()">ログイン</button>
+        <button class="secondary" onclick="location.href='./signup.html'">新規登録</button>
+    </div>
+
+    <script type="module">
+        import { auth } from "../firebase-config.js";
+        import {
+            setPersistence,
+            browserSessionPersistence,
+            signInWithEmailAndPassword,
+            createUserWithEmailAndPassword,
+            GoogleAuthProvider,
+            signInWithPopup,
+            onAuthStateChanged,
+            getAdditionalUserInfo
+        } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+
+        setPersistence(auth, browserSessionPersistence);
+
+        // ★Googleログインのチェック処理中かどうかを管理するフラグ
+        let isGoogleProcessing = false;
+
+        onAuthStateChanged(auth, (user) => {
+            // ★Googleチェック中は、ここでの自動リダイレクトをスキップする
+            if (user && !isGoogleProcessing) {
+                window.location.href = "../My_page/profile.html";
+            }
+        });
+
+        function setMessage(text, type = "") {
+            const message = document.getElementById("message");
+            message.className = `message ${type}`;
+            message.innerText = text;
+        }
+
+        // ログイン処理
+        window.login = () => {
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+
+            signInWithEmailAndPassword(auth, email, password)
+                .then(() => {
+                    setMessage("ログイン成功", "success");
+
+                    setTimeout(() => {
+                        window.location.href = "../My_page/profile.html";
+                    }, 1000);
+                })
+                .catch(err => {
+                    setMessage("ログイン失敗", "error");
+                });
+        };
+
+        // Googleでログイン処理
+        window.googleLogin = () => {
+            isGoogleProcessing = true; // ★チェック開始（自動遷移をストップ）
+            const provider = new GoogleAuthProvider();
+
+            signInWithPopup(auth, provider)
+                .then((result) => {
+                    // ★ログインしたユーザーが「新規」かどうかを調べる
+                    const additionalUserInfo = getAdditionalUserInfo(result);
+
+                    if (additionalUserInfo && additionalUserInfo.isNewUser) {
+                        // 未登録だった場合、勝手に作られたアカウントを即座に削除する
+                        result.user.delete()
+                            .then(() => {
+                                setMessage("アカウントが登録されていません。先に新規登録をしてください。", "error");
+                                isGoogleProcessing = false; // フラグを戻す
+                            })
+                            .catch((deleteErr) => {
+                                console.error(deleteErr);
+                                setMessage("エラーが発生しました。", "error");
+                                isGoogleProcessing = false;
+                            });
+                    } else {
+                        // すでに登録済みのユーザーだった場合のみ進める
+                        setMessage("Googleでログイン成功", "success");
+
+                        setTimeout(() => {
+                            window.location.href = "../My_page/profile.html";
+                        }, 1000);
+                    }
+                })
+                .catch(err => {
+                    console.error("CODE:", err.code);
+                    console.error("MESSAGE:", err.message);
+                    console.error(err);
+
+                    setMessage(
+                        err.code + "\n" + err.message,
+                        "error"
+                    );
+
+                    isGoogleProcessing = false;
+                });
+        };
+    </script>
+
+</body>
+
+</html>
