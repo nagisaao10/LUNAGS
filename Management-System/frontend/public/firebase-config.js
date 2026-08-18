@@ -6,14 +6,14 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
 const firebaseConfig = {
-    apiKey: "AIzaSyAQLjSjCS-94924MCKEZ5dUa2GBhryM4y8",
-    authDomain: "lunags-management-system.firebaseapp.com",
-    projectId: "lunags-management-system",
-    storageBucket: "lunags-management-system.firebasestorage.app",
-    messagingSenderId: "1039501095200",
-    appId: "1:1039501095200:web:e13d27026441d9ccf5a745",
-    measurementId: "G-QXMSKHVP0Q"
-};
+    apiKey: "AIzaSyD89vXJuiPBTi8F19qI1bwAecrygUdwZZo",
+    authDomain: "lunags-development.firebaseapp.com",
+    projectId: "lunags-development",
+    storageBucket: "lunags-development.firebasestorage.app",
+    messagingSenderId: "166567508771",
+    appId: "1:166567508771:web:128bf4357b23a69fde2a96",
+    measurementId: "G-R98GTPV4QC"
+  };
 
 const app = initializeApp(firebaseConfig);
 

@@ -1,5 +1,8 @@
 {
   "projects": {
-    "default": "lunags-management-system"
-  }
+    "default": "lunags-development",
+    "production": "lunags-production"
+  },
+  "targets": {},
+  "etags": {}
 }
