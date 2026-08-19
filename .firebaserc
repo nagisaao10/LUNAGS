@@ -1,0 +1,22 @@
+{
+  "projects": {
+    "default": "lunags-development",
+    "production": "lunags-production"
+  },
+  "targets": {
+    "lunags-development": {
+      "hosting": {
+        "management": [
+          "lunags-management"
+        ],
+        "account": [
+          "lunags-account"
+        ],
+        "shop": [
+          "lunags-shop"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}
