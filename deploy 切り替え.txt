@@ -1,7 +1,0 @@
-開発
-firebase use default
-firebase deploy
-
-本番
-firebase use production
-firebase deploy
