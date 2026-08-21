@@ -20,7 +20,7 @@ function Run-Step {
 }
 
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "          LUNAGS Deploy System" -ForegroundColor Cyan
+Write-Host " LUNAGS Deploy System" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 
 # LUNAGSルートから実行することを保証
@@ -139,7 +139,7 @@ if ($LASTEXITCODE -ne 0) {
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Green
-Write-Host "        Deploy Complete" -ForegroundColor Green
+Write-Host " Deploy Complete" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Green
 Write-Host ""
 Write-Host "Git:      完了"
