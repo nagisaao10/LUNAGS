@@ -1,9 +1,8 @@
 開発
-firebase use default
-firebase deploy
 https://lunags-development.web.app
 
 本番
-firebase use production
-firebase deploy
 https://lunags-production.web.app
+
+cd D:\Programming\LUNAGS
+.\deploy.ps1
