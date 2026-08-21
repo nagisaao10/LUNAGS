@@ -2,10 +2,10 @@ import { onInit } from "firebase-functions/v2/core";
 import { onRequest } from "firebase-functions/v2/https";
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
+// import dotenv from "dotenv";
 import { Resend } from "resend";
 
-dotenv.config();
+// dotenv.config();
 
 const app = express();
 
