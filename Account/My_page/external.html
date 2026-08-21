@@ -333,9 +333,7 @@
             document.getElementById("xConnectBtn");
 
         xConnectBtn.addEventListener("click", async () => {
-
             try {
-
                 const user = auth.currentUser;
 
                 if (!user) {
@@ -343,19 +341,21 @@
                     return;
                 }
 
-                const userDoc =
-                    await getDoc(doc(db, "users", await getUserId()));
+                const userId = await getUserId();
+                const userRef = doc(db, "users", userId);
+
+                const userDoc = await getDoc(userRef);
 
                 const connected =
                     userDoc.data()?.external?.x?.connected;
 
                 // 解除
                 if (connected) {
-
                     if (!confirm("X連携を解除しますか？")) {
                         return;
                     }
 
+                    // Firebase Auth側のX連携を解除
                     if (
                         user.providerData.some(
                             p => p.providerId === "twitter.com"
@@ -364,15 +364,24 @@
                         await unlink(user, "twitter.com");
                     }
 
+                    // FirestoreからX情報を削除
                     await updateDoc(
-                        doc(db, "users", await getUserId()),
+                        userRef,
                         {
                             "external.x": deleteField()
                         }
                     );
 
+                    // 画面更新
                     document.getElementById("xStatus")
                         .textContent = "未接続";
+
+                    const xUserInfo =
+                        document.getElementById("xUserInfo");
+
+                    if (xUserInfo) {
+                        xUserInfo.textContent = "";
+                    }
 
                     xConnectBtn.textContent =
                         "接続する";
@@ -386,31 +395,78 @@
                 const provider =
                     new TwitterAuthProvider();
 
-                await linkWithPopup(user, provider);
+                const result =
+                    await linkWithPopup(user, provider);
 
+                // Xのプロバイダ情報
+                const xUser =
+                    result.user.providerData.find(
+                        p => p.providerId === "twitter.com"
+                    );
+
+                if (!xUser) {
+                    throw new Error(
+                        "Xのユーザー情報を取得できませんでした"
+                    );
+                }
+
+                // Xユーザー情報
+                // XのユーザーID
+                const xUserId = xUser.uid;
+
+                // Xの表示名
+                const xDisplayName =
+                    xUser.displayName || "";
+
+                // Xのユーザー名（@～～）
+                const xUsername =
+                    result.additionalUserInfo?.username ?
+                        `@${result.additionalUserInfo.username}` : "";
+
+                // Firestoreに保存
                 await setDoc(
-                    doc(db, "users", await getUserId()),
+                    userRef,
                     {
                         external: {
                             x: {
-                                connected: true
+                                connected: true,
+                                userId: xUserId,
+                                displayName: xDisplayName,
+                                username: xUsername
                             }
                         }
                     },
-                    { merge: true }
+                    {
+                        merge: true
+                    }
                 );
 
+                // 画面更新
                 document.getElementById("xStatus")
                     .textContent = "接続済み";
+
+                const xUserInfo =
+                    document.getElementById("xUserInfo");
+
+                if (xUserInfo) {
+                    xUserInfo.textContent =
+                        `${xDisplayName || "名前なし"} ` +
+                        `(${xUsername || "取得できませんでした"})`;
+                }
 
                 xConnectBtn.textContent =
                     "解除する";
 
-                alert("X連携完了");
+                // 完了通知
+                alert(
+                    `X連携完了\n\n` +
+                    `表示名: ${xDisplayName || "取得できませんでした"}\n` +
+                    `ユーザー名: ${xUsername || "取得できませんでした"}\n` +
+                    `ユーザーID: ${xUserId}`
+                );
 
             } catch (error) {
-
-                console.error(error);
+                console.error("X連携エラー:", error);
 
                 alert(
                     error.message ||
