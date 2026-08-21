@@ -8,3 +8,6 @@ node_modules/
 Thumbs.db
 Management-System/backup/
 Management-System/functions/client_secret_*.json
+
+# Google OAuth client secret
+functions/client_secret_*.json
