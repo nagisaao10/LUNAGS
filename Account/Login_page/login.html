@@ -50,7 +50,7 @@
         onAuthStateChanged(auth, (user) => {
             // ★Googleチェック中は、ここでの自動リダイレクトをスキップする
             if (user && !isGoogleProcessing) {
-                window.location.href = "../My_page/profile.html";
+                window.location.href = "../../launcher.html";
             }
         });
 
@@ -70,7 +70,7 @@
                     setMessage("ログイン成功", "success");
 
                     setTimeout(() => {
-                        window.location.href = "../My_page/profile.html";
+                        window.location.href = "../../launcher.html";
                     }, 1000);
                 })
                 // .catch(err => {
@@ -116,7 +116,7 @@
                         setMessage("Googleでログイン成功", "success");
 
                         setTimeout(() => {
-                            window.location.href = "../My_page/profile.html";
+                            window.location.href = "../../launcher.html";
                         }, 1000);
                     }
                 })

@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LUNAGS | Launcher</title>
+    <link rel="stylesheet" href="./shared/normalize.css">
+    <link rel="stylesheet" href="./shared/common.css">
+
+    <style>
+        :root {
+            --lunags-primary: #73B8FD;
+            --lunags-primary-hover: #5DAAF7;
+            --lunags-primary-light: #EAF5FF;
+            --lunags-primary-dark: #4D9BE8;
+
+            --text-main: #222;
+            --text-sub: #777;
+            --background: #f6f9fc;
+            --card-background: #ffffff;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                "Noto Sans JP",
+                sans-serif;
+
+            color: var(--text-main);
+            background:
+                radial-gradient(circle at top left,
+                    var(--lunags-primary-light),
+                    transparent 35%),
+                var(--background);
+        }
+
+        /* =========================
+           Header
+        ========================= */
+
+        header {
+            width: 100%;
+            height: 70px;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            padding: 0 32px;
+
+            background: rgba(255, 255, 255, 0.85);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            color: var(--lunags-primary-dark);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .user-name {
+            font-size: 14px;
+            color: var(--text-sub);
+        }
+
+        .logout-button {
+            border: none;
+            background: transparent;
+
+            color: var(--text-sub);
+
+            font-size: 13px;
+
+            padding: 8px 12px;
+            border-radius: 8px;
+
+            cursor: pointer;
+
+            transition:
+                background 0.2s ease,
+                color 0.2s ease;
+        }
+
+        .logout-button:hover {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        /* =========================
+           Main
+        ========================= */
+
+        main {
+            width: min(1100px, calc(100% - 40px));
+
+            margin: 0 auto;
+            padding: 70px 0 80px;
+        }
+
+        .welcome {
+            text-align: center;
+            margin-bottom: 55px;
+        }
+
+        .welcome h1 {
+            margin: 0 0 12px;
+
+            font-size: clamp(30px, 5vw, 46px);
+            font-weight: 700;
+
+            letter-spacing: 0.03em;
+        }
+
+        .welcome p {
+            margin: 0;
+
+            color: var(--text-sub);
+            font-size: 16px;
+        }
+
+        #displayName {
+            color: var(--lunags-primary-dark);
+            font-weight: 600;
+        }
+
+        /* =========================
+           Launcher
+        ========================= */
+
+        .launcher-grid {
+            display: grid;
+
+            grid-template-columns:
+                repeat(2, minmax(0, 1fr));
+
+            gap: 28px;
+        }
+
+        .launcher-card {
+            position: relative;
+
+            min-height: 260px;
+
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+
+            padding: 32px;
+
+            background: var(--card-background);
+
+            border: 1px solid rgba(115, 184, 253, 0.18);
+            border-radius: 24px;
+
+            box-shadow:
+                0 8px 30px rgba(0, 0, 0, 0.06);
+
+            text-decoration: none;
+            color: inherit;
+
+            overflow: hidden;
+
+            transition:
+                transform 0.25s ease,
+                box-shadow 0.25s ease,
+                border-color 0.25s ease;
+        }
+
+        .launcher-card::before {
+            content: "";
+
+            position: absolute;
+
+            width: 180px;
+            height: 180px;
+
+            right: -70px;
+            top: -70px;
+
+            border-radius: 50%;
+
+            background: var(--lunags-primary-light);
+
+            transition:
+                transform 0.3s ease;
+        }
+
+        .launcher-card:hover {
+            transform: translateY(-6px);
+
+            border-color:
+                rgba(115, 184, 253, 0.5);
+
+            box-shadow:
+                0 16px 40px rgba(0, 0, 0, 0.10);
+        }
+
+        .launcher-card:hover::before {
+            transform: scale(1.25);
+        }
+
+        .card-top {
+            position: relative;
+            z-index: 1;
+        }
+
+        .card-icon {
+            width: 64px;
+            height: 64px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            margin-bottom: 24px;
+
+            border-radius: 18px;
+
+            background: var(--lunags-primary-light);
+
+            color: var(--lunags-primary-dark);
+
+            font-size: 30px;
+        }
+
+        .card-title {
+            margin: 0 0 8px;
+
+            font-size: 26px;
+            font-weight: 700;
+        }
+
+        .card-description {
+            margin: 0;
+
+            color: var(--text-sub);
+
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+        .card-bottom {
+            position: relative;
+            z-index: 1;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            margin-top: 25px;
+        }
+
+        .open-text {
+            color: var(--lunags-primary-dark);
+
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .arrow {
+            width: 38px;
+            height: 38px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 50%;
+
+            background: var(--lunags-primary);
+
+            color: white;
+
+            font-size: 18px;
+
+            transition:
+                transform 0.2s ease,
+                background 0.2s ease;
+        }
+
+        .launcher-card:hover .arrow {
+            transform: translateX(4px);
+            background: var(--lunags-primary-hover);
+        }
+
+        /* =========================
+           Loading
+        ========================= */
+
+        #loading {
+            position: fixed;
+            inset: 0;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            background: var(--background);
+
+            z-index: 1000;
+
+            transition: opacity 0.3s ease;
+        }
+
+        #loading.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loading-content {
+            text-align: center;
+        }
+
+        .loading-logo {
+            margin-bottom: 20px;
+
+            font-size: 28px;
+            font-weight: 700;
+
+            color: var(--lunags-primary-dark);
+        }
+
+        .loading-text {
+            color: var(--text-sub);
+            font-size: 14px;
+        }
+
+        /* =========================
+           Mobile
+        ========================= */
+
+        @media (max-width: 700px) {
+
+            header {
+                height: 62px;
+                padding: 0 18px;
+            }
+
+            .logo {
+                font-size: 21px;
+            }
+
+            .user-name {
+                display: none;
+            }
+
+            main {
+                width: min(100% - 28px, 500px);
+
+                padding: 50px 0 60px;
+            }
+
+            .welcome {
+                margin-bottom: 35px;
+            }
+
+            .welcome h1 {
+                font-size: 32px;
+            }
+
+            .welcome p {
+                font-size: 14px;
+            }
+
+            .launcher-grid {
+                grid-template-columns: 1fr;
+                gap: 18px;
+            }
+
+            .launcher-card {
+                min-height: 220px;
+                padding: 26px;
+                border-radius: 20px;
+            }
+
+            .card-title {
+                font-size: 23px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- =========================
+         Loading
+    ========================== -->
+
+    <div id="loading">
+
+        <div class="loading-content">
+
+            <div class="loading-logo">
+                LUNAGS
+            </div>
+
+            <div class="loading-text">
+                Loading...
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================
+         Header
+    ========================== -->
+
+    <header>
+
+        <div class="logo">
+            LUNAGS
+        </div>
+
+        <div class="header-right">
+
+            <span id="userName" class="user-name">
+                ログイン確認中...
+            </span>
+
+            <button id="logoutButton" class="logout-button">
+                ログアウト
+            </button>
+
+        </div>
+
+    </header>
+
+
+    <!-- =========================
+         Main
+    ========================== -->
+
+    <main>
+
+        <section class="welcome">
+
+            <h1>
+                Welcome to LUNAGS
+            </h1>
+
+            <p>
+                <span id="displayName">ユーザー</span>
+                さん、どこへ行きますか？
+            </p>
+
+        </section>
+
+
+        <!-- =========================
+             Launcher Cards
+        ========================== -->
+
+        <section class="launcher-grid">
+
+            <!-- My Page -->
+
+            <a href="./Account/My_page/profile.html" class="launcher-card">
+
+                <div class="card-top">
+
+                    <div class="card-icon">
+                        👤
+                    </div>
+
+                    <h2 class="card-title">
+                        My Page
+                    </h2>
+
+                    <p class="card-description">
+                        プロフィールやアカウント情報、
+                        外部サービスとの連携などを管理します。
+                    </p>
+
+                </div>
+
+                <div class="card-bottom">
+
+                    <span class="open-text">
+                        My Pageを開く
+                    </span>
+
+                    <span class="arrow">
+                        →
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- Shop -->
+
+            <a href="./Shop/" class="launcher-card">
+
+                <div class="card-top">
+
+                    <div class="card-icon">
+                        🛒
+                    </div>
+
+                    <h2 class="card-title">
+                        Shop
+                    </h2>
+
+                    <p class="card-description">
+                        LUNAGSのショップへ移動します。
+                        商品やサービスを確認できます。
+                    </p>
+
+                </div>
+
+                <div class="card-bottom">
+
+                    <span class="open-text">
+                        Shopを開く
+                    </span>
+
+                    <span class="arrow">
+                        →
+                    </span>
+
+                </div>
+
+            </a>
+
+        </section>
+
+    </main>
+
+
+    <!-- =========================
+         Firebase
+    ========================== -->
+
+    <script type="module">
+
+        import { auth } from "./shared/firebase-config.js";
+        import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+
+        const loading = document.getElementById("loading");
+        const userName = document.getElementById("userName");
+        const displayName = document.getElementById("displayName");
+        const logoutButton = document.getElementById("logoutButton");
+
+        /*
+         * ログイン状態を確認
+         */
+
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+
+                /*
+                 * 未ログイン
+                 *
+                 * ログインページへ戻す
+                 */
+
+                window.location.href = "./Account/Login_page/login.html";
+                return;
+            }
+
+
+            /*
+             * ログイン済み
+             */
+
+            const name =
+                user.displayName ||
+                user.email?.split("@")[0] ||
+                "ユーザー";
+
+
+            userName.textContent = name;
+            displayName.textContent = name;
+
+
+            /*
+             * ローディング終了
+             */
+
+            loading.classList.add("hidden");
+        });
+
+
+        /*
+         * ログアウト
+         */
+
+        logoutButton.addEventListener("click", async () => {
+
+            try {
+                await signOut(auth);
+                window.location.href = "./Account/Login_page/login.html";
+
+            } catch (error) {
+                console.error(
+                    "ログアウトに失敗しました:",
+                    error
+                );
+                alert(
+                    "ログアウトに失敗しました。"
+                );
+
+            }
+
+        });
+
+    </script>
+
+</body>
+
+</html>
