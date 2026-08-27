@@ -1,9 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
-import {
-    getFirestore,
-    serverTimestamp
-} from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+import { getFirestore, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
 const firebaseConfigs = {
     development: {
@@ -51,7 +48,10 @@ export const CODE_TTL_MS = 5 * 60 * 1000;
 export const MAX_ATTEMPTS = 5;
 export const RESEND_COOLDOWN_MS = 60 * 1000;
 
-export const MAILER_ENDPOINT = "https://send-poqx4aslqa-uc.a.run.app/send";
+const MAILER_ENDPOINT = isDevelopment
+    ? "https://us-central1-lunags-development.cloudfunctions.net/send"
+    : "https://us-central1-lunags-production.cloudfunctions.net/send";
+
 export const FIREBASE_TIMEOUT_MS = 30000;
 export const LOCAL_VERIFICATION_KEY_PREFIX = "verify_";
 
