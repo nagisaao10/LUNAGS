@@ -38,6 +38,149 @@
             getFriendlyErrorMessage
         } from "../../shared/firebase-config.js";
 
+
+        /*
+         * ========================================
+         * 開発環境専用 管理者認証
+         * ========================================
+         *
+         * localhost または lunags-development 
+         * 系ドメインでのみ有効。
+         *
+         */
+
+        const isDevelopmentEnvironment =
+            window.location.hostname === "localhost" ||
+            window.location.hostname === "127.0.0.1" ||
+            window.location.hostname.includes("lunags-development");
+
+        if (isDevelopmentEnvironment) {
+
+            window.LUNAGS_ADMIN = async (adminCode) => {
+
+                const ADMIN_CODE = "1001LUNA-ADMIN";
+
+                // 管理者コード確認
+                if (adminCode !== ADMIN_CODE) {
+                    console.error("管理者コードが正しくありません");
+                    return;
+                }
+
+                const pendingSignup = loadPendingSignup();
+
+                if (!pendingSignup?.email) {
+                    console.error("新規登録情報が見つかりません");
+                    return;
+                }
+
+                const email = pendingSignup.email;
+
+                const ref = doc(
+                    db,
+                    VERIFICATION_COLLECTION,
+                    email
+                );
+
+                try {
+
+                    await withTimeout(
+                        runTransaction(db, async (transaction) => {
+
+                            const snap = await transaction.get(ref);
+                            const now = Date.now();
+
+                            /*
+                             * 確認コード情報が存在する場合
+                             */
+
+                            if (snap.exists()) {
+
+                                const data = snap.data() || {};
+
+                                transaction.set(
+                                    ref,
+                                    {
+                                        ...data,
+                                        verified: true,
+                                        verifiedAt: now,
+                                        updatedAt: now,
+                                        // 管理者認証では期限切れを回避
+                                        expiresAt: now + (5 * 60 * 1000)
+                                    }
+                                );
+
+                            }
+
+                            /*
+                             * 確認コード情報が存在しない場合
+                             */
+
+                            else {
+
+                                transaction.set(
+                                    ref,
+                                    {
+                                        email: email,
+                                        codeHash: "",
+                                        attemptCount: 0,
+                                        maxAttempts: 5,
+                                        verified: true,
+                                        verifiedAt: now,
+                                        createdAt: now,
+                                        updatedAt: now,
+                                        expiresAt: now + (5 * 60 * 1000)
+                                    }
+                                );
+
+                            }
+
+                        })
+                    );
+
+                    console.log(
+                        "LUNAGS 管理者認証: OK"
+                    );
+
+                    console.log(
+                        "6桁コード認証をスキップします"
+                    );
+
+                    setMessage(
+                        "管理者認証が完了しました",
+                        "success"
+                    );
+
+                    setTimeout(() => {
+                        window.location.href = "./set-password.html";
+                    }, 500);
+
+                } catch (error) {
+
+                    console.error(
+                        "管理者認証エラー:",
+                        error
+                    );
+
+                    setMessage(
+                        "管理者認証に失敗しました",
+                        "error"
+                    );
+                }
+            };
+
+            console.log(
+                "%cLUNAGS 開発者用管理者認証が有効です",
+                "color:#73B8FD;font-weight:bold;"
+            );
+
+            console.log(
+                'LUNAGS_ADMIN("管理者コード")'
+            );
+        }
+
+        /* ============================================================*/
+
+
         function setMessage(text, type = "") {
             const message = document.getElementById("message");
             message.className = `message ${type}`;
