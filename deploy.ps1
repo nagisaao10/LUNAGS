@@ -146,4 +146,4 @@ Write-Host "Git:      完了"
 Write-Host "Firebase: 完了"
 Write-Host "Project:  $project"
 Write-Host ""
-Write-Host "本番URL / Development URLをブラウザで確認してください。" -ForegroundColor Yellow
+Write-Host "Production URL / Development URLをブラウザで確認してください。" -ForegroundColor Yellow
