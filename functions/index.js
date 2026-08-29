@@ -1,24 +1,15 @@
-import { onInit } from "firebase-functions/v2/core";
 import { onRequest } from "firebase-functions/v2/https";
 import express from "express";
 import cors from "cors";
-// import dotenv from "dotenv";
 import { Resend } from "resend";
-
-// dotenv.config();
 
 const app = express();
 
-app.use(cors());
 app.use(express.json());
 
-let resend;
+const resend = new Resend(process.env.RESEND_KEY);
 
-onInit(() => {
-    resend = new Resend(process.env.RESEND_KEY);
-});
-
-app.post("/send", async (req, res) => {
+app.post("/", async (req, res) => {
     const { email, code, name } = req.body;
 
     try {
@@ -54,4 +45,14 @@ app.post("/send", async (req, res) => {
     }
 });
 
-export const send = onRequest(app);
+export const send = onRequest(
+    {
+        invoker: "public",
+        cors: [
+            "https://lunags-development.web.app",
+            "http://localhost:8000",
+            "http://127.0.0.1:8000"
+        ]
+    },
+    app
+);

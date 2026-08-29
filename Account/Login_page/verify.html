@@ -44,7 +44,7 @@
          * 開発環境専用 管理者認証
          * ========================================
          *
-         * localhost または lunags-development 
+         * localhost または lunags-development
          * 系ドメインでのみ有効。
          *
          */
@@ -55,16 +55,24 @@
             window.location.hostname.includes("lunags-development");
 
         if (isDevelopmentEnvironment) {
-
             window.LUNAGS_ADMIN = async (adminCode) => {
-
                 const ADMIN_CODE = "1001LUNA-ADMIN";
 
-                // 管理者コード確認
+                // 管理者コードが正しくない場合は何もしない
                 if (adminCode !== ADMIN_CODE) {
-                    console.error("管理者コードが正しくありません");
                     return;
                 }
+
+                // 正しい管理者コードが入力された場合のみ
+                // 管理者モードの存在を表示
+                console.log(
+                    "%cLUNAGS 開発者用モードが有効です",
+                    "color:#73B8FD;font-weight:bold;"
+                );
+
+                console.log(
+                    'LUNAGS_ADMIN("管理者コード")'
+                );
 
                 const pendingSignup = loadPendingSignup();
 
@@ -82,19 +90,14 @@
                 );
 
                 try {
-
                     await withTimeout(
                         runTransaction(db, async (transaction) => {
-
                             const snap = await transaction.get(ref);
                             const now = Date.now();
 
-                            /*
-                             * 確認コード情報が存在する場合
-                             */
+                            // 確認コード情報が存在する場合
 
                             if (snap.exists()) {
-
                                 const data = snap.data() || {};
 
                                 transaction.set(
@@ -104,19 +107,15 @@
                                         verified: true,
                                         verifiedAt: now,
                                         updatedAt: now,
+
                                         // 管理者認証では期限切れを回避
                                         expiresAt: now + (5 * 60 * 1000)
                                     }
                                 );
-
                             }
 
-                            /*
-                             * 確認コード情報が存在しない場合
-                             */
-
+                            // 確認コード情報が存在しない場合
                             else {
-
                                 transaction.set(
                                     ref,
                                     {
@@ -131,9 +130,7 @@
                                         expiresAt: now + (5 * 60 * 1000)
                                     }
                                 );
-
                             }
-
                         })
                     );
 
@@ -155,7 +152,6 @@
                     }, 500);
 
                 } catch (error) {
-
                     console.error(
                         "管理者認証エラー:",
                         error
@@ -167,18 +163,9 @@
                     );
                 }
             };
-
-            console.log(
-                "%cLUNAGS 開発者用管理者認証が有効です",
-                "color:#73B8FD;font-weight:bold;"
-            );
-
-            console.log(
-                'LUNAGS_ADMIN("管理者コード")'
-            );
         }
 
-        /* ============================================================*/
+        /* ============================================================ */
 
 
         function setMessage(text, type = "") {
