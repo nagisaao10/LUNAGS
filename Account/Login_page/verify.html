@@ -107,7 +107,7 @@
 
                     if (!/^\d{6}$/.test(inputCode)) {
                         const adminResponse = await fetch(
-                            "https://send-74lpz7lxba-uc.a.run.app/admin-auth",
+                            `${FUNCTIONS_ENDPOINT}/admin-auth`,
                             {
                                 method: "POST",
                                 headers: { "Content-Type": "application/json" },
