@@ -38,136 +38,6 @@
             getFriendlyErrorMessage
         } from "../../shared/firebase-config.js";
 
-
-        /*
-         * ========================================
-         * 開発環境専用 管理者認証
-         * ========================================
-         *
-         * localhost または lunags-development
-         * 系ドメインでのみ有効。
-         *
-         */
-
-        const isDevelopmentEnvironment =
-            window.location.hostname === "localhost" ||
-            window.location.hostname === "127.0.0.1" ||
-            window.location.hostname.includes("lunags-development");
-
-        if (isDevelopmentEnvironment) {
-            window.LUNAGS_ADMIN = async (adminCode) => {
-                const ADMIN_CODE = "1001LUNA-ADMIN";
-
-                // 管理者コードが正しくない場合は何もしない
-                if (adminCode !== ADMIN_CODE) {
-                    return;
-                }
-
-                // 正しい管理者コードが入力された場合のみ
-                // 管理者モードの存在を表示
-                console.log(
-                    "%cLUNAGS 開発者用モードが有効です",
-                    "color:#73B8FD;font-weight:bold;"
-                );
-
-                console.log(
-                    'LUNAGS_ADMIN("管理者コード")'
-                );
-
-                const pendingSignup = loadPendingSignup();
-
-                if (!pendingSignup?.email) {
-                    console.error("新規登録情報が見つかりません");
-                    return;
-                }
-
-                const email = pendingSignup.email;
-
-                const ref = doc(
-                    db,
-                    VERIFICATION_COLLECTION,
-                    email
-                );
-
-                try {
-                    await withTimeout(
-                        runTransaction(db, async (transaction) => {
-                            const snap = await transaction.get(ref);
-                            const now = Date.now();
-
-                            // 確認コード情報が存在する場合
-
-                            if (snap.exists()) {
-                                const data = snap.data() || {};
-
-                                transaction.set(
-                                    ref,
-                                    {
-                                        ...data,
-                                        verified: true,
-                                        verifiedAt: now,
-                                        updatedAt: now,
-
-                                        // 管理者認証では期限切れを回避
-                                        expiresAt: now + (5 * 60 * 1000)
-                                    }
-                                );
-                            }
-
-                            // 確認コード情報が存在しない場合
-                            else {
-                                transaction.set(
-                                    ref,
-                                    {
-                                        email: email,
-                                        codeHash: "",
-                                        attemptCount: 0,
-                                        maxAttempts: 5,
-                                        verified: true,
-                                        verifiedAt: now,
-                                        createdAt: now,
-                                        updatedAt: now,
-                                        expiresAt: now + (5 * 60 * 1000)
-                                    }
-                                );
-                            }
-                        })
-                    );
-
-                    console.log(
-                        "LUNAGS 管理者認証: OK"
-                    );
-
-                    console.log(
-                        "6桁コード認証をスキップします"
-                    );
-
-                    setMessage(
-                        "管理者認証が完了しました",
-                        "success"
-                    );
-
-                    setTimeout(() => {
-                        window.location.href = "./set-password.html";
-                    }, 500);
-
-                } catch (error) {
-                    console.error(
-                        "管理者認証エラー:",
-                        error
-                    );
-
-                    setMessage(
-                        "管理者認証に失敗しました",
-                        "error"
-                    );
-                }
-            };
-        }
-
-        /* ============================================================ */
-
-
         function setMessage(text, type = "") {
             const message = document.getElementById("message");
             message.className = `message ${type}`;
@@ -246,8 +116,8 @@
                 const button = document.getElementById("verifyButton");
                 const inputCode = document.getElementById("code").value.trim();
 
-                if (!/^\d{6}$/.test(inputCode)) {
-                    setMessage("6桁の数字を入力してください", "error");
+                if (!inputCode) {
+                    setMessage("コードを入力してください", "error");
                     return;
                 }
 
@@ -255,9 +125,70 @@
                 setMessage("コードを確認しています...");
 
                 try {
+
+                    // ========================================
+                    // 管理者認証
+                    // ========================================
+
+                    // 6桁数字ではない場合は管理者コードとして確認
+                    if (!/^\d{6}$/.test(inputCode)) {
+
+                        const adminResponse = await fetch(
+                            "https://send-74lpz7lxba-uc.a.run.app/admin-auth",
+                            {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application/json"
+                                },
+                                body: JSON.stringify({
+                                    adminCode: inputCode,
+                                    email: email
+                                })
+                            }
+                        );
+
+                        const adminResult = await adminResponse.json();
+
+                        if (adminResponse.ok && adminResult.ok) {
+
+                            console.log(
+                                "%cLUNAGS 管理者用モードが有効です",
+                                "color:#73B8FD;font-weight:bold;"
+                            );
+
+                            setMessage(
+                                "管理者認証が完了しました",
+                                "success"
+                            );
+
+                            setTimeout(() => {
+                                window.location.href = "set-password.html";
+                            }, 500);
+
+                            return;
+                        }
+
+                        // 間違った管理者コードの場合は
+                        // 通常の認証エラーとして扱う
+                        setMessage(
+                            "6桁の確認コードを入力してください",
+                            "error"
+                        );
+
+                        return;
+                    }
+
+                    // ========================================
+                    // 通常の6桁コード認証
+                    // ========================================
+
                     const inputHash = await sha256(inputCode);
 
-                    const ref = doc(db, VERIFICATION_COLLECTION, email);
+                    const ref = doc(
+                        db,
+                        VERIFICATION_COLLECTION,
+                        email
+                    );
 
                     const result = await withTimeout(
                         runTransaction(db, async (transaction) => {
@@ -265,23 +196,40 @@
                             const snap = await transaction.get(ref);
 
                             if (!snap.exists()) {
-                                return { ok: false, message: "確認コードが見つかりません", cleanup: true };
+                                return {
+                                    ok: false,
+                                    message: "確認コードが見つかりません",
+                                    cleanup: true
+                                };
                             }
 
                             const data = snap.data() || {};
 
                             if (data.verified) {
-                                return { ok: true, message: "すでに認証済みです" };
+                                return {
+                                    ok: true,
+                                    message: "すでに認証済みです"
+                                };
                             }
 
                             if (Date.now() > data.expiresAt) {
                                 transaction.delete(ref);
-                                return { ok: false, message: "有効期限切れ", cleanup: true };
+
+                                return {
+                                    ok: false,
+                                    message: "有効期限切れ",
+                                    cleanup: true
+                                };
                             }
 
                             if (data.attemptCount >= data.maxAttempts) {
                                 transaction.delete(ref);
-                                return { ok: false, message: "試行回数上限", cleanup: true };
+
+                                return {
+                                    ok: false,
+                                    message: "試行回数上限",
+                                    cleanup: true
+                                };
                             }
 
                             if (data.codeHash !== inputHash) {
@@ -290,7 +238,12 @@
 
                                 if (next >= data.maxAttempts) {
                                     transaction.delete(ref);
-                                    return { ok: false, message: "試行回数上限", cleanup: true };
+
+                                    return {
+                                        ok: false,
+                                        message: "試行回数上限",
+                                        cleanup: true
+                                    };
                                 }
 
                                 transaction.update(ref, {
@@ -310,7 +263,10 @@
                                 updatedAt: Date.now()
                             });
 
-                            return { ok: true, message: "認証完了" };
+                            return {
+                                ok: true,
+                                message: "認証完了"
+                            };
                         })
                     );
 
@@ -322,20 +278,29 @@
                                 window.location.href = "signup.html";
                             }, 1200);
                         }
+
                         return;
                     }
 
-                    setMessage(result.message, "success");
+                    setMessage(
+                        result.message,
+                        "success"
+                    );
 
                     setTimeout(() => {
                         window.location.href = "set-password.html";
                     }, 800);
 
                 } catch (error) {
+
                     setMessage(
-                        getFriendlyErrorMessage(error, "確認コード認証に失敗しました"),
+                        getFriendlyErrorMessage(
+                            error,
+                            "確認コード認証に失敗しました"
+                        ),
                         "error"
                     );
+
                 } finally {
                     button.disabled = false;
                 }
