@@ -78,6 +78,11 @@
         }
 
         window.addEventListener("DOMContentLoaded", () => {
+            const FUNCTIONS_ENDPOINT =
+                window.location.hostname === "lunags-production.web.app"
+                    ? "https://us-central1-lunags-production.cloudfunctions.net/send"
+                    : "https://us-central1-lunags-development.cloudfunctions.net/send";
+
             const pendingSignup = loadPendingSignup();
 
             if (!pendingSignup?.email) {

@@ -67,6 +67,13 @@ app.post("/admin-auth", async (req, res) => {
 
         const correctAdminCode = LUNAGS_ADMIN_CODE.value();
 
+        console.log("Admin auth debug:", {
+            receivedLength: typeof adminCode === "string" ? adminCode.length : -1,
+            secretLength: typeof correctAdminCode === "string" ? correctAdminCode.length : -1,
+            receivedType: typeof adminCode,
+            secretType: typeof correctAdminCode
+        });
+
         if (adminCode !== correctAdminCode) {
             console.warn("LUNAGS 管理者認証: NG");
             return res.status(401).json({ ok: false });
