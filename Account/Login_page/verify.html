@@ -14,29 +14,15 @@
     <div class="box">
         <h2>確認コード認証</h2>
         <p id="emailLabel"></p>
-        <input id="code" inputmode="numeric" maxlength="6" placeholder="6桁コード">
+        <input id="code" inputmode="text" autocomplete="one-time-code" placeholder="確認コード">
         <div id="message" class="message"></div>
         <button id="verifyButton">認証する</button>
         <button class="secondary" onclick="location.href='./signup.html'">新規登録へ戻る</button>
     </div>
 
     <script type="module">
-        import {
-            doc,
-            getDoc,
-            runTransaction
-        } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
-
-        import {
-            db,
-            VERIFICATION_COLLECTION,
-            sha256,
-            loadPendingSignup,
-            saveLocalVerification,
-            clearLocalVerification,
-            withTimeout,
-            getFriendlyErrorMessage
-        } from "../../shared/firebase-config.js";
+        import { doc, getDoc, runTransaction } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+        import { db, VERIFICATION_COLLECTION, sha256, loadPendingSignup, saveLocalVerification, clearLocalVerification, withTimeout, getFriendlyErrorMessage } from "../../shared/firebase-config.js";
 
         function setMessage(text, type = "") {
             const message = document.getElementById("message");
@@ -47,16 +33,10 @@
         async function verifyLocalCode(inputHash, email) {
             const ref = doc(db, VERIFICATION_COLLECTION, email);
             const snap = await getDoc(ref);
-
-            if (!snap.exists()) {
-                return { ok: false, message: "確認コードが見つかりません", cleanup: true };
-            }
+            if (!snap.exists()) return { ok: false, message: "確認コードが見つかりません", cleanup: true };
 
             const data = snap.data();
-
-            if (data.verified) {
-                return { ok: true, message: "すでに認証済みです" };
-            }
+            if (data.verified) return { ok: true, message: "すでに認証済みです" };
 
             if (Date.now() > data.expiresAt) {
                 clearLocalVerification(email);
@@ -69,9 +49,7 @@
             }
 
             if (data.codeHash !== inputHash) {
-
                 const next = data.attemptCount + 1;
-
                 if (next >= data.maxAttempts) {
                     clearLocalVerification(email);
                     return { ok: false, message: "試行回数上限", cleanup: true };
@@ -100,7 +78,6 @@
         }
 
         window.addEventListener("DOMContentLoaded", () => {
-
             const pendingSignup = loadPendingSignup();
 
             if (!pendingSignup?.email) {
@@ -112,7 +89,6 @@
             document.getElementById("emailLabel").innerText = email;
 
             window.verifyCode = async () => {
-
                 const button = document.getElementById("verifyButton");
                 const inputCode = document.getElementById("code").value.trim();
 
@@ -125,21 +101,16 @@
                 setMessage("コードを確認しています...");
 
                 try {
-
                     // ========================================
                     // 管理者認証
                     // ========================================
 
-                    // 6桁数字ではない場合は管理者コードとして確認
                     if (!/^\d{6}$/.test(inputCode)) {
-
                         const adminResponse = await fetch(
                             "https://send-74lpz7lxba-uc.a.run.app/admin-auth",
                             {
                                 method: "POST",
-                                headers: {
-                                    "Content-Type": "application/json"
-                                },
+                                headers: { "Content-Type": "application/json" },
                                 body: JSON.stringify({
                                     adminCode: inputCode,
                                     email: email
@@ -150,16 +121,12 @@
                         const adminResult = await adminResponse.json();
 
                         if (adminResponse.ok && adminResult.ok) {
-
                             console.log(
                                 "%cLUNAGS 管理者用モードが有効です",
                                 "color:#73B8FD;font-weight:bold;"
                             );
 
-                            setMessage(
-                                "管理者認証が完了しました",
-                                "success"
-                            );
+                            setMessage("管理者認証が完了しました", "success");
 
                             setTimeout(() => {
                                 window.location.href = "set-password.html";
@@ -168,13 +135,7 @@
                             return;
                         }
 
-                        // 間違った管理者コードの場合は
-                        // 通常の認証エラーとして扱う
-                        setMessage(
-                            "6桁の確認コードを入力してください",
-                            "error"
-                        );
-
+                        setMessage("6桁の確認コードを入力してください", "error");
                         return;
                     }
 
@@ -183,16 +144,10 @@
                     // ========================================
 
                     const inputHash = await sha256(inputCode);
-
-                    const ref = doc(
-                        db,
-                        VERIFICATION_COLLECTION,
-                        email
-                    );
+                    const ref = doc(db, VERIFICATION_COLLECTION, email);
 
                     const result = await withTimeout(
                         runTransaction(db, async (transaction) => {
-
                             const snap = await transaction.get(ref);
 
                             if (!snap.exists()) {
@@ -206,15 +161,11 @@
                             const data = snap.data() || {};
 
                             if (data.verified) {
-                                return {
-                                    ok: true,
-                                    message: "すでに認証済みです"
-                                };
+                                return { ok: true, message: "すでに認証済みです" };
                             }
 
                             if (Date.now() > data.expiresAt) {
                                 transaction.delete(ref);
-
                                 return {
                                     ok: false,
                                     message: "有効期限切れ",
@@ -224,7 +175,6 @@
 
                             if (data.attemptCount >= data.maxAttempts) {
                                 transaction.delete(ref);
-
                                 return {
                                     ok: false,
                                     message: "試行回数上限",
@@ -233,12 +183,10 @@
                             }
 
                             if (data.codeHash !== inputHash) {
-
                                 const next = data.attemptCount + 1;
 
                                 if (next >= data.maxAttempts) {
                                     transaction.delete(ref);
-
                                     return {
                                         ok: false,
                                         message: "試行回数上限",
@@ -263,10 +211,7 @@
                                 updatedAt: Date.now()
                             });
 
-                            return {
-                                ok: true,
-                                message: "認証完了"
-                            };
+                            return { ok: true, message: "認証完了" };
                         })
                     );
 
@@ -282,17 +227,13 @@
                         return;
                     }
 
-                    setMessage(
-                        result.message,
-                        "success"
-                    );
+                    setMessage(result.message, "success");
 
                     setTimeout(() => {
                         window.location.href = "set-password.html";
                     }, 800);
 
                 } catch (error) {
-
                     setMessage(
                         getFriendlyErrorMessage(
                             error,
@@ -300,14 +241,15 @@
                         ),
                         "error"
                     );
-
                 } finally {
                     button.disabled = false;
                 }
             };
 
-            document.getElementById("verifyButton")
-                .addEventListener("click", window.verifyCode);
+            document.getElementById("verifyButton").addEventListener(
+                "click",
+                window.verifyCode
+            );
         });
     </script>
 </body>

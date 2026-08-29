@@ -127,9 +127,9 @@ Write-Host ""
 Write-Host "[5/5] Firebase Deploy: $environment ($project)" -ForegroundColor Cyan
 
 # Firebase Functions Discovery Timeout
-$env:FUNCTIONS_DISCOVERY_TIMEOUT = "30"
+$env:FUNCTIONS_DISCOVERY_TIMEOUT = "120"
 
-Write-Host "Functions Discovery Timeout: 30 seconds" -ForegroundColor DarkGray
+Write-Host "Functions Discovery Timeout: 120 seconds" -ForegroundColor DarkGray
 
 firebase deploy --project $project
 
