@@ -145,22 +145,7 @@
                     </div>
                 </section>
 
-                <!-- 2. 新規登録用メール承認（共通機能） -->
-                <section class="card hidden" id="approveEmailCard">
-                    <div class="card__head">
-                        <h2><i class="fa-solid fa-user-check"></i> 新規登録用メール承認</h2>
-                    </div>
-                    <form id="approveEmailForm" class="form-grid">
-                        <div class="form-group">
-                            <label for="approvalEmail">対象メールアドレス</label>
-                            <input class="field" id="approvalEmail" type="email" placeholder="example@gmail.com" autocomplete="off" required>
-                        </div>
-                        <div class="actions">
-                            <button class="btn btn-primary" type="submit"><i class="fa-solid fa-check"></i> 承認する</button>
-                        </div>
-                    </form>
-                    <div class="message" id="approvalMessage"></div>
-                </section>
+
 
                 <!-- 3. 管理者アカウントの管理（管理者アカウントのみ） -->
                 <section class="card hidden" id="adminAccountsSection">
@@ -428,7 +413,6 @@
             $("selfAdminAccount").textContent = status.isAdminAccount ? "有効" : "なし";
             
             $("selfAdminAccountRow").classList.toggle("hidden", !status.isAdminAccount);
-            $("approveEmailCard").classList.toggle("hidden", !isAllowed);
             $("selfSessionSection").classList.toggle("hidden", !status.adminMode);
             
             if (status.isAdminAccount) {
@@ -676,23 +660,6 @@
                 await loadAll();
             }));
 
-            $("approveEmailForm").addEventListener("submit", (event) => {
-                event.preventDefault();
-                runAction(async () => {
-                    const result = await request("/admin-approve-email", {
-                        method: "POST",
-                        body: JSON.stringify({
-                            email: $("approvalEmail").value.trim()
-                        })
-                    });
-                    setMessage(
-                        "approvalMessage",
-                        `承認しました。期限: ${formatDate(result.expiresAt)}`,
-                        "success"
-                    );
-                    $("approvalEmail").value = "";
-                }, "approvalMessage");
-            });
 
             $("grantModeForm").addEventListener("submit", (event) => {
                 event.preventDefault();
