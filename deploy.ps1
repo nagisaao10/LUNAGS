@@ -126,12 +126,14 @@ switch ($target) {
 Write-Host ""
 Write-Host "[5/5] Firebase Deploy: $environment ($project)" -ForegroundColor Cyan
 
-# Firebase Functions Discovery Timeout
+Write-Host "Deploy Hosting only" -ForegroundColor DarkGray
+firebase deploy --only hosting --project $project
+
+Write-Host "Deploy Functions only" -ForegroundColor DarkGray
+
 $env:FUNCTIONS_DISCOVERY_TIMEOUT = "120"
-
 Write-Host "Functions Discovery Timeout: 120 seconds" -ForegroundColor DarkGray
-
-firebase deploy --project $project
+firebase deploy --only functions --project $project
 
 if ($LASTEXITCODE -ne 0) {
     throw "Firebase Deployに失敗しました。"
