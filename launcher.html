@@ -160,6 +160,10 @@
             gap: 28px;
         }
 
+        .launcher-card.is-hidden {
+            display: none;
+        }
+
         .launcher-card {
             position: relative;
 
@@ -549,6 +553,41 @@
 
             </a>
 
+
+            <!-- Admin -->
+
+            <a href="./Account/Admin_page/admin.html" class="launcher-card is-hidden" id="adminCard">
+
+                <div class="card-top">
+
+                    <div class="card-icon">
+                        管
+                    </div>
+
+                    <h2 class="card-title">
+                        Admin
+                    </h2>
+
+                    <p class="card-description" id="adminCardDescription">
+                        管理者アカウントと管理者モードを確認します。
+                    </p>
+
+                </div>
+
+                <div class="card-bottom">
+
+                    <span class="open-text" id="adminCardStatus">
+                        管理者ページを開く
+                    </span>
+
+                    <span class="arrow">
+                        →
+                    </span>
+
+                </div>
+
+            </a>
+
         </section>
 
     </main>
@@ -567,12 +606,79 @@
         const userName = document.getElementById("userName");
         const displayName = document.getElementById("displayName");
         const logoutButton = document.getElementById("logoutButton");
+        const adminCard = document.getElementById("adminCard");
+        const adminCardStatus = document.getElementById("adminCardStatus");
+        const adminCardDescription = document.getElementById("adminCardDescription");
+
+        const FUNCTIONS_ENDPOINT =
+            window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+                ? "http://127.0.0.1:5001/lunags-development/us-central1/send"
+                : window.location.hostname === "lunags-production.web.app"
+                    ? "https://us-central1-lunags-production.cloudfunctions.net/send"
+                    : "https://us-central1-lunags-development.cloudfunctions.net/send";
+
+        function formatTime(value) {
+            if (!value) return "-";
+
+            return new Date(value).toLocaleTimeString(
+                "ja-JP",
+                {
+                    hour: "2-digit",
+                    minute: "2-digit"
+                }
+            );
+        }
+
+        async function renderAdminCard(user) {
+            adminCard.classList.add("is-hidden");
+
+            try {
+                const idToken = await user.getIdToken();
+                const response = await fetch(
+                    `${FUNCTIONS_ENDPOINT}/admin-status`,
+                    {
+                        headers: {
+                            "Authorization": `Bearer ${idToken}`
+                        }
+                    }
+                );
+                const result = await response.json();
+
+                if (!response.ok || !result.ok) {
+                    return;
+                }
+
+                if (!result.isAdminAccount && !result.adminMode) {
+                    return;
+                }
+
+                adminCard.classList.remove("is-hidden");
+
+                if (result.isAdminAccount) {
+                    adminCardStatus.textContent = "管理者アカウント";
+                    adminCardDescription.textContent =
+                        "管理者アカウント、管理者モード、履歴を管理します。";
+                    return;
+                }
+
+                adminCardStatus.textContent =
+                    `管理者モード中 期限: ${formatTime(result.session?.expiresAt)}`;
+                adminCardDescription.textContent =
+                    "一時的な管理者モードで、新規登録用メール承認を行えます。";
+
+            } catch (error) {
+                console.info(
+                    "管理者状態を取得できませんでした:",
+                    error
+                );
+            }
+        }
 
         /*
          * ログイン状態を確認
          */
 
-        onAuthStateChanged(auth, (user) => {
+        onAuthStateChanged(auth, async (user) => {
             if (!user) {
 
                 /*
@@ -598,6 +704,8 @@
 
             userName.textContent = name;
             displayName.textContent = name;
+
+            await renderAdminCard(user);
 
 
             /*

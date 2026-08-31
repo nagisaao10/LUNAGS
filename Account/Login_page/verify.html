@@ -78,11 +78,6 @@
         }
 
         window.addEventListener("DOMContentLoaded", () => {
-            const FUNCTIONS_ENDPOINT =
-                window.location.hostname === "lunags-production.web.app"
-                    ? "https://us-central1-lunags-production.cloudfunctions.net/send"
-                    : "https://us-central1-lunags-development.cloudfunctions.net/send";
-
             const pendingSignup = loadPendingSignup();
 
             if (!pendingSignup?.email) {
@@ -106,40 +101,7 @@
                 setMessage("コードを確認しています...");
 
                 try {
-                    // ========================================
-                    // 管理者認証
-                    // ========================================
-
                     if (!/^\d{6}$/.test(inputCode)) {
-                        const adminResponse = await fetch(
-                            `${FUNCTIONS_ENDPOINT}/admin-auth`,
-                            {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({
-                                    adminCode: inputCode,
-                                    email: email
-                                })
-                            }
-                        );
-
-                        const adminResult = await adminResponse.json();
-
-                        if (adminResponse.ok && adminResult.ok) {
-                            console.log(
-                                "%cLUNAGS 管理者モードが有効です",
-                                "color:#73B8FD;font-weight:bold;"
-                            );
-
-                            setMessage("管理者認証が完了しました", "success");
-
-                            setTimeout(() => {
-                                window.location.href = "set-password.html";
-                            }, 500);
-
-                            return;
-                        }
-
                         setMessage("6桁の確認コードを入力してください", "error");
                         return;
                     }
