@@ -20,7 +20,7 @@
         <!-- 左サイドバー -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar__brand">
-                <img src="../../Images/logo_LUNAGS.png" alt="LUNAGS" class="logo-lunags">
+                <img src="../../images/logo_LUNAGS.png" alt="LUNAGS" class="logo-lunags">
                 <div class="sidebar__brand-divider"></div>
                 <span class="sidebar__brand-subtitle">ADMIN</span>
             </div>
@@ -30,11 +30,11 @@
                     <i class="fa-solid fa-table-cells-large"></i>
                     <span>ランチャー</span>
                 </a>
-                <a href="../../Management/Home_page/home.html" class="menu">
+                <a href="../../management/dashboard/dashboard.html" class="menu">
                     <i class="fas fa-desktop"></i>
                     <span>管理ホーム</span>
                 </a>
-                <a href="../My_page/profile.html" class="menu">
+                <a href="../mypage/profile.html" class="menu">
                     <i class="fas fa-user"></i>
                     <span>マイページ</span>
                 </a>
@@ -48,6 +48,10 @@
                 <button class="btn btn-secondary" id="refreshBtn">
                     <i class="fa-solid fa-rotate"></i>
                     <span>再読み込み</span>
+                </button>
+                <button class="btn logout-btn" id="logoutBtn">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>ログアウト</span>
                 </button>
             </div>
         </aside>
@@ -301,7 +305,7 @@
     <!-- JS ロジック -->
     <script type="module">
         import { auth } from "../../shared/firebase-config.js";
-        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+        import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
 
         const FUNCTIONS_ENDPOINT =
             window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
@@ -644,6 +648,18 @@
 
             $("refreshBtn").addEventListener("click", () => runAction(loadAll));
 
+            $("logoutBtn").addEventListener("click", async () => {
+                if (confirm("ログアウトしますか？")) {
+                    try {
+                        await signOut(auth);
+                        window.location.href = "../login/login.html";
+                    } catch (error) {
+                        console.error("ログアウトに失敗しました:", error);
+                        alert("ログアウトに失敗しました: " + error.message);
+                    }
+                }
+            });
+
             $("endMyModeBtn").addEventListener("click", () => runAction(async () => {
                 await request("/admin-logout", {
                     method: "POST",
@@ -741,7 +757,7 @@
 
         onAuthStateChanged(auth, async (user) => {
             if (!user) {
-                window.location.href = "../Login_page/login.html";
+                window.location.href = "../login/login.html";
                 return;
             }
 

@@ -208,6 +208,30 @@ select:disabled {
     margin-top: auto;
 }
 
+.logout-btn {
+    width: 100%;
+    min-height: 40px;
+    color: #ff9aa8;
+    background: rgba(232, 85, 111, 0.12);
+    border: 1px solid rgba(232, 85, 111, 0.28);
+    border-radius: var(--radius);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    transition: transform 0.14s ease, border-color 0.14s ease, background 0.14s ease, box-shadow 0.14s ease, color 0.14s ease;
+}
+
+.logout-btn:hover {
+    color: #ffffff;
+    background: var(--rose-500);
+    border-color: var(--rose-500);
+    box-shadow: 0 4px 14px rgba(232, 85, 111, 0.25);
+    transform: translateY(-1px);
+}
+
 /* メインコンテンツ */
 .main {
     width: min(1080px, 100%);

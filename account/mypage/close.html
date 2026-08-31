@@ -129,7 +129,7 @@
         <aside class="sidebar" id="sidebar">
 
             <div class="sidebar__brand">
-                <img src="../../Images/logo_LUNAGS.png" alt="LUNAGS">
+                <img src="../../images/logo_LUNAGS.png" alt="LUNAGS">
                 <div class="sidebar__brand-divider"></div>
                 <span class="sidebar__brand-subtitle">ACCOUNT</span>
             </div>
@@ -137,7 +137,7 @@
             <div class="menu-list">
 
                 <!-- 管理ホーム -->
-                <a href="../../Management/Home_page/home.html" class="menu">
+                <a href="../../management/dashboard/dashboard.html" class="menu">
                     <i class="fas fa-desktop"></i>
                     <span>管理ホーム</span>
                 </a>
@@ -323,8 +323,9 @@
                     `;
                 }
 
-            } else {
-                window.location.href = "../Login_page/login.html";
+                if (!user) {
+                    window.location.href = "../login/login.html";
+                }
             }
         });
 
@@ -333,7 +334,7 @@
             if (confirm("ログアウトしますか？")) {
                 try {
                     await signOut(auth);
-                    window.location.href = "../Login_page/login.html";
+                    window.location.href = "../login/login.html";
 
                 } catch (error) {
                     console.error("ログアウトに失敗しました:", error);

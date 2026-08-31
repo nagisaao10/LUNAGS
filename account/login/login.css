@@ -8,7 +8,7 @@ body {
     align-items: center;
     min-height: 100vh;
 
-    background-image: url("../../Images/lunags-login_pc.jpg");
+    background-image: url("../../images/lunags-login_pc.jpg");
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -17,13 +17,13 @@ body {
 
 @media screen and (max-width: 959px) {
     body {
-        background-image: url("../../Images/lunags-login_tb.jpg");
+        background-image: url("../../images/lunags-login_tb.jpg");
     }
 }
 
 @media screen and (max-width: 480px) {
     body {
-        background-image: url("../../Images/lunags-login_sp.jpg");
+        background-image: url("../../images/lunags-login_sp.jpg");
         padding: 0 16px;
     }
 

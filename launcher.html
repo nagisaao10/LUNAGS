@@ -484,7 +484,7 @@
 
             <!-- My Page -->
 
-            <a href="./Account/My_page/profile.html" class="launcher-card">
+            <a href="./account/mypage/profile.html" class="launcher-card">
 
                 <div class="card-top">
 
@@ -520,7 +520,7 @@
 
             <!-- Shop -->
 
-            <a href="./Shop/" class="launcher-card">
+            <a href="./shop/" class="launcher-card">
 
                 <div class="card-top">
 
@@ -556,7 +556,7 @@
 
             <!-- Admin -->
 
-            <a href="./Account/Admin_page/admin.html" class="launcher-card is-hidden" id="adminCard">
+            <a href="./account/admin/admin.html" class="launcher-card is-hidden" id="adminCard">
 
                 <div class="card-top">
 
@@ -687,7 +687,7 @@
                  * ログインページへ戻す
                  */
 
-                window.location.href = "./Account/Login_page/login.html";
+                window.location.href = "./account/login/login.html";
                 return;
             }
 
@@ -724,7 +724,7 @@
 
             try {
                 await signOut(auth);
-                window.location.href = "./Account/Login_page/login.html";
+                window.location.href = "./account/login/login.html";
 
             } catch (error) {
                 console.error(

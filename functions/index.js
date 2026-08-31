@@ -629,7 +629,6 @@ app.patch("/admin-accounts/me/duration", async (req, res) => {
     }
 });
 
-
 app.get("/admin-sessions", async (req, res) => {
     try {
         await requireAdminAccount(req);
