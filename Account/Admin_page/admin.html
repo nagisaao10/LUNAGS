@@ -85,7 +85,7 @@
                 <!-- 1. 自分の情報 & モード設定 -->
                 <section class="card" id="selfCard">
                     <div class="card__head">
-                        <h2><i class="fa-solid fa-id-badge"></i> 自分の情報・設定</h2>
+                        <h2><i class="fa-solid fa-id-badge"></i> <span id="selfCardTitle">自分の情報・設定</span></h2>
                     </div>
                     
                     <div class="row-list">
@@ -97,17 +97,13 @@
                             <div class="label">ユーザー名</div>
                             <div class="value" id="selfName">-</div>
                         </div>
-                        <div class="info-row">
+                        <div class="info-row" id="selfAdminAccountRow">
                             <div class="label">管理者アカウント</div>
                             <div class="value" id="selfAdminAccount">-</div>
                         </div>
-                        <div class="info-row">
-                            <div class="label">管理者モード</div>
-                            <div class="value" id="selfAdminMode">-</div>
-                        </div>
                     </div>
 
-                    <!-- 自分の管理者モード（モード中のユーザーのみ） -->
+                    <!-- 自分の管理者モード（管理者モード中のユーザーにのみ表示） -->
                     <div class="hidden" id="selfSessionSection" style="margin-top: 12px; padding-top: 16px; border-top: 1px dashed var(--line);">
                         <div class="card__head" style="border-bottom: 0; padding-bottom: 0;">
                             <h3 class="section-subtitle" style="margin:0;"><i class="fa-solid fa-clock"></i> 有効な管理者モード</h3>
@@ -133,7 +129,7 @@
                         </div>
                     </div>
 
-                    <!-- 自分のモード有効時間設定（管理者アカウントのみ） -->
+                    <!-- 自分のモード有効時間設定（管理者アカウントのみ表示） -->
                     <div class="hidden" id="selfDurationSection" style="margin-top: 12px; padding-top: 16px; border-top: 1px dashed var(--line);">
                         <h3 class="section-subtitle" style="margin-top: 0;"><i class="fa-solid fa-hourglass-half"></i> 自分が付与する管理者モード有効時間</h3>
                         <form id="durationForm" class="form-grid">
@@ -430,11 +426,19 @@
             $("selfEmail").textContent = status.user?.email || "-";
             $("selfName").textContent = status.user?.name || "-";
             $("selfAdminAccount").textContent = status.isAdminAccount ? "有効" : "なし";
-            $("selfAdminMode").textContent = status.adminMode ? "有効" : "なし";
             
+            $("selfAdminAccountRow").classList.toggle("hidden", !status.isAdminAccount);
             $("approveEmailCard").classList.toggle("hidden", !isAllowed);
             $("selfSessionSection").classList.toggle("hidden", !status.adminMode);
             
+            if (status.isAdminAccount) {
+                $("pageLead").textContent = "管理者アカウント";
+                $("selfCardTitle").textContent = "自分の情報・設定";
+            } else if (status.adminMode) {
+                $("pageLead").textContent = "管理者モード";
+                $("selfCardTitle").textContent = "自分の管理者モード情報";
+            }
+
             setAdminSectionsVisible(!!status.isAdminAccount);
 
             if (status.adminMode && status.session) {
