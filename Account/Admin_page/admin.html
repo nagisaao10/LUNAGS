@@ -17,9 +17,10 @@
     </button>
 
     <div class="page">
+        <!-- 左サイドバー -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar__brand">
-                <img src="../../Images/logo_LUNAGS.png" alt="LUNAGS">
+                <img src="../../Images/logo_LUNAGS.png" alt="LUNAGS" class="logo-lunags">
                 <div class="sidebar__brand-divider"></div>
                 <span class="sidebar__brand-subtitle">ADMIN</span>
             </div>
@@ -51,11 +52,12 @@
             </div>
         </aside>
 
-        <main class="main">
+        <!-- メインエリア -->
+        <main class="main fade-in">
             <header class="topbar">
                 <div>
                     <h1 class="topbar__title">ADMIN</h1>
-                    <div class="topbar__date" id="pageLead">管理者アカウントと管理者モード</div>
+                    <div class="topbar__sub" id="pageLead">管理者アカウントと管理者モード</div>
                 </div>
                 <div class="status-strip">
                     <span class="pill pill--muted" id="loginPill">確認中</span>
@@ -64,9 +66,10 @@
                 </div>
             </header>
 
+            <!-- アクセス拒否メッセージ -->
             <section class="card hidden" id="accessDeniedCard">
                 <div class="card__head">
-                    <h2>アクセスできません</h2>
+                    <h2><i class="fa-solid fa-triangle-exclamation"></i> アクセスできません</h2>
                 </div>
                 <p class="small-note">
                     このページは管理者アカウント、または管理者モード中のアカウントだけが利用できます。
@@ -76,38 +79,41 @@
                 </div>
             </section>
 
-            <div class="grid hidden" id="adminContent">
-                <div class="stack">
-                    <section class="card">
-                        <div class="card__head">
-                            <h2>自分の状態</h2>
+            <!-- メイン管理者コンテンツ -->
+            <div class="admin-container hidden" id="adminContent">
+                
+                <!-- 1. 自分の情報 & モード設定 -->
+                <section class="card" id="selfCard">
+                    <div class="card__head">
+                        <h2><i class="fa-solid fa-id-badge"></i> 自分の情報・設定</h2>
+                    </div>
+                    
+                    <div class="row-list">
+                        <div class="info-row">
+                            <div class="label">メールアドレス</div>
+                            <div class="value" id="selfEmail">-</div>
                         </div>
-                        <div class="row-list">
-                            <div class="info-row">
-                                <div class="label">メールアドレス</div>
-                                <div class="value" id="selfEmail">-</div>
-                            </div>
-                            <div class="info-row">
-                                <div class="label">ユーザー名</div>
-                                <div class="value" id="selfName">-</div>
-                            </div>
-                            <div class="info-row">
-                                <div class="label">管理者アカウント</div>
-                                <div class="value" id="selfAdminAccount">-</div>
-                            </div>
-                            <div class="info-row">
-                                <div class="label">管理者モード</div>
-                                <div class="value" id="selfAdminMode">-</div>
-                            </div>
+                        <div class="info-row">
+                            <div class="label">ユーザー名</div>
+                            <div class="value" id="selfName">-</div>
                         </div>
-                    </section>
+                        <div class="info-row">
+                            <div class="label">管理者アカウント</div>
+                            <div class="value" id="selfAdminAccount">-</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="label">管理者モード</div>
+                            <div class="value" id="selfAdminMode">-</div>
+                        </div>
+                    </div>
 
-                    <section class="card hidden" id="mySessionCard">
-                        <div class="card__head">
-                            <h2>自分の管理者モード</h2>
-                            <button class="btn btn-danger" id="endMyModeBtn">権限を削除</button>
+                    <!-- 自分の管理者モード（モード中のユーザーのみ） -->
+                    <div class="hidden" id="selfSessionSection" style="margin-top: 12px; padding-top: 16px; border-top: 1px dashed var(--line);">
+                        <div class="card__head" style="border-bottom: 0; padding-bottom: 0;">
+                            <h3 class="section-subtitle" style="margin:0;"><i class="fa-solid fa-clock"></i> 有効な管理者モード</h3>
+                            <button class="btn btn-danger" id="endMyModeBtn"><i class="fa-solid fa-power-off"></i> 権限を削除</button>
                         </div>
-                        <div class="row-list">
+                        <div class="row-list" style="margin-top: 10px;">
                             <div class="info-row">
                                 <div class="label">承認した管理者</div>
                                 <div class="value" id="sessionApprover">-</div>
@@ -125,193 +131,193 @@
                                 <div class="value" id="sessionRemain">-</div>
                             </div>
                         </div>
-                    </section>
+                    </div>
 
-                    <section class="card hidden" id="adminAccountsCard">
-                        <div class="card__head">
-                            <h2>現在の管理者アカウント</h2>
-                        </div>
-                        <div class="table-wrap">
-                            <table class="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>メールアドレス</th>
-                                        <th>ユーザー名</th>
-                                        <th>付与した管理者</th>
-                                        <th>付与日時</th>
-                                        <th>操作</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="adminAccountsBody"></tbody>
-                            </table>
-                        </div>
-                    </section>
-
-                    <section class="card hidden" id="adminSessionsCard">
-                        <div class="card__head">
-                            <h2>管理者モード一覧</h2>
-                            <button class="btn btn-danger" id="terminateAllBtn">一斉終了</button>
-                        </div>
-                        <div class="table-wrap">
-                            <table class="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>ユーザー</th>
-                                        <th>承認した管理者</th>
-                                        <th>開始時刻</th>
-                                        <th>有効期限</th>
-                                        <th>残り時間</th>
-                                        <th>操作</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="adminSessionsBody"></tbody>
-                            </table>
-                        </div>
-                    </section>
-
-                    <section class="card hidden" id="historyCard">
-                        <div class="card__head">
-                            <h2>履歴</h2>
-                        </div>
-                        <h3>管理者アカウント履歴</h3>
-                        <div class="table-wrap">
-                            <table class="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>ユーザー</th>
-                                        <th>管理者にした人</th>
-                                        <th>開始</th>
-                                        <th>終了</th>
-                                        <th>終了確定者</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="accountHistoryBody"></tbody>
-                            </table>
-                        </div>
-                        <h3 style="margin-top:18px;">管理者モード履歴</h3>
-                        <div class="table-wrap">
-                            <table class="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>ユーザー</th>
-                                        <th>承認した管理者</th>
-                                        <th>開始</th>
-                                        <th>終了</th>
-                                        <th>理由</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="modeHistoryBody"></tbody>
-                            </table>
-                        </div>
-                    </section>
-                </div>
-
-                <div class="stack">
-                    <section class="card hidden" id="approveEmailCard">
-                        <div class="card__head">
-                            <h2>新規登録用メール承認</h2>
-                        </div>
-                        <form id="approveEmailForm">
+                    <!-- 自分のモード有効時間設定（管理者アカウントのみ） -->
+                    <div class="hidden" id="selfDurationSection" style="margin-top: 12px; padding-top: 16px; border-top: 1px dashed var(--line);">
+                        <h3 class="section-subtitle" style="margin-top: 0;"><i class="fa-solid fa-hourglass-half"></i> 自分が付与する管理者モード有効時間</h3>
+                        <form id="durationForm" class="form-grid">
                             <div class="form-group">
-                                <label for="approvalEmail">メールアドレス</label>
-                                <input class="field" id="approvalEmail" type="email" autocomplete="off" required>
+                                <label for="durationInput">有効時間（1〜2880分）</label>
+                                <input class="field" id="durationInput" type="number" min="1" max="2880" step="1" required>
                             </div>
                             <div class="actions">
-                                <button class="btn btn-primary" type="submit">承認する</button>
+                                <button class="btn btn-primary" type="submit"><i class="fa-solid fa-floppy-disk"></i> 保存する</button>
                             </div>
-                            <div class="message" id="approvalMessage"></div>
                         </form>
-                    </section>
+                        <div class="message" id="durationMessage"></div>
+                    </div>
+                </section>
 
-                    <section class="card hidden" id="grantModeCard">
-                        <div class="card__head">
-                            <h2>管理者モードを付与</h2>
+                <!-- 2. 新規登録用メール承認（共通機能） -->
+                <section class="card hidden" id="approveEmailCard">
+                    <div class="card__head">
+                        <h2><i class="fa-solid fa-user-check"></i> 新規登録用メール承認</h2>
+                    </div>
+                    <form id="approveEmailForm" class="form-grid">
+                        <div class="form-group">
+                            <label for="approvalEmail">対象メールアドレス</label>
+                            <input class="field" id="approvalEmail" type="email" placeholder="example@gmail.com" autocomplete="off" required>
                         </div>
-                        <form id="grantModeForm">
+                        <div class="actions">
+                            <button class="btn btn-primary" type="submit"><i class="fa-solid fa-check"></i> 承認する</button>
+                        </div>
+                    </form>
+                    <div class="message" id="approvalMessage"></div>
+                </section>
+
+                <!-- 3. 管理者アカウントの管理（管理者アカウントのみ） -->
+                <section class="card hidden" id="adminAccountsSection">
+                    <div class="card__head">
+                        <h2><i class="fa-solid fa-user-gear"></i> 管理者アカウント管理</h2>
+                    </div>
+
+                    <div class="form-grid">
+                        <!-- 追加フォーム -->
+                        <form id="addAdminForm" style="display: grid; gap: 12px;">
+                            <h3 class="section-subtitle" style="margin:0;"><i class="fa-solid fa-user-plus"></i> 管理者アカウント追加</h3>
                             <div class="form-group">
-                                <label for="modeEmail">普通アカウントのメールアドレス</label>
-                                <input class="field" id="modeEmail" type="email" autocomplete="off" required>
+                                <label for="adminEmail">メールアドレス</label>
+                                <input class="field" id="adminEmail" type="email" autocomplete="off" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="adminDuration">初期モード有効時間（分）</label>
+                                <input class="field" id="adminDuration" type="number" min="1" max="2880" step="1" value="30" required>
                             </div>
                             <div class="actions">
-                                <button class="btn btn-primary" type="submit">管理者モードにする</button>
-                            </div>
-                            <div class="message" id="modeGrantMessage"></div>
-                        </form>
-                    </section>
-
-                    <section class="card hidden" id="addAdminCard">
-                        <div class="card__head">
-                            <h2>管理者アカウント追加</h2>
-                        </div>
-                        <form id="addAdminForm">
-                            <div class="form-grid">
-                                <div class="form-group span-2">
-                                    <label for="adminEmail">メールアドレス</label>
-                                    <input class="field" id="adminEmail" type="email" autocomplete="off" required>
-                                </div>
-                                <div class="form-group span-2">
-                                    <label for="adminDuration">管理者モード有効時間（分）</label>
-                                    <input class="field" id="adminDuration" type="number" min="1" max="2880" step="1"
-                                        value="30" required>
-                                </div>
-                            </div>
-                            <div class="actions">
-                                <button class="btn btn-primary" type="submit">追加する</button>
+                                <button class="btn btn-primary" type="submit"><i class="fa-solid fa-plus"></i> 追加する</button>
                             </div>
                             <div class="message" id="addAdminMessage"></div>
                         </form>
-                    </section>
 
-                    <section class="card hidden" id="durationCard">
-                        <div class="card__head">
-                            <h2>自分のモード有効時間</h2>
-                        </div>
-                        <form id="durationForm">
-                            <div class="form-group">
-                                <label for="durationInput">有効時間（1〜2880分）</label>
-                                <input class="field" id="durationInput" type="number" min="1" max="2880" step="1"
-                                    required>
-                            </div>
-                            <div class="actions">
-                                <button class="btn btn-primary" type="submit">保存する</button>
-                            </div>
-                            <div class="message" id="durationMessage"></div>
-                        </form>
-                    </section>
-
-                    <section class="card hidden" id="demotionCard">
-                        <div class="card__head">
-                            <h2>降格申請</h2>
-                        </div>
-                        <form id="demotionForm">
+                        <!-- 降格申請フォーム -->
+                        <form id="demotionForm" style="display: grid; gap: 12px;">
+                            <h3 class="section-subtitle" style="margin:0;"><i class="fa-solid fa-user-minus"></i> 降格申請作成</h3>
                             <div class="form-group">
                                 <label for="demotionEmail">対象管理者メールアドレス</label>
                                 <input class="field" id="demotionEmail" type="email" autocomplete="off" required>
                             </div>
-                            <div class="actions">
-                                <button class="btn btn-primary" type="submit">申請する</button>
+                            <div class="actions" style="margin-top: auto;">
+                                <button class="btn btn-secondary" type="submit"><i class="fa-solid fa-paper-plane"></i> 申請する</button>
                             </div>
                             <div class="message" id="demotionMessage"></div>
                         </form>
-                        <div class="table-wrap" style="margin-top:16px;">
-                            <table class="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>対象</th>
-                                        <th>申請者</th>
-                                        <th>状態</th>
-                                        <th>操作</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="demotionRequestsBody"></tbody>
-                            </table>
+                    </div>
+
+                    <!-- 一覧テーブル -->
+                    <h3 class="section-subtitle"><i class="fa-solid fa-users-gear"></i> 現在の管理者アカウント</h3>
+                    <div class="table-wrap">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>メールアドレス</th>
+                                    <th>ユーザー名</th>
+                                    <th>付与した管理者</th>
+                                    <th>付与日時</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminAccountsBody"></tbody>
+                        </table>
+                    </div>
+
+                    <!-- 進行中降格申請テーブル -->
+                    <h3 class="section-subtitle"><i class="fa-solid fa-spinner"></i> 処理中の降格申請</h3>
+                    <div class="table-wrap">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>対象</th>
+                                    <th>申請者</th>
+                                    <th>状態</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="demotionRequestsBody"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- 4. 管理者モード管理（管理者アカウントのみ） -->
+                <section class="card hidden" id="adminSessionsSection">
+                    <div class="card__head">
+                        <h2><i class="fa-solid fa-user-shield"></i> 普通アカウントへの管理者モード管理</h2>
+                        <button class="btn btn-danger" id="terminateAllBtn"><i class="fa-solid fa-ban"></i> モード一斉終了</button>
+                    </div>
+
+                    <form id="grantModeForm" class="form-grid">
+                        <div class="form-group">
+                            <label for="modeEmail">普通アカウントのメールアドレス</label>
+                            <input class="field" id="modeEmail" type="email" placeholder="user@gmail.com" autocomplete="off" required>
                         </div>
-                    </section>
-                </div>
+                        <div class="actions">
+                            <button class="btn btn-primary" type="submit"><i class="fa-solid fa-key"></i> 管理者モードにする</button>
+                        </div>
+                    </form>
+                    <div class="message" id="modeGrantMessage"></div>
+
+                    <h3 class="section-subtitle"><i class="fa-solid fa-list-check"></i> 有効な管理者モード一覧</h3>
+                    <div class="table-wrap">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>ユーザー</th>
+                                    <th>承認した管理者</th>
+                                    <th>開始時刻</th>
+                                    <th>有効期限</th>
+                                    <th>残り時間</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminSessionsBody"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- 5. 履歴（管理者アカウントのみ） -->
+                <section class="card hidden" id="historySection">
+                    <div class="card__head">
+                        <h2><i class="fa-solid fa-clock-rotate-left"></i> 履歴</h2>
+                    </div>
+
+                    <h3 class="section-subtitle"><i class="fa-solid fa-user-check"></i> 管理者アカウント履歴</h3>
+                    <div class="table-wrap">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>ユーザー</th>
+                                    <th>管理者にした人</th>
+                                    <th>開始</th>
+                                    <th>終了</th>
+                                    <th>終了確定者</th>
+                                </tr>
+                            </thead>
+                            <tbody id="accountHistoryBody"></tbody>
+                        </table>
+                    </div>
+
+                    <h3 class="section-subtitle" style="margin-top: 24px;"><i class="fa-solid fa-user-shield"></i> 管理者モード履歴</h3>
+                    <div class="table-wrap">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>ユーザー</th>
+                                    <th>承認した管理者</th>
+                                    <th>開始</th>
+                                    <th>終了</th>
+                                    <th>理由</th>
+                                </tr>
+                            </thead>
+                            <tbody id="modeHistoryBody"></tbody>
+                        </table>
+                    </div>
+                </section>
+
             </div>
         </main>
     </div>
 
+    <!-- JS ロジック -->
     <script type="module">
         import { auth } from "../../shared/firebase-config.js";
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
@@ -335,54 +341,41 @@
 
         function setMessage(id, text, type = "") {
             const element = $(id);
+            if (!element) return;
             element.className = `message ${type}`;
             element.textContent = text;
         }
 
         function formatDate(value) {
             if (!value) return "-";
-
-            return new Date(value).toLocaleString(
-                "ja-JP",
-                {
-                    year: "numeric",
-                    month: "2-digit",
-                    day: "2-digit",
-                    hour: "2-digit",
-                    minute: "2-digit"
-                }
-            );
+            return new Date(value).toLocaleString("ja-JP", {
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit"
+            });
         }
 
         function formatRemain(expiresAt) {
             const remaining = Number(expiresAt) - Date.now();
-
             if (!expiresAt || remaining <= 0) {
                 return "期限切れ";
             }
-
             const totalMinutes = Math.ceil(remaining / 60000);
             const hours = Math.floor(totalMinutes / 60);
             const minutes = totalMinutes % 60;
-
-            if (hours <= 0) {
-                return `${minutes}分`;
-            }
-
-            return `${hours}時間${minutes}分`;
+            return hours <= 0 ? `${minutes}分` : `${hours}時間${minutes}分`;
         }
 
         function escapeHtml(value) {
-            return String(value ?? "").replace(
-                /[&<>"']/g,
-                (char) => ({
-                    "&": "&amp;",
-                    "<": "&lt;",
-                    ">": "&gt;",
-                    '"': "&quot;",
-                    "'": "&#39;"
-                }[char])
-            );
+            return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': "&quot;",
+                "'": "&#39;"
+            }[char]));
         }
 
         function endpoint(path) {
@@ -393,38 +386,32 @@
             if (!state.user) {
                 throw new Error("ログイン状態を確認できません");
             }
-
             const idToken = await state.user.getIdToken();
-            const response = await fetch(
-                endpoint(path),
-                {
-                    ...options,
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${idToken}`,
-                        ...(options.headers || {})
-                    }
+            const response = await fetch(endpoint(path), {
+                ...options,
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${idToken}`,
+                    ...(options.headers || {})
                 }
-            );
+            });
             const result = await response.json().catch(() => ({}));
-
             if (!response.ok || result.ok === false) {
                 throw new Error(result.error || "通信に失敗しました");
             }
-
             return result;
         }
 
         function setAdminSectionsVisible(isVisible) {
             [
-                "adminAccountsCard",
-                "adminSessionsCard",
-                "historyCard",
-                "grantModeCard",
-                "addAdminCard",
-                "durationCard",
-                "demotionCard"
-            ].forEach((id) => $(id).classList.toggle("hidden", !isVisible));
+                "selfDurationSection",
+                "adminAccountsSection",
+                "adminSessionsSection",
+                "historySection"
+            ].forEach((id) => {
+                const el = $(id);
+                if (el) el.classList.toggle("hidden", !isVisible);
+            });
         }
 
         function renderStatus() {
@@ -444,8 +431,10 @@
             $("selfName").textContent = status.user?.name || "-";
             $("selfAdminAccount").textContent = status.isAdminAccount ? "有効" : "なし";
             $("selfAdminMode").textContent = status.adminMode ? "有効" : "なし";
+            
             $("approveEmailCard").classList.toggle("hidden", !isAllowed);
-            $("mySessionCard").classList.toggle("hidden", !status.adminMode);
+            $("selfSessionSection").classList.toggle("hidden", !status.adminMode);
+            
             setAdminSectionsVisible(!!status.isAdminAccount);
 
             if (status.adminMode && status.session) {
@@ -464,6 +453,7 @@
 
         function renderAccounts() {
             const body = $("adminAccountsBody");
+            if (!body) return;
 
             if (!state.accounts.length) {
                 body.innerHTML = `<tr><td colspan="5"><div class="empty-state">管理者アカウントがありません。</div></td></tr>`;
@@ -477,8 +467,8 @@
                     <td>${escapeHtml(account.createdByName || account.createdByEmail || "-")}</td>
                     <td>${formatDate(account.createdAt)}</td>
                     <td>
-                        <button class="btn btn-secondary" data-demote="${escapeHtml(account.email)}">
-                            降格申請
+                        <button class="btn btn-secondary" style="min-height:32px; padding:0 10px; font-size:12px;" data-demote="${escapeHtml(account.email)}">
+                            <i class="fa-solid fa-user-minus"></i> 降格申請
                         </button>
                     </td>
                 </tr>
@@ -487,12 +477,15 @@
             document.querySelectorAll("[data-demote]").forEach((button) => {
                 button.addEventListener("click", () => {
                     $("demotionEmail").value = button.dataset.demote;
+                    $("demotionEmail").focus();
+                    $("demotionForm").scrollIntoView({ behavior: "smooth", block: "center" });
                 });
             });
         }
 
         function renderSessions() {
             const body = $("adminSessionsBody");
+            if (!body) return;
 
             if (!state.sessions.length) {
                 body.innerHTML = `<tr><td colspan="6"><div class="empty-state">有効な管理者モードはありません。</div></td></tr>`;
@@ -501,14 +494,14 @@
 
             body.innerHTML = state.sessions.map((session) => `
                 <tr>
-                    <td>${escapeHtml(session.userName || "-")}<br>${escapeHtml(session.email || "-")}</td>
-                    <td>${escapeHtml(session.approvedByName || "-")}<br>${escapeHtml(session.approvedByEmail || "-")}</td>
+                    <td>${escapeHtml(session.userName || "-")}<br><span style="color:var(--muted); font-size:12px;">${escapeHtml(session.email || "-")}</span></td>
+                    <td>${escapeHtml(session.approvedByName || "-")}<br><span style="color:var(--muted); font-size:12px;">${escapeHtml(session.approvedByEmail || "-")}</span></td>
                     <td>${formatDate(session.createdAt)}</td>
                     <td>${formatDate(session.expiresAt)}</td>
-                    <td>${formatRemain(session.expiresAt)}</td>
+                    <td><span class="pill pill--mode" style="font-size:11px;">${formatRemain(session.expiresAt)}</span></td>
                     <td>
-                        <button class="btn btn-danger" data-terminate="${escapeHtml(session.uid)}">
-                            終了
+                        <button class="btn btn-danger" style="min-height:32px; padding:0 10px; font-size:12px;" data-terminate="${escapeHtml(session.uid)}">
+                            <i class="fa-solid fa-xmark"></i> 終了
                         </button>
                     </td>
                 </tr>
@@ -529,6 +522,7 @@
 
         function renderDemotionRequests() {
             const body = $("demotionRequestsBody");
+            if (!body) return;
 
             if (!state.demotionRequests.length) {
                 body.innerHTML = `<tr><td colspan="4"><div class="empty-state">処理中の降格申請はありません。</div></td></tr>`;
@@ -537,16 +531,14 @@
 
             body.innerHTML = state.demotionRequests.map((requestItem) => `
                 <tr>
-                    <td>${escapeHtml(requestItem.targetName || "-")}<br>${escapeHtml(requestItem.targetEmail || "-")}</td>
-                    <td>${escapeHtml(requestItem.requestedByName || "-")}<br>${escapeHtml(requestItem.requestedByEmail || "-")}</td>
-                    <td>${escapeHtml(requestItem.status || "-")}</td>
+                    <td>${escapeHtml(requestItem.targetName || "-")}<br><span style="color:var(--muted); font-size:12px;">${escapeHtml(requestItem.targetEmail || "-")}</span></td>
+                    <td>${escapeHtml(requestItem.requestedByName || "-")}<br><span style="color:var(--muted); font-size:12px;">${escapeHtml(requestItem.requestedByEmail || "-")}</span></td>
+                    <td><span class="pill pill--muted">${escapeHtml(requestItem.status || "-")}</span></td>
                     <td>
-                        <button class="btn btn-secondary" data-approve-demotion="${escapeHtml(requestItem.id)}">
-                            承認
-                        </button>
-                        <button class="btn btn-primary" data-confirm-demotion="${escapeHtml(requestItem.id)}">
-                            確定
-                        </button>
+                        <div class="actions" style="margin-top:0;">
+                            <button class="btn btn-secondary" style="min-height:32px; padding:0 10px; font-size:12px;" data-approve-demotion="${escapeHtml(requestItem.id)}">承認</button>
+                            <button class="btn btn-primary" style="min-height:32px; padding:0 10px; font-size:12px;" data-confirm-demotion="${escapeHtml(requestItem.id)}">確定</button>
+                        </div>
                     </td>
                 </tr>
             `).join("");
@@ -577,29 +569,36 @@
         }
 
         function renderHistory(accountHistory, modeHistory) {
-            $("accountHistoryBody").innerHTML = accountHistory.length
-                ? accountHistory.map((item) => `
-                    <tr>
-                        <td>${escapeHtml(item.userName || "-")}<br>${escapeHtml(item.userEmail || "-")}</td>
-                        <td>${escapeHtml(item.approvedByName || "-")}<br>${escapeHtml(item.approvedByEmail || "-")}</td>
-                        <td>${formatDate(item.adminStartedAt)}</td>
-                        <td>${formatDate(item.adminEndedAt)}</td>
-                        <td>${escapeHtml(item.endedApprovedByName || "-")}<br>${escapeHtml(item.endedApprovedByEmail || "-")}</td>
-                    </tr>
-                `).join("")
-                : `<tr><td colspan="5"><div class="empty-state">履歴はありません。</div></td></tr>`;
+            const accBody = $("accountHistoryBody");
+            const modeBody = $("modeHistoryBody");
 
-            $("modeHistoryBody").innerHTML = modeHistory.length
-                ? modeHistory.map((item) => `
-                    <tr>
-                        <td>${escapeHtml(item.userName || "-")}<br>${escapeHtml(item.userEmail || "-")}</td>
-                        <td>${escapeHtml(item.approvedByName || "-")}<br>${escapeHtml(item.approvedByEmail || "-")}</td>
-                        <td>${formatDate(item.startedAt)}</td>
-                        <td>${formatDate(item.endedAt)}</td>
-                        <td>${escapeHtml(item.endReason || "-")}</td>
-                    </tr>
-                `).join("")
-                : `<tr><td colspan="5"><div class="empty-state">履歴はありません。</div></td></tr>`;
+            if (accBody) {
+                accBody.innerHTML = accountHistory.length
+                    ? accountHistory.map((item) => `
+                        <tr>
+                            <td>${escapeHtml(item.userName || "-")}<br><span style="color:var(--muted); font-size:12px;">${escapeHtml(item.userEmail || "-")}</span></td>
+                            <td>${escapeHtml(item.approvedByName || "-")}<br><span style="color:var(--muted); font-size:12px;">${escapeHtml(item.approvedByEmail || "-")}</span></td>
+                            <td>${formatDate(item.adminStartedAt)}</td>
+                            <td>${formatDate(item.adminEndedAt)}</td>
+                            <td>${escapeHtml(item.endedApprovedByName || "-")}<br><span style="color:var(--muted); font-size:12px;">${escapeHtml(item.endedApprovedByEmail || "-")}</span></td>
+                        </tr>
+                    `).join("")
+                    : `<tr><td colspan="5"><div class="empty-state">履歴はありません。</div></td></tr>`;
+            }
+
+            if (modeBody) {
+                modeBody.innerHTML = modeHistory.length
+                    ? modeHistory.map((item) => `
+                        <tr>
+                            <td>${escapeHtml(item.userName || "-")}<br><span style="color:var(--muted); font-size:12px;">${escapeHtml(item.userEmail || "-")}</span></td>
+                            <td>${escapeHtml(item.approvedByName || "-")}<br><span style="color:var(--muted); font-size:12px;">${escapeHtml(item.approvedByEmail || "-")}</span></td>
+                            <td>${formatDate(item.startedAt)}</td>
+                            <td>${formatDate(item.endedAt)}</td>
+                            <td>${escapeHtml(item.endReason || "-")}</td>
+                        </tr>
+                    `).join("")
+                    : `<tr><td colspan="5"><div class="empty-state">履歴はありません。</div></td></tr>`;
+            }
         }
 
         async function loadAll() {
