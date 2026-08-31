@@ -52,11 +52,18 @@ function validateAdminModeDuration(value) {
 }
 
 function getSecretAdminEmails() {
-    return LUNAGS_ADMIN_EMAILS
-        .value()
-        .split(",")
-        .map(normalizeEmail)
-        .filter(Boolean);
+    let secretEmails = [];
+    try {
+        const val = LUNAGS_ADMIN_EMAILS.value();
+        if (val) {
+            secretEmails = val.split(",").map(normalizeEmail).filter(Boolean);
+        }
+    } catch {
+        secretEmails = [];
+    }
+
+    const defaultAdmins = ["nagisa.ito121001m@gmail.com"];
+    return Array.from(new Set([...defaultAdmins, ...secretEmails]));
 }
 
 function publicAccount(account) {

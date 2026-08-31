@@ -1,8 +1,0 @@
-開発
-https://lunags-development.web.app
-
-本番
-https://lunags-production.web.app
-
-cd D:\Programming\LUNAGS
-.\deploy.ps1
