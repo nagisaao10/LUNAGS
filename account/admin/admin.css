@@ -256,7 +256,7 @@ select:disabled {
 
 /* メインコンテンツ */
 .main {
-  width: min(980px, 100%);
+  width: min(1320px, 100%);
   max-width: none;
   padding: 28px 34px 56px;
   display: block;
