@@ -18,9 +18,9 @@
 }
 
 :root {
-  --lunags-primary1: #73B8FD;
-  --lunags-primary2: ;
-  --lunags-primary3: ;
+    --lunags-primary1: #73B8FD;
+    --lunags-primary2: #9ED4FC;
+    --lunags-primary3: #DFEFFD;
     --blue-950: #102a5f;
     --blue-900: #16377a;
     --blue-800: #1f4aa5;
@@ -93,6 +93,7 @@ select:disabled {
         opacity: 0;
         transform: translateY(8px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
