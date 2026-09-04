@@ -100,6 +100,7 @@ button {
   min-height: 100dvh;
 }
 
+/* サイドバー */
 .sidebar {
   position: sticky;
   top: 0;
@@ -115,13 +116,54 @@ button {
   gap: 22px;
   z-index: 10;
   overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
-.logo-lunags {
+.sidebar::-webkit-scrollbar {
+  display: none;
+}
+
+.sidebar__brand {
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  padding: 6px 8px 12px;
+}
+
+.logo-lunags,
+.sidebar__brand img {
   width: 178px;
   max-width: 100%;
   height: auto;
   margin: 6px auto 4px;
+}
+
+.sidebar__brand-divider {
+  position: relative;
+  width: 140px;
+  height: 1px;
+  margin: 2px 0;
+  background: rgba(255, 255, 255, .18);
+}
+
+.sidebar__brand-divider::after {
+  content: "✦";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  padding: 0 10px;
+  background: #153576;
+  color: rgba(255, 255, 255, .65);
+  font-size: 10px;
+}
+
+.sidebar__brand-subtitle {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  color: rgba(238, 245, 255, 0.78);
 }
 
 .menu-list {
@@ -162,6 +204,10 @@ button {
   flex: 0 0 auto;
 }
 
+.menu span {
+  line-height: 1;
+}
+
 .menu:hover {
   color: #ffffff;
   background: rgba(255, 255, 255, 0.11);
@@ -173,6 +219,38 @@ button {
   background: rgba(255, 255, 255, 0.18);
   border-color: rgba(255, 255, 255, 0.22);
   box-shadow: none;
+}
+
+.sidebar__footer {
+  display: grid;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.logout-btn {
+  width: 100%;
+  height: 42px;
+  min-height: 42px;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: var(--radius);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 800;
+  margin-top: auto;
+  transition: transform 0.14s ease, border-color 0.14s ease, background 0.14s ease, box-shadow 0.14s ease, color 0.14s ease;
+}
+
+.logout-btn:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.24);
+  box-shadow: none;
+  transform: translateY(-1px);
 }
 
 .hamburger {
@@ -327,25 +405,6 @@ h1 {
   height: 40px;
   float: right;
   margin-top: 14px;
-}
-
-.logout-btn {
-  width: 100%;
-  height: 42px;
-  margin: auto 0 0;
-  align-self: auto;
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.16);
-  box-shadow: none;
-}
-
-.logout-btn:hover {
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.16);
-  border-color: rgba(255, 255, 255, 0.24);
-  box-shadow: none;
-  transform: translateY(-1px);
 }
 
 .id-card {
@@ -669,52 +728,6 @@ input:focus-visible,
 select:focus-visible {
   outline: 3px solid var(--blue-300);
   outline-offset: 2px;
-}
-
-.sidebar__brand {
-  display: grid;
-  place-items: center;
-  gap: 8px;
-  padding: 6px 8px 12px;
-}
-
-.sidebar__brand-subtitle {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.22em;
-  color: rgba(238, 245, 255, 0.78);
-}
-
-.sidebar__brand img {
-  width: 178px;
-  max-width: 100%;
-  height: auto;
-}
-
-/* 中央のワンポイント */
-.sidebar__brand-divider::after {
-  content: "✦";
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  padding: 0 10px;
-  background: #153576;
-  /* サイドバー背景色 */
-  color: rgba(255, 255, 255, .65);
-  font-size: 10px;
-}
-
-.sidebar__brand-divider {
-  position: relative;
-  width: 140px;
-  height: 1px;
-  margin: 2px 0;
-  background: rgba(255, 255, 255, .18);
-}
-
-.menu span {
-  line-height: 1;
 }
 
 @media (max-width: 900px) {
