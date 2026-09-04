@@ -128,6 +128,7 @@ svg {
 .app-shell {
   display: grid;
   grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
+  min-height: 100vh;
   min-height: 100dvh;
 }
 
@@ -136,6 +137,7 @@ svg {
   position: sticky;
   top: 0;
   width: auto;
+  height: 100vh;
   height: 100dvh;
   padding: 22px 16px;
   color: #eef5ff;
@@ -302,7 +304,10 @@ svg {
 /* メインコンテンツ */
 .main {
   width: min(1320px, 100%);
+  max-width: none;
   padding: 28px 34px 56px;
+  display: block;
+  margin: 0;
 }
 
 h1 {
