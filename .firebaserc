@@ -6,14 +6,15 @@
   "targets": {
     "lunags-development": {
       "hosting": {
-        "management": [
-          "lunags-management"
-        ],
-        "account": [
-          "lunags-account"
-        ],
-        "shop": [
-          "lunags-shop"
+        "development": [
+          "lunags-development"
+        ]
+      }
+    },
+    "lunags-production": {
+      "hosting": {
+        "production": [
+          "lunags-production"
         ]
       }
     }
