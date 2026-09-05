@@ -29,6 +29,27 @@ if (-not (Test-Path ".firebaserc")) {
     throw ".firebaserc が見つかりません。"
 }
 
+# Firebase Deploy実行関数
+function Invoke-FirebaseDeploy {
+    param (
+        [string]$Target,
+        [string]$Project
+    )
+
+    Write-Host ""
+    Write-Host "Firebase Deploy: $Target" -ForegroundColor Cyan
+
+    & firebase deploy --only $Target --project $Project
+    $exitCode = $LASTEXITCODE
+
+    if ($exitCode -ne 0) {
+        throw "Firebase $Target Deployに失敗しました。終了コード: $exitCode"
+    }
+
+    Write-Host ""
+    Write-Host "Firebase $Target Deploy 完了" -ForegroundColor Green
+}
+
 # Gitの変更確認
 Write-Host ""
 Write-Host "[1/5] Git変更を確認" -ForegroundColor Cyan
