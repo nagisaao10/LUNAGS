@@ -137,10 +137,15 @@ switch ($deployType) {
         Write-Host ""
         Write-Host "[5/5] Firebase Deploy: Hosting" -ForegroundColor Cyan
 
-        firebase deploy --only hosting --project $project
+        $output = & firebase deploy --only $Target --project $Project 2>&1
+        $exitCode = $LASTEXITCODE
 
-        if ($LASTEXITCODE -ne 0) {
-            throw "Firebase Hosting Deployに失敗しました。"
+        $output | ForEach-Object {
+            Write-Host $_
+        }
+
+        if ($exitCode -ne 0) {
+            throw "Firebase $Target Deployに失敗しました。終了コード: $exitCode"
         }
     }
 
@@ -152,10 +157,15 @@ switch ($deployType) {
 
         Write-Host "Functions Discovery Timeout: 120 seconds" -ForegroundColor DarkGray
 
-        firebase deploy --only functions --project $project
+        $output = & firebase deploy --only $Target --project $Project 2>&1
+        $exitCode = $LASTEXITCODE
 
-        if ($LASTEXITCODE -ne 0) {
-            throw "Firebase Functions Deployに失敗しました。"
+        $output | ForEach-Object {
+            Write-Host $_
+        }
+
+        if ($exitCode -ne 0) {
+            throw "Firebase $Target Deployに失敗しました。終了コード: $exitCode"
         }
     }
 
@@ -163,10 +173,15 @@ switch ($deployType) {
         Write-Host ""
         Write-Host "[5/5] Firebase Deploy: Hosting" -ForegroundColor Cyan
 
-        firebase deploy --only hosting --project $project
+        $output = & firebase deploy --only $Target --project $Project 2>&1
+        $exitCode = $LASTEXITCODE
 
-        if ($LASTEXITCODE -ne 0) {
-            throw "Firebase Hosting Deployに失敗しました。"
+        $output | ForEach-Object {
+            Write-Host $_
+        }
+
+        if ($exitCode -ne 0) {
+            throw "Firebase $Target Deployに失敗しました。終了コード: $exitCode"
         }
 
         Write-Host ""
@@ -176,10 +191,15 @@ switch ($deployType) {
 
         Write-Host "Functions Discovery Timeout: 120 seconds" -ForegroundColor DarkGray
 
-        firebase deploy --only functions --project $project
+        $output = & firebase deploy --only $Target --project $Project 2>&1
+        $exitCode = $LASTEXITCODE
 
-        if ($LASTEXITCODE -ne 0) {
-            throw "Firebase Functions Deployに失敗しました。"
+        $output | ForEach-Object {
+            Write-Host $_
+        }
+
+        if ($exitCode -ne 0) {
+            throw "Firebase $Target Deployに失敗しました。終了コード: $exitCode"
         }
     }
 
