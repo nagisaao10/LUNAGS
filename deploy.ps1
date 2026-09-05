@@ -4,21 +4,6 @@
 
 $ErrorActionPreference = "Stop"
 
-function Run-Step {
-    param(
-        [string]$Title,
-        [scriptblock]$Command
-    )
-
-    Write-Host ""
-    Write-Host "[$Title]" -ForegroundColor Cyan
-    & $Command
-
-    if ($LASTEXITCODE -ne 0) {
-        throw "処理に失敗しました: $Title"
-    }
-}
-
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host " LUNAGS Deploy System" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
@@ -64,7 +49,6 @@ if (-not $status) {
     }
 }
 else {
-    # Commit message
     Write-Host ""
     $commitMessage = Read-Host "Commit message"
 
@@ -72,16 +56,28 @@ else {
         throw "Commit messageが空です。"
     }
 
-    Run-Step "2/5 Git add" {
-        git add .
+    Write-Host ""
+    Write-Host "[2/5] Git add" -ForegroundColor Cyan
+    git add .
+
+    if ($LASTEXITCODE -ne 0) {
+        throw "Git addに失敗しました。"
     }
 
-    Run-Step "3/5 Git commit" {
-        git commit -m $commitMessage
+    Write-Host ""
+    Write-Host "[3/5] Git commit" -ForegroundColor Cyan
+    git commit -m $commitMessage
+
+    if ($LASTEXITCODE -ne 0) {
+        throw "Git commitに失敗しました。"
     }
 
-    Run-Step "4/5 Git push" {
-        git push
+    Write-Host ""
+    Write-Host "[4/5] Git push" -ForegroundColor Cyan
+    git push
+
+    if ($LASTEXITCODE -ne 0) {
+        throw "Git pushに失敗しました。"
     }
 }
 
@@ -99,11 +95,10 @@ $target = Read-Host "Deploy target"
 switch ($target) {
     "1" {
         $project = "lunags-development"
-        $environment = "Development"
     }
+
     "2" {
         $project = "lunags-production"
-        $environment = "Production"
 
         Write-Host ""
         Write-Host "WARNING: ProductionへDeployします。" -ForegroundColor Red
@@ -114,29 +109,88 @@ switch ($target) {
             exit 0
         }
     }
+
     "0" {
         Write-Host "Deployを中止しました。" -ForegroundColor Yellow
         exit 0
     }
+
     default {
         throw "無効な選択です。"
     }
 }
 
+# Firebase Deploy対象選択
 Write-Host ""
-Write-Host "[5/5] Firebase Deploy: $environment ($project)" -ForegroundColor Cyan
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host " Firebase Deploy Type" -ForegroundColor Cyan
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "[1] Hosting"
+Write-Host "[2] Functions"
+Write-Host "[3] 全体 (Hosting + Functions)"
+Write-Host "[0] Cancel"
 
-Write-Host "Deploy Hosting only" -ForegroundColor DarkGray
-firebase deploy --only hosting --project $project
+$deployType = Read-Host "Deploy type"
 
-Write-Host "Deploy Functions only" -ForegroundColor DarkGray
+switch ($deployType) {
+    "1" {
+        Write-Host ""
+        Write-Host "[5/5] Firebase Deploy: Hosting" -ForegroundColor Cyan
 
-$env:FUNCTIONS_DISCOVERY_TIMEOUT = "120"
-Write-Host "Functions Discovery Timeout: 120 seconds" -ForegroundColor DarkGray
-firebase deploy --only functions --project $project
+        firebase deploy --only hosting --project $project
 
-if ($LASTEXITCODE -ne 0) {
-    throw "Firebase Deployに失敗しました。"
+        if ($LASTEXITCODE -ne 0) {
+            throw "Firebase Hosting Deployに失敗しました。"
+        }
+    }
+
+    "2" {
+        Write-Host ""
+        Write-Host "[5/5] Firebase Deploy: Functions" -ForegroundColor Cyan
+
+        $env:FUNCTIONS_DISCOVERY_TIMEOUT = "120"
+
+        Write-Host "Functions Discovery Timeout: 120 seconds" -ForegroundColor DarkGray
+
+        firebase deploy --only functions --project $project
+
+        if ($LASTEXITCODE -ne 0) {
+            throw "Firebase Functions Deployに失敗しました。"
+        }
+    }
+
+    "3" {
+        Write-Host ""
+        Write-Host "[5/5] Firebase Deploy: Hosting" -ForegroundColor Cyan
+
+        firebase deploy --only hosting --project $project
+
+        if ($LASTEXITCODE -ne 0) {
+            throw "Firebase Hosting Deployに失敗しました。"
+        }
+
+        Write-Host ""
+        Write-Host "[5/5] Firebase Deploy: Functions" -ForegroundColor Cyan
+
+        $env:FUNCTIONS_DISCOVERY_TIMEOUT = "120"
+
+        Write-Host "Functions Discovery Timeout: 120 seconds" -ForegroundColor DarkGray
+
+        firebase deploy --only functions --project $project
+
+        if ($LASTEXITCODE -ne 0) {
+            throw "Firebase Functions Deployに失敗しました。"
+        }
+    }
+
+    "0" {
+        Write-Host "Deployを中止しました。" -ForegroundColor Yellow
+        exit 0
+    }
+
+    default {
+        throw "無効な選択です。"
+    }
 }
 
 Write-Host ""
@@ -144,8 +198,11 @@ Write-Host "========================================" -ForegroundColor Green
 Write-Host " Deploy Complete" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Green
 Write-Host ""
+
 Write-Host "Git:      完了"
 Write-Host "Firebase: 完了"
 Write-Host "Project:  $project"
+Write-Host "Target:   $deployType"
 Write-Host ""
+
 Write-Host "Production URL / Development URLをブラウザで確認してください。" -ForegroundColor Yellow
