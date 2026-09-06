@@ -1,11 +1,9 @@
 import { onRequest } from "firebase-functions/v2/https";
 import { onSchedule } from "firebase-functions/v2/scheduler";
-import { defineSecret } from "firebase-functions/params";
 import express from "express";
 import cors from "cors";
 import { Resend } from "resend";
 import admin from "firebase-admin";
-import crypto from "crypto";
 
 admin.initializeApp();
 
@@ -17,7 +15,6 @@ app.use(cors());
 
 const resend = new Resend(process.env.RESEND_KEY);
 
-const LUNAGS_ADMIN_EMAILS = defineSecret("LUNAGS_ADMIN_EMAILS");
 const DEFAULT_ADMIN_MODE_MINUTES = 30;
 const MIN_ADMIN_MODE_MINUTES = 1;
 const MAX_ADMIN_MODE_MINUTES = 2880;
@@ -48,21 +45,6 @@ function validateAdminModeDuration(value) {
     }
 
     return duration;
-}
-
-function getSecretAdminEmails() {
-    let secretEmails = [];
-    try {
-        const val = LUNAGS_ADMIN_EMAILS.value();
-        if (val) {
-            secretEmails = val.split(",").map(normalizeEmail).filter(Boolean);
-        }
-    } catch {
-        secretEmails = [];
-    }
-
-    const defaultAdmins = ["nagisa.ito121001m@gmail.com"];
-    return Array.from(new Set([...defaultAdmins, ...secretEmails]));
 }
 
 function publicAccount(account) {
@@ -146,6 +128,7 @@ async function getUserProfileByUid(uid) {
 
         if (userId) {
             const userSnap = await db.collection("users").doc(userId).get();
+
             if (userSnap.exists) {
                 userDoc = userSnap.data();
             }
@@ -187,6 +170,7 @@ async function findUserByEmail(email) {
         .where("email", "==", normalized)
         .limit(1)
         .get();
+
     const userDoc = usersSnap.empty ? null : usersSnap.docs[0].data();
 
     if (!authUser && !userDoc?.uid) {
@@ -208,6 +192,7 @@ async function findUserByEmail(email) {
 
 async function getAdminAccountByEmail(email) {
     const normalized = normalizeEmail(email);
+
     if (!normalized) return null;
 
     const accountSnap = await db
@@ -217,21 +202,6 @@ async function getAdminAccountByEmail(email) {
 
     if (accountSnap.exists && accountSnap.data().active === true) {
         return publicAccount(accountSnap.data());
-    }
-
-    if (getSecretAdminEmails().includes(normalized)) {
-        return {
-            email: normalized,
-            uid: "",
-            name: "",
-            active: true,
-            createdBy: "LUNAGS_ADMIN_EMAILS",
-            createdByEmail: "LUNAGS_ADMIN_EMAILS",
-            createdByName: "初期管理者",
-            createdAt: null,
-            updatedAt: null,
-            adminModeDurationMinutes: DEFAULT_ADMIN_MODE_MINUTES
-        };
     }
 
     return null;
@@ -249,6 +219,7 @@ async function finishAdminSession(uid, endReason, actor = {}) {
         uid,
         ...sessionSnap.data()
     };
+
     const endedAt = Date.now();
 
     await db.collection("adminModeHistory").add({
@@ -295,7 +266,9 @@ async function getActiveSession(uid) {
         uid,
         ...sessionSnap.data()
     };
-    const expiresAt = timestampMillis(session.expiresAt) || Number(session.expiresAt);
+
+    const expiresAt =
+        timestampMillis(session.expiresAt) || Number(session.expiresAt);
 
     if (!expiresAt || expiresAt <= Date.now()) {
         await finishAdminSession(uid, "期限切れ");
@@ -353,27 +326,8 @@ async function getActiveAdminAccounts() {
         .collection("adminAccounts")
         .where("active", "==", true)
         .get();
-    const accounts = snap.docs.map((doc) => publicAccount(doc.data()));
-    const knownEmails = new Set(accounts.map((account) => account.email));
 
-    for (const email of getSecretAdminEmails()) {
-        if (!knownEmails.has(email)) {
-            accounts.push({
-                email,
-                uid: "",
-                name: "",
-                active: true,
-                createdBy: "LUNAGS_ADMIN_EMAILS",
-                createdByEmail: "LUNAGS_ADMIN_EMAILS",
-                createdByName: "初期管理者",
-                createdAt: null,
-                updatedAt: null,
-                adminModeDurationMinutes: DEFAULT_ADMIN_MODE_MINUTES
-            });
-        }
-    }
-
-    return accounts;
+    return snap.docs.map((doc) => publicAccount(doc.data()));
 }
 
 async function assertMinimumAdminCountAfterOneRemoval() {
@@ -441,7 +395,9 @@ app.post("/admin-auth", async (req, res) => {
         const targetAdminAccount = await getAdminAccountByEmail(targetUser.email);
 
         if (targetAdminAccount) {
-            const error = new Error("管理者モードは普通アカウントにのみ付与できます");
+            const error = new Error(
+                "管理者モードは普通アカウントにのみ付与できます"
+            );
             error.status = 400;
             throw error;
         }
@@ -450,6 +406,7 @@ app.post("/admin-auth", async (req, res) => {
             context.adminAccount.adminModeDurationMinutes ||
             DEFAULT_ADMIN_MODE_MINUTES
         );
+
         const now = Date.now();
         const expiresAt = now + duration * 60 * 1000;
 
@@ -510,7 +467,9 @@ app.get("/admin-accounts", async (req, res) => {
 
         return res.json({
             ok: true,
-            accounts: accounts.sort((a, b) => a.email.localeCompare(b.email))
+            accounts: accounts.sort((a, b) =>
+                a.email.localeCompare(b.email)
+            )
         });
     } catch (err) {
         return sendError(res, err, "管理者アカウント一覧の取得に失敗しました");
@@ -521,14 +480,21 @@ app.post("/admin-accounts", async (req, res) => {
     try {
         const context = await requireAdminAccount(req);
         const targetUser = await findUserByEmail(req.body.email);
-        const duration = req.body.adminModeDurationMinutes === undefined
-            ? DEFAULT_ADMIN_MODE_MINUTES
-            : validateAdminModeDuration(req.body.adminModeDurationMinutes);
+
+        const duration =
+            req.body.adminModeDurationMinutes === undefined
+                ? DEFAULT_ADMIN_MODE_MINUTES
+                : validateAdminModeDuration(
+                    req.body.adminModeDurationMinutes
+                );
+
         const accountRef = db.collection("adminAccounts").doc(targetUser.email);
         const existingSnap = await accountRef.get();
+
         const isExistingActive =
             existingSnap.exists &&
             existingSnap.data().active === true;
+
         let historyId = existingSnap.exists
             ? existingSnap.data().historyId || ""
             : "";
@@ -548,6 +514,7 @@ app.post("/admin-accounts", async (req, res) => {
                 endedApprovedByName: "",
                 createdAt: admin.firestore.FieldValue.serverTimestamp()
             });
+
             historyId = historyRef.id;
         }
 
@@ -561,7 +528,8 @@ app.post("/admin-accounts", async (req, res) => {
                 createdByEmail: context.email,
                 createdByName: context.name,
                 createdAt: isExistingActive
-                    ? existingSnap.data().createdAt || admin.firestore.FieldValue.serverTimestamp()
+                    ? existingSnap.data().createdAt ||
+                    admin.firestore.FieldValue.serverTimestamp()
                     : admin.firestore.FieldValue.serverTimestamp(),
                 updatedAt: admin.firestore.FieldValue.serverTimestamp(),
                 adminModeDurationMinutes: duration,
@@ -582,29 +550,12 @@ app.post("/admin-accounts", async (req, res) => {
 app.patch("/admin-accounts/me/duration", async (req, res) => {
     try {
         const context = await requireAdminAccount(req);
-        const duration = validateAdminModeDuration(req.body.adminModeDurationMinutes);
+        const duration = validateAdminModeDuration(
+            req.body.adminModeDurationMinutes
+        );
+
         const ref = db.collection("adminAccounts").doc(context.email);
         const snap = await ref.get();
-
-        if (!snap.exists && context.adminAccount?.createdBy === "LUNAGS_ADMIN_EMAILS") {
-            await ref.set({
-                email: context.email,
-                uid: context.uid,
-                name: context.name,
-                active: true,
-                createdBy: "LUNAGS_ADMIN_EMAILS",
-                createdByEmail: "LUNAGS_ADMIN_EMAILS",
-                createdByName: "初期管理者",
-                createdAt: admin.firestore.FieldValue.serverTimestamp(),
-                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-                adminModeDurationMinutes: duration
-            });
-
-            return res.json({
-                ok: true,
-                adminModeDurationMinutes: duration
-            });
-        }
 
         if (!snap.exists) {
             const error = new Error("Firestoreの管理者アカウントが見つかりません");
@@ -632,10 +583,12 @@ app.patch("/admin-accounts/me/duration", async (req, res) => {
 app.get("/admin-sessions", async (req, res) => {
     try {
         await requireAdminAccount(req);
+
         const snap = await db
             .collection("adminSessions")
             .where("active", "==", true)
             .get();
+
         const sessions = [];
 
         for (const doc of snap.docs) {
@@ -643,7 +596,10 @@ app.get("/admin-sessions", async (req, res) => {
                 uid: doc.id,
                 ...doc.data()
             };
-            const expiresAt = timestampMillis(session.expiresAt) || Number(session.expiresAt);
+
+            const expiresAt =
+                timestampMillis(session.expiresAt) ||
+                Number(session.expiresAt);
 
             if (expiresAt && expiresAt <= Date.now()) {
                 await finishAdminSession(doc.id, "期限切れ");
@@ -664,7 +620,11 @@ app.get("/admin-sessions", async (req, res) => {
 app.post("/admin-sessions/:uid/terminate", async (req, res) => {
     try {
         const context = await requireAdminAccount(req);
-        await finishAdminSession(req.params.uid, "管理者による削除", context);
+        await finishAdminSession(
+            req.params.uid,
+            "管理者による削除",
+            context
+        );
 
         return res.json({ ok: true });
     } catch (err) {
@@ -675,10 +635,12 @@ app.post("/admin-sessions/:uid/terminate", async (req, res) => {
 app.post("/admin-sessions/terminate-all", async (req, res) => {
     try {
         const context = await requireAdminAccount(req);
+
         const snap = await db
             .collection("adminSessions")
             .where("active", "==", true)
             .get();
+
         let terminated = 0;
 
         for (const doc of snap.docs) {
@@ -687,6 +649,7 @@ app.post("/admin-sessions/terminate-all", async (req, res) => {
                 "一斉終了",
                 context
             );
+
             if (didTerminate) terminated += 1;
         }
 
@@ -702,6 +665,7 @@ app.post("/admin-sessions/terminate-all", async (req, res) => {
 app.get("/admin-mode-history", async (req, res) => {
     try {
         await requireAdminAccount(req);
+
         const snap = await db
             .collection("adminModeHistory")
             .orderBy("endedAt", "desc")
@@ -720,6 +684,7 @@ app.get("/admin-mode-history", async (req, res) => {
 app.get("/admin-account-history", async (req, res) => {
     try {
         await requireAdminAccount(req);
+
         const snap = await db
             .collection("adminAccountHistory")
             .orderBy("createdAt", "desc")
@@ -738,6 +703,7 @@ app.get("/admin-account-history", async (req, res) => {
 app.get("/admin-demotion-requests", async (req, res) => {
     try {
         await requireAdminAccount(req);
+
         const snap = await db
             .collection("adminDemotionRequests")
             .where("status", "in", [
@@ -752,14 +718,21 @@ app.get("/admin-demotion-requests", async (req, res) => {
             requests: snap.docs.map(publicHistory)
         });
     } catch (err) {
-        return sendError(res, err, "降格申請一覧の取得に失敗しました");
+        return sendError(
+            res,
+            err,
+            "降格申請一覧の取得に失敗しました"
+        );
     }
 });
 
 app.post("/admin-demotion-requests", async (req, res) => {
     try {
         const context = await requireAdminAccount(req);
-        const target = await findUserByEmail(req.body.targetEmail || req.body.email);
+        const target = await findUserByEmail(
+            req.body.targetEmail || req.body.email
+        );
+
         const targetAccount = await getAdminAccountByEmail(target.email);
 
         if (!targetAccount) {
@@ -771,33 +744,45 @@ app.post("/admin-demotion-requests", async (req, res) => {
         await assertMinimumAdminCountAfterOneRemoval();
 
         const isSelf = target.email === context.email;
-        const requestRef = await db.collection("adminDemotionRequests").add({
-            targetUid: target.uid,
-            targetEmail: target.email,
-            targetName: target.name,
-            requestedBy: context.uid,
-            requestedByEmail: context.email,
-            requestedByName: context.name,
-            targetApproved: false,
-            requesterConfirmed: false,
-            status: isSelf ? "waiting_other_admin_approval" : "waiting_target_approval",
-            createdAt: admin.firestore.FieldValue.serverTimestamp(),
-            updatedAt: admin.firestore.FieldValue.serverTimestamp()
-        });
+
+        const requestRef = await db
+            .collection("adminDemotionRequests")
+            .add({
+                targetUid: target.uid,
+                targetEmail: target.email,
+                targetName: target.name,
+                requestedBy: context.uid,
+                requestedByEmail: context.email,
+                requestedByName: context.name,
+                targetApproved: false,
+                requesterConfirmed: false,
+                status: isSelf
+                    ? "waiting_other_admin_approval"
+                    : "waiting_target_approval",
+                createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                updatedAt: admin.firestore.FieldValue.serverTimestamp()
+            });
 
         return res.json({
             ok: true,
             requestId: requestRef.id
         });
     } catch (err) {
-        return sendError(res, err, "降格申請の作成に失敗しました");
+        return sendError(
+            res,
+            err,
+            "降格申請の作成に失敗しました"
+        );
     }
 });
 
 app.post("/admin-demotion-requests/:id/approve", async (req, res) => {
     try {
         const context = await requireAdminAccount(req);
-        const ref = db.collection("adminDemotionRequests").doc(req.params.id);
+        const ref = db
+            .collection("adminDemotionRequests")
+            .doc(req.params.id);
+
         const snap = await ref.get();
 
         if (!snap.exists) {
@@ -807,15 +792,21 @@ app.post("/admin-demotion-requests/:id/approve", async (req, res) => {
         }
 
         const request = snap.data();
-        const isSelfRequest = request.targetEmail === request.requestedByEmail;
-        const canApproveOtherRequest = request.targetEmail === context.email;
+        const isSelfRequest =
+            request.targetEmail === request.requestedByEmail;
+
+        const canApproveOtherRequest =
+            request.targetEmail === context.email;
+
         const canApproveSelfRequest =
             isSelfRequest &&
             request.targetEmail !== context.email &&
             request.requestedByEmail !== context.email;
 
         if (!canApproveOtherRequest && !canApproveSelfRequest) {
-            const error = new Error("この降格申請を承認できません");
+            const error = new Error(
+                "この降格申請を承認できません"
+            );
             error.status = 403;
             throw error;
         }
@@ -836,14 +827,21 @@ app.post("/admin-demotion-requests/:id/approve", async (req, res) => {
 
         return res.json({ ok: true });
     } catch (err) {
-        return sendError(res, err, "降格申請の承認に失敗しました");
+        return sendError(
+            res,
+            err,
+            "降格申請の承認に失敗しました"
+        );
     }
 });
 
 app.post("/admin-demotion-requests/:id/confirm", async (req, res) => {
     try {
         const context = await requireAdminAccount(req);
-        const ref = db.collection("adminDemotionRequests").doc(req.params.id);
+        const ref = db
+            .collection("adminDemotionRequests")
+            .doc(req.params.id);
+
         let completedRequest = null;
         let removedAccount = null;
         let historyId = "";
@@ -860,13 +858,17 @@ app.post("/admin-demotion-requests/:id/confirm", async (req, res) => {
             const request = snap.data();
 
             if (request.requestedByEmail !== context.email) {
-                const error = new Error("申請者だけが最終確定できます");
+                const error = new Error(
+                    "申請者だけが最終確定できます"
+                );
                 error.status = 403;
                 throw error;
             }
 
             if (!request.targetApproved) {
-                const error = new Error("対象管理者の承認が完了していません");
+                const error = new Error(
+                    "対象管理者の承認が完了していません"
+                );
                 error.status = 409;
                 throw error;
             }
@@ -876,16 +878,26 @@ app.post("/admin-demotion-requests/:id/confirm", async (req, res) => {
             );
 
             if (accountsSnap.size - 1 < 2) {
-                const error = new Error("有効な管理者アカウントは2人以上必要です");
+                const error = new Error(
+                    "有効な管理者アカウントは2人以上必要です"
+                );
                 error.status = 409;
                 throw error;
             }
 
-            const targetRef = db.collection("adminAccounts").doc(request.targetEmail);
+            const targetRef = db
+                .collection("adminAccounts")
+                .doc(request.targetEmail);
+
             const targetSnap = await transaction.get(targetRef);
 
-            if (!targetSnap.exists || targetSnap.data().active !== true) {
-                const error = new Error("対象の管理者アカウントが見つかりません");
+            if (
+                !targetSnap.exists ||
+                targetSnap.data().active !== true
+            ) {
+                const error = new Error(
+                    "対象の管理者アカウントが見つかりません"
+                );
                 error.status = 404;
                 throw error;
             }
@@ -898,7 +910,8 @@ app.post("/admin-demotion-requests/:id/confirm", async (req, res) => {
                 targetRef,
                 {
                     active: false,
-                    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                    updatedAt:
+                        admin.firestore.FieldValue.serverTimestamp(),
                     endedApprovedByUid: context.uid,
                     endedApprovedByEmail: context.email,
                     endedApprovedByName: context.name
@@ -911,7 +924,8 @@ app.post("/admin-demotion-requests/:id/confirm", async (req, res) => {
                 {
                     requesterConfirmed: true,
                     status: "completed",
-                    updatedAt: admin.firestore.FieldValue.serverTimestamp()
+                    updatedAt:
+                        admin.firestore.FieldValue.serverTimestamp()
                 },
                 { merge: true }
             );
@@ -926,36 +940,52 @@ app.post("/admin-demotion-requests/:id/confirm", async (req, res) => {
         };
 
         if (historyId) {
-            await db.collection("adminAccountHistory").doc(historyId).set(
-                historyPatch,
-                { merge: true }
-            );
+            await db
+                .collection("adminAccountHistory")
+                .doc(historyId)
+                .set(historyPatch, { merge: true });
         } else {
             await db.collection("adminAccountHistory").add({
-                userUid: completedRequest.targetUid || removedAccount.uid || "",
+                userUid:
+                    completedRequest.targetUid ||
+                    removedAccount.uid ||
+                    "",
                 userEmail: completedRequest.targetEmail,
-                userName: completedRequest.targetName || removedAccount.name || "",
+                userName:
+                    completedRequest.targetName ||
+                    removedAccount.name ||
+                    "",
                 approvedByUid: removedAccount.createdBy || "",
-                approvedByEmail: removedAccount.createdByEmail || "",
-                approvedByName: removedAccount.createdByName || "",
-                adminStartedAt: timestampMillis(removedAccount.createdAt) || null,
+                approvedByEmail:
+                    removedAccount.createdByEmail || "",
+                approvedByName:
+                    removedAccount.createdByName || "",
+                adminStartedAt:
+                    timestampMillis(removedAccount.createdAt) || null,
                 ...historyPatch,
-                createdAt: admin.firestore.FieldValue.serverTimestamp()
+                createdAt:
+                    admin.firestore.FieldValue.serverTimestamp()
             });
         }
 
         return res.json({ ok: true });
     } catch (err) {
-        return sendError(res, err, "降格申請の確定に失敗しました");
+        return sendError(
+            res,
+            err,
+            "降格申請の確定に失敗しました"
+        );
     }
 });
 
 async function deleteExpiredHistory() {
     const cutoff = Date.now() - HISTORY_RETENTION_MS;
+
     const collections = [
         { name: "adminModeHistory", field: "endedAt" },
         { name: "adminAccountHistory", field: "adminEndedAt" }
     ];
+
     let deleted = 0;
 
     for (const collection of collections) {
@@ -968,10 +998,12 @@ async function deleteExpiredHistory() {
         if (snap.empty) continue;
 
         const batch = db.batch();
+
         snap.docs.forEach((doc) => {
             batch.delete(doc.ref);
             deleted += 1;
         });
+
         await batch.commit();
     }
 
@@ -992,9 +1024,6 @@ export const cleanupAdminHistory = onSchedule(
 export const send = onRequest(
     {
         invoker: "public",
-        secrets: [
-            LUNAGS_ADMIN_EMAILS
-        ],
         cors: [
             "https://lunags-development.web.app",
             "https://lunags-production.web.app",
@@ -1006,5 +1035,3 @@ export const send = onRequest(
     },
     app
 );
-// LUNAGS Admin System build: 2026-08-31-01
-
