@@ -4,6 +4,12 @@ import express from "express";
 import cors from "cors";
 import { Resend } from "resend";
 import admin from "firebase-admin";
+import crypto from "crypto";
+import { defineSecret } from "firebase-functions/params";
+
+const SIGNUP_SKIP_PASSWORD = defineSecret("SIGNUP_SKIP_PASSWORD");
+
+const SIGNUP_SKIP_TOKEN_TTL_MS = 10 * 60 * 1000;
 
 admin.initializeApp();
 
@@ -23,6 +29,131 @@ const HISTORY_RETENTION_MS = 31 * 24 * 60 * 60 * 1000;
 function normalizeEmail(email) {
     return String(email || "").trim().toLowerCase();
 }
+
+app.post("/", async (req, res) => {
+    try {
+        const { action } = req.body || {};
+
+        if (action === "enable") {
+            const password = String(req.body.password || "");
+            const expectedPassword = SIGNUP_SKIP_PASSWORD.value();
+
+            if (!password) {
+                const error = new Error(
+                    "スキップモード認証情報が入力されていません"
+                );
+                error.status = 400;
+                throw error;
+            }
+
+            if (
+                password.length !== expectedPassword.length ||
+                !crypto.timingSafeEqual(
+                    Buffer.from(password, "utf8"),
+                    Buffer.from(expectedPassword, "utf8")
+                )
+            ) {
+                const error = new Error(
+                    "スキップモード認証に失敗しました"
+                );
+                error.status = 403;
+                throw error;
+            }
+
+            const token = createSignupSkipToken();
+
+            return res.json({
+                ok: true,
+                token,
+                expiresIn: SIGNUP_SKIP_TOKEN_TTL_MS
+            });
+        }
+
+        if (action === "prepare") {
+            const token = req.body.token;
+
+            if (!verifySignupSkipToken(token)) {
+                const error = new Error(
+                    "新規登録スキップモードの認証が無効です"
+                );
+                error.status = 403;
+                throw error;
+            }
+
+            const name = String(req.body.name || "").trim();
+            const email = normalizeEmail(req.body.email);
+
+            if (!name) {
+                const error = new Error(
+                    "ユーザー名を入力してください"
+                );
+                error.status = 400;
+                throw error;
+            }
+
+            if (!email) {
+                const error = new Error(
+                    "メールアドレスを入力してください"
+                );
+                error.status = 400;
+                throw error;
+            }
+
+            try {
+                await admin.auth().getUserByEmail(email);
+
+                const error = new Error(
+                    "このメールアドレスはすでに登録されています"
+                );
+                error.status = 409;
+                throw error;
+
+            } catch (error) {
+                if (error.status) {
+                    throw error;
+                }
+            }
+
+            await db
+                .collection("emailVerifications")
+                .doc(email)
+                .set({
+                    name,
+                    email,
+                    codeHash: "",
+                    verified: true,
+                    skipMode: true,
+                    attemptCount: 0,
+                    maxAttempts: 0,
+                    expiresAt:
+                        Date.now() + SIGNUP_SKIP_TOKEN_TTL_MS,
+                    createdAt:
+                        admin.firestore.FieldValue.serverTimestamp(),
+                    updatedAt:
+                        admin.firestore.FieldValue.serverTimestamp()
+                });
+
+            return res.json({
+                ok: true,
+                verified: true,
+                skipMode: true
+            });
+        }
+
+        const error = new Error(
+            "不正なスキップモード処理です"
+        );
+        error.status = 400;
+        throw error;
+
+    } catch (error) {
+        return sendError(
+            res,
+            error,
+            "新規登録スキップ処理に失敗しました"
+        );
+    }
+});
 
 function timestampMillis(value) {
     if (!value) return null;
@@ -339,33 +470,6 @@ async function assertMinimumAdminCountAfterOneRemoval() {
         throw error;
     }
 }
-
-app.post("/", async (req, res) => {
-    const { email, code, name } = req.body;
-
-    try {
-        const result = await resend.emails.send({
-            from: "LUNAGS <onboarding@resend.dev>",
-            to: email,
-            subject: "確認コード",
-            html: `
-                <div>
-                    <h2>${name || "ユーザー"}さん</h2>
-                    <p>認証コード:</p>
-                    <h1>${code}</h1>
-                </div>
-            `
-        });
-
-        if (result.error) {
-            return res.status(500).json(result);
-        }
-
-        return res.json(result);
-    } catch (err) {
-        return sendError(res, err, "メール送信に失敗しました");
-    }
-});
 
 app.get("/admin-status", async (req, res) => {
     try {
@@ -1034,4 +1138,22 @@ export const send = onRequest(
         ]
     },
     app
+);
+
+export const signupSkip = onRequest(
+    {
+        invoker: "public",
+        cors: [
+            "https://lunags-development.web.app",
+            "https://lunags-production.web.app",
+            "http://localhost:8000",
+            "http://127.0.0.1:8000",
+            "http://localhost:5174",
+            "http://127.0.0.1:5174"
+        ],
+        secrets: [SIGNUP_SKIP_PASSWORD]
+    },
+    async (req, res) => {
+        return app(req, res);
+    }
 );

@@ -57,6 +57,13 @@ const MAILER_ENDPOINT =
 
 console.log("MAILER_ENDPOINT =", MAILER_ENDPOINT);
 
+const SIGNUP_SKIP_ENDPOINT =
+    hostname === "localhost" || hostname === "127.0.0.1"
+        ? "http://127.0.0.1:5001/lunags-development/us-central1/signupSkip"
+        : hostname.includes("lunags-development")
+            ? "https://us-central1-lunags-development.cloudfunctions.net/signupSkip"
+            : "https://us-central1-lunags-production.cloudfunctions.net/signupSkip";
+
 export const FIREBASE_TIMEOUT_MS = 30000;
 export const LOCAL_VERIFICATION_KEY_PREFIX = "verify_";
 
@@ -169,6 +176,120 @@ function rightRotate(value, bits) {
 
 function add32(...values) {
     return values.reduce((sum, value) => (sum + value) >>> 0, 0);
+}
+
+export async function enableSignupSkip(password) {
+    const response = await fetch(SIGNUP_SKIP_ENDPOINT, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            action: "enable",
+            password
+        })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.ok) {
+        throw new Error(
+            data.error || "新規登録スキップモードの認証に失敗しました"
+        );
+    }
+
+    sessionStorage.setItem(
+        "lunagsSignupSkipToken",
+        data.token
+    );
+
+    sessionStorage.setItem(
+        "lunagsSignupSkipExpiresAt",
+        String(Date.now() + data.expiresIn)
+    );
+
+    return true;
+}
+
+export function isSignupSkipEnabled() {
+    const token = sessionStorage.getItem(
+        "lunagsSignupSkipToken"
+    );
+
+    const expiresAt = Number(
+        sessionStorage.getItem(
+            "lunagsSignupSkipExpiresAt"
+        )
+    );
+
+    if (!token || !expiresAt) {
+        return false;
+    }
+
+    if (Date.now() >= expiresAt) {
+        disableSignupSkip();
+        return false;
+    }
+
+    return true;
+}
+
+export function getSignupSkipToken() {
+    if (!isSignupSkipEnabled()) {
+        return null;
+    }
+
+    return sessionStorage.getItem(
+        "lunagsSignupSkipToken"
+    );
+}
+
+export function disableSignupSkip() {
+    sessionStorage.removeItem(
+        "lunagsSignupSkipToken"
+    );
+
+    sessionStorage.removeItem(
+        "lunagsSignupSkipExpiresAt"
+    );
+}
+
+export async function prepareSignupSkip({
+    email,
+    name
+}) {
+    const token = getSignupSkipToken();
+
+    if (!token) {
+        throw new Error(
+            "新規登録スキップモードが有効ではありません"
+        );
+    }
+
+    const response = await fetch(SIGNUP_SKIP_ENDPOINT, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            action: "prepare",
+            token,
+            email,
+            name
+        })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.ok) {
+        disableSignupSkip();
+
+        throw new Error(
+            data.error || "新規登録スキップ処理に失敗しました"
+        );
+    }
+
+    return data;
 }
 
 export async function sendVerificationEmail({ email, code, name }) {
