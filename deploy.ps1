@@ -180,12 +180,24 @@ switch ($deployType) {
     }
 
     "4" {
-        Invoke-FirebaseDeploy -Target "All" -Project $project
+    $env:FUNCTIONS_DISCOVERY_TIMEOUT = "120"
 
-        $env:FUNCTIONS_DISCOVERY_TIMEOUT = "120"
+    Write-Host ""
+    Write-Host "Functions Discovery Timeout: 120 seconds" -ForegroundColor DarkGray
 
-        Write-Host ""
-        Write-Host "Functions Discovery Timeout: 120 seconds" -ForegroundColor DarkGray
+    Write-Host ""
+    Write-Host "Firebase Deploy: All" -ForegroundColor Cyan
+
+    & firebase deploy --project $project
+
+    $exitCode = $LASTEXITCODE
+
+    if ($exitCode -ne 0) {
+        throw "Firebase All Deployに失敗しました。終了コード: $exitCode"
+    }
+
+    Write-Host ""
+    Write-Host "Firebase All Deploy 完了" -ForegroundColor Green
     }
 
     "0" {
