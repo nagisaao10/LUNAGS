@@ -5,6 +5,7 @@ import { Resend } from "resend";
 import admin from "firebase-admin";
 import crypto from "crypto";
 import { defineSecret } from "firebase-functions/params";
+import cors from "cors";
 
 const SIGNUP_SKIP_PASSWORD = defineSecret("SIGNUP_SKIP_PASSWORD");
 
@@ -16,6 +17,23 @@ const app = express();
 const signupSkipApp = express();
 
 const db = admin.firestore();
+
+const allowedOrigins = [
+    "https://lunags-development.web.app",
+    "https://lunags-development.firebaseapp.com",
+    "https://lunags-production.web.app",
+    "https://lunags-production.firebaseapp.com",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+    "http://localhost:5174",
+    "http://127.0.0.1:5174"
+];
+
+app.use(cors({
+    origin: allowedOrigins,
+    methods: ["GET", "POST", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
+}));
 
 app.use(express.json());
 signupSkipApp.use(express.json());
@@ -1634,58 +1652,47 @@ export const cleanupAdminHistory =
    メール送信
    ============================ */
 
+app.post("/", async (req, res) => {
+    try {
+        const apiKey = process.env.RESEND_KEY;
+
+        if (!apiKey) {
+            const error = new Error(
+                "RESEND_KEYが設定されていません"
+            );
+            error.status = 500;
+            throw error;
+        }
+
+        const resend = new Resend(apiKey);
+
+        const result = await resend.emails.send(
+            req.body
+        );
+
+        return res.json({
+            ok: true,
+            result
+        });
+    } catch (err) {
+        return sendError(
+            res,
+            err,
+            "メール送信に失敗しました"
+        );
+    }
+});
+
+/* ============================
+   Functions公開
+   ============================ */
+
 export const send = onRequest(
     {
-        invoker: "public",
-        cors: [
-            "https://lunags-development.web.app",
-            "https://lunags-production.web.app",
-            "http://localhost:8000",
-            "http://127.0.0.1:8000",
-            "http://localhost:5174",
-            "http://127.0.0.1:5174"
-        ]
+        invoker: "public"
     },
-    async (req, res) => {
-        try {
-            if (req.method !== "POST") {
-                return res.status(405).json({
-                    ok: false,
-                    error:
-                        "POSTメソッドのみ使用できます"
-                });
-            }
-
-            const apiKey =
-                process.env.RESEND_KEY;
-
-            if (!apiKey) {
-                const error = new Error(
-                    "RESEND_KEYが設定されていません"
-                );
-                error.status = 500;
-                throw error;
-            }
-
-            const resend =
-                new Resend(apiKey);
-
-            const result =
-                await resend.emails.send(
-                    req.body
-                );
-
-            return res.json({
-                ok: true,
-                result
-            });
-        } catch (err) {
-            return sendError(
-                res,
-                err,
-                "メール送信に失敗しました"
-            );
-        }
+    (req, res) => {
+        return app(req, res);
     }
 );
 

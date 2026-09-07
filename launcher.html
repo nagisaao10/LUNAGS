@@ -688,7 +688,9 @@
              * ローディング終了
              */
 
-            loading.classList.add("hidden");
+            if (loading) {
+                loading.classList.add("hidden");
+            }
         });
 
 
