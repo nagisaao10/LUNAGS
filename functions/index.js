@@ -1698,7 +1698,9 @@ export const signupSkip = onRequest(
         invoker: "public",
         cors: [
             "https://lunags-development.web.app",
+            "https://lunags-development.firebaseapp.com",
             "https://lunags-production.web.app",
+            "https://lunags-production.firebaseapp.com",
             "http://localhost:8000",
             "http://127.0.0.1:8000",
             "http://localhost:5174",

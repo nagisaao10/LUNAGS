@@ -600,44 +600,50 @@
         }
 
         async function renderAdminCard(user) {
+            const adminCard = document.getElementById("adminCard");
+
+            if (!adminCard) {
+                console.warn("adminCard が見つかりません");
+                return;
+            }
+
             adminCard.classList.add("is-hidden");
 
             try {
-                const idToken = await user.getIdToken();
+                const token = await user.getIdToken();
+
                 const response = await fetch(
                     `${FUNCTIONS_ENDPOINT}/admin-status`,
                     {
+                        method: "GET",
                         headers: {
-                            "Authorization": `Bearer ${idToken}`
+                            Authorization: `Bearer ${token}`
                         }
                     }
                 );
+
+                if (!response.ok) {
+                    console.error(
+                        "管理者状態取得失敗:",
+                        response.status,
+                        await response.text()
+                    );
+                    return;
+                }
+
                 const result = await response.json();
 
-                if (!response.ok || !result.ok) {
+                console.log("管理者状態:", result);
+
+                if (!result.ok) {
                     return;
                 }
 
-                if (!result.isAdminAccount && !result.adminMode) {
-                    return;
+                if (result.isAdminAccount || result.adminMode) {
+                    adminCard.classList.remove("is-hidden");
                 }
-
-                adminCard.classList.remove("is-hidden");
-
-                if (result.isAdminAccount) {
-                    adminCardStatus.textContent = "管理者アカウント";
-                    adminCardDescription.textContent =
-                        "管理者アカウント、管理者モード、履歴を管理します。";
-                    return;
-                }
-
-                adminCardStatus.textContent =
-                    `管理者モード中 期限: ${formatTime(result.session?.expiresAt)}`;
-                adminCardDescription.textContent =
-                    "一時的な管理者モードで、新規登録用メール承認を行えます。";
-
             } catch (error) {
-                console.info(
+                console.error(
                     "管理者状態を取得できませんでした:",
                     error
                 );
