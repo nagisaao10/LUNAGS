@@ -148,7 +148,8 @@ Write-Host " Firebase Deploy Type" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "[1] Hosting"
 Write-Host "[2] Functions"
-Write-Host "[3] 全体 (Hosting + Functions)"
+Write-Host "[3] Hosting + Functions"
+Write-Host "[4] All"
 Write-Host "[0] Cancel"
 
 $deployType = Read-Host "Deploy type"
@@ -176,6 +177,15 @@ switch ($deployType) {
         Write-Host "Functions Discovery Timeout: 120 seconds" -ForegroundColor DarkGray
 
         Invoke-FirebaseDeploy -Target "functions" -Project $project
+    }
+
+    "4" {
+        Invoke-FirebaseDeploy -Project $project
+
+        $env:FUNCTIONS_DISCOVERY_TIMEOUT = "120"
+
+        Write-Host ""
+        Write-Host "Functions Discovery Timeout: 120 seconds" -ForegroundColor DarkGray
     }
 
     "0" {
