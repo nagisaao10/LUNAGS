@@ -14,33 +14,51 @@ function getFirebaseProjectId() {
             }
         );
 
-        const match = result.match(
-            /Active Project:\s*([^\s]+)/i
+        const activeMatch = result.match(
+            /Now using project\s+([^\s]+)/i
         );
 
-        if (match) {
-            return match[1].trim();
+        if (activeMatch) {
+            return activeMatch[1].trim();
         }
 
-        const line = result
-            .split(/\r?\n/)
-            .find((value) => value.includes("(current)"));
+        const oldMatch = result.match(
+            /Active Project:\s*\*?([^\s]+)/i
+        );
 
-        if (line) {
-            return line
+        if (oldMatch) {
+            return oldMatch[1].trim();
+        }
+
+        const currentLine = result
+            .split(/\r?\n/)
+            .find((value) =>
+                value.includes("(current)")
+            );
+
+        if (currentLine) {
+            return currentLine
                 .replace("(current)", "")
                 .trim();
         }
 
         return null;
     } catch (error) {
-        console.error("Firebase CLIからプロジェクトを取得できませんでした。");
+        console.error(
+            "Firebase CLIからプロジェクトを取得できませんでした。"
+        );
         console.error("");
-        console.error("先にFirebaseプロジェクトを選択してください。");
+        console.error(
+            "先にFirebaseプロジェクトを選択してください。"
+        );
         console.error("");
         console.error("例:");
-        console.error("  firebase use lunags-development");
-        console.error("  firebase use lunags-production");
+        console.error(
+            "  firebase use lunags-development"
+        );
+        console.error(
+            "  firebase use lunags-production"
+        );
         console.error("");
 
         process.exit(1);
