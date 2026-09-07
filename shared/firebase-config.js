@@ -41,28 +41,27 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 
+export const FIREBASE_PROJECT_ID =
+    app.options.projectId;
+
+export const FUNCTIONS_ENDPOINT =
+    hostname === "localhost" ||
+        hostname === "127.0.0.1"
+        ? `http://127.0.0.1:5001/${FIREBASE_PROJECT_ID}/us-central1/send`
+        : `https://us-central1-${FIREBASE_PROJECT_ID}.cloudfunctions.net/send`;
+
+export const SIGNUP_SKIP_ENDPOINT =
+    hostname === "localhost" ||
+        hostname === "127.0.0.1"
+        ? `http://127.0.0.1:5001/${FIREBASE_PROJECT_ID}/us-central1/signupSkip`
+        : `https://us-central1-${FIREBASE_PROJECT_ID}.cloudfunctions.net/signupSkip`;
+
 export { serverTimestamp };
 
 export const VERIFICATION_COLLECTION = "emailVerifications";
 export const CODE_TTL_MS = 5 * 60 * 1000;
 export const MAX_ATTEMPTS = 5;
 export const RESEND_COOLDOWN_MS = 60 * 1000;
-
-const MAILER_ENDPOINT =
-    hostname === "localhost" || hostname === "127.0.0.1"
-        ? "http://127.0.0.1:5001/lunags-development/us-central1/send"
-        : hostname.includes("lunags-development")
-            ? "https://us-central1-lunags-development.cloudfunctions.net/send"
-            : "https://us-central1-lunags-production.cloudfunctions.net/send";
-
-console.log("MAILER_ENDPOINT =", MAILER_ENDPOINT);
-
-const SIGNUP_SKIP_ENDPOINT =
-    hostname === "localhost" || hostname === "127.0.0.1"
-        ? "http://127.0.0.1:5001/lunags-development/us-central1/signupSkip"
-        : hostname.includes("lunags-development")
-            ? "https://us-central1-lunags-development.cloudfunctions.net/signupSkip"
-            : "https://us-central1-lunags-production.cloudfunctions.net/signupSkip";
 
 export const FIREBASE_TIMEOUT_MS = 30000;
 export const LOCAL_VERIFICATION_KEY_PREFIX = "verify_";
@@ -293,7 +292,7 @@ export async function prepareSignupSkip({
 }
 
 export async function sendVerificationEmail({ email, code, name }) {
-    const response = await fetch(MAILER_ENDPOINT, {
+    const response = await fetch(FUNCTIONS_ENDPOINT, {
         method: "POST",
         headers: {
             "Content-Type": "application/json"

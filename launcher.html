@@ -599,7 +599,7 @@
 
     <script type="module">
 
-        import { auth } from "./shared/firebase-config.js";
+        import { auth, auth, FUNCTIONS_ENDPOINT } from "./shared/firebase-config.js";
         import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
 
         const loading = document.getElementById("loading");
@@ -609,13 +609,6 @@
         const adminCard = document.getElementById("adminCard");
         const adminCardStatus = document.getElementById("adminCardStatus");
         const adminCardDescription = document.getElementById("adminCardDescription");
-
-        const FUNCTIONS_ENDPOINT =
-            window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
-                ? "http://127.0.0.1:5001/lunags-development/us-central1/send"
-                : window.location.hostname === "lunags-production.web.app"
-                    ? "https://us-central1-lunags-production.cloudfunctions.net/send"
-                    : "https://us-central1-lunags-development.cloudfunctions.net/send";
 
         function formatTime(value) {
             if (!value) return "-";
