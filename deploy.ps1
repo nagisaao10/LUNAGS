@@ -180,7 +180,7 @@ switch ($deployType) {
     }
 
     "4" {
-        Invoke-FirebaseDeploy -Project $project
+        Invoke-FirebaseDeploy -Target "All" -Project $project
 
         $env:FUNCTIONS_DISCOVERY_TIMEOUT = "120"
 
