@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>新規登録 | LUNAGS Account</title>
+
     <link rel="stylesheet" href="../../shared/normalize.css">
     <link rel="stylesheet" href="../../shared/common.css">
     <link rel="stylesheet" href="./login.css">
@@ -13,9 +14,13 @@
 <body>
     <div class="box">
         <h2>新規登録</h2>
-        <p>名前とメールアドレスを入力すると、6桁の確認コードを送信します。</p>
+
+        <p>
+            名前とメールアドレスを入力すると、6桁の確認コードを送信します。
+        </p>
 
         <input id="name" type="text" placeholder="ユーザー名">
+
         <input id="email" type="email" placeholder="メールアドレス">
 
         <div id="message" class="message"></div>
@@ -31,6 +36,7 @@
 
     <script type="module">
         console.log("JS動いてる");
+
         import {
             auth,
             db,
@@ -48,40 +54,58 @@
             getFriendlyErrorMessage,
             isSignupSkipEnabled,
             prepareSignupSkip,
-            enableSignupSkip,
+            enableSignupSkip
         } from "../../shared/firebase-config.js";
 
-        import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+        import {
+            doc,
+            setDoc
+        } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
         import {
-            fetchSignInMethodsForEmail,
-            GoogleAuthProvider,
-            signInWithPopup
+            fetchSignInMethodsForEmail
         } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+
 
         function setMessage(text, type = "") {
             const message = document.getElementById("message");
+
             message.className = `message ${type}`;
             message.innerText = text;
         }
 
-        window.signup = async () => { };
 
-        window.LUNAGS = window.LUNAGS || {};
+        /*
+         * ========================================
+         * LUNAGS 新規登録スキップ API
+         * ========================================
+         *
+         * ブラウザのConsoleから
+         *
+         * LUNAGS_signup.skip("1001LUNA")
+         *
+         * と実行すると、新規登録スキップモードを有効化する。
+         *
+         * パスワード自体はコードには保存しない。
+         * Firebase Functions側でSecretとして検証する。
+         */
 
-        window.LUNAGS.enableSignupSkip = async (password) => {
+        window.LUNAGS_signup = window.LUNAGS_signup || {};
+
+        window.LUNAGS_signup.skip = async (password) => {
             try {
                 await enableSignupSkip(password);
 
                 console.log(
-                    "LUNAGS: 新規登録スキップモードを有効化しました"
+                    "LUNAGS_signup: 新規登録スキップモードを有効化しました"
                 );
 
                 return true;
 
             } catch (error) {
+
                 console.error(
-                    "LUNAGS: 新規登録スキップモードの有効化に失敗しました",
+                    "LUNAGS_signup: 新規登録スキップモードの有効化に失敗しました",
                     error
                 );
 
@@ -89,15 +113,27 @@
             }
         };
 
-        // メール登録
+
+        /*
+         * ========================================
+         * メール登録
+         * ========================================
+         */
+
         window.startSignup = async (event) => {
             event.preventDefault();
 
-            const button = document.getElementById("submitButton");
-            const name = document.getElementById("name").value.trim();
-            const email = normalizeEmail(
-                document.getElementById("email").value
-            );
+            const button =
+                document.getElementById("submitButton");
+
+            const name =
+                document.getElementById("name").value.trim();
+
+            const email =
+                normalizeEmail(
+                    document.getElementById("email").value
+                );
+
 
             if (!name) {
                 return setMessage(
@@ -106,6 +142,7 @@
                 );
             }
 
+
             if (!email) {
                 return setMessage(
                     "メールアドレスを入力してください",
@@ -113,98 +150,143 @@
                 );
             }
 
+
             button.disabled = true;
 
+
             try {
-                let offline = false;
+
+                /*
+                 * --------------------------------
+                 * 既存アカウント確認
+                 * --------------------------------
+                 */
 
                 try {
+
                     const methods = await withTimeout(
-                        fetchSignInMethodsForEmail(auth, email)
+                        fetchSignInMethodsForEmail(
+                            auth,
+                            email
+                        )
                     );
 
+
                     if (methods.length > 0) {
+
                         throw new Error(
                             "このメールアドレスはすでに登録されています"
                         );
                     }
 
                 } catch (error) {
+
                     if (!isOfflineDocumentError(error)) {
                         throw error;
                     }
-
-                    offline = true;
                 }
+
+
+                /*
+                 * --------------------------------
+                 * 登録情報を一時保存
+                 * --------------------------------
+                 */
 
                 savePendingSignup({
                     name,
                     email
                 });
 
+
                 /*
-                 * ========================================
+                 * --------------------------------
                  * 新規登録スキップモード
-                 * ========================================
+                 * --------------------------------
                  */
 
                 if (isSignupSkipEnabled()) {
+
                     setMessage(
                         "新規登録スキップモードで登録しています..."
                     );
+
 
                     await prepareSignupSkip({
                         email,
                         name
                     });
 
+
                     setMessage(
                         "確認をスキップしました",
                         "success"
                     );
+
 
                     setTimeout(() => {
                         window.location.href =
                             "./set-password.html";
                     }, 500);
 
+
                     return;
                 }
 
+
                 /*
-                 * ========================================
-                 * 通常の6桁確認コード
-                 * ========================================
+                 * --------------------------------
+                 * 通常の確認コード登録
+                 * --------------------------------
                  */
 
                 setMessage(
                     "確認コードを発行しています..."
                 );
 
-                const ref = doc(
-                    db,
-                    VERIFICATION_COLLECTION,
-                    email
-                );
 
-                const code = generateCode();
-                const codeHash = await sha256(code);
+                const ref =
+                    doc(
+                        db,
+                        VERIFICATION_COLLECTION,
+                        email
+                    );
 
-                await setDoc(
-                    ref,
-                    {
-                        name,
-                        email,
-                        codeHash,
-                        verified: false,
-                        skipMode: false,
-                        attemptCount: 0,
-                        maxAttempts: MAX_ATTEMPTS,
-                        expiresAt: Date.now() + CODE_TTL_MS,
-                        createdAt: serverTimestamp(),
-                        updatedAt: serverTimestamp()
-                    }
-                );
+
+                const code =
+                    generateCode();
+
+
+                const codeHash =
+                    await sha256(code);
+
+
+                await setDoc(ref, {
+
+                    name,
+                    email,
+
+                    codeHash,
+
+                    verified: false,
+
+                    skipMode: false,
+
+                    attemptCount: 0,
+
+                    maxAttempts:
+                        MAX_ATTEMPTS,
+
+                    expiresAt:
+                        Date.now() + CODE_TTL_MS,
+
+                    createdAt:
+                        serverTimestamp(),
+
+                    updatedAt:
+                        serverTimestamp()
+                });
+
 
                 await sendVerificationEmail({
                     email,
@@ -212,17 +294,23 @@
                     name
                 });
 
+
                 setMessage(
                     "確認コードを送信しました",
                     "success"
                 );
 
+
                 setTimeout(() => {
+
                     window.location.href =
                         "./verify.html";
+
                 }, 800);
 
+
             } catch (error) {
+
                 console.error(error);
 
                 setMessage(
@@ -233,7 +321,9 @@
                     "error"
                 );
 
+
             } finally {
+
                 button.disabled = false;
             }
         };
