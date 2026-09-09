@@ -37,14 +37,14 @@
   --amber-500: #d89d18;
   --ink: #182747;
   --muted: #637093;
-  --line: #d9e7fb;
+  --line: #dfeffd;
   --surface: #ffffff;
   --surface-soft: #f5f9ff;
   --surface-blue: #eef6ff;
   --sidebar-w: 248px;
   --radius: 8px;
   --shadow: 0 18px 48px rgba(29, 75, 150, 0.14);
-  --font: "Noto Sans JP", "Inter", system-ui, sans-serif;
+  --font: "Noto Sans JP", "游ゴシック体", system-ui, sans-serif;
 }
 
 html,

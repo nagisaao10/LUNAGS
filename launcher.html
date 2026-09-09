@@ -9,39 +9,22 @@
     <link rel="stylesheet" href="./shared/common.css">
 
     <style>
-        :root {
-            --lunags-primary: #73B8FD;
-            --lunags-primary-hover: #5DAAF7;
-            --lunags-primary-light: #EAF5FF;
-            --lunags-primary-dark: #4D9BE8;
-
-            --text-main: #222;
-            --text-sub: #777;
-            --background: #f6f9fc;
-            --card-background: #ffffff;
-        }
-
         * {
             box-sizing: border-box;
         }
 
+
+
         body {
             margin: 0;
             min-height: 100vh;
-
-            font-family:
-                -apple-system,
-                BlinkMacSystemFont,
-                "Segoe UI",
-                "Noto Sans JP",
-                sans-serif;
-
-            color: var(--text-main);
+            font-family: var(--font);
+            color: var(--ink);
             background:
                 radial-gradient(circle at top left,
-                    var(--lunags-primary-light),
+                    var(--surface-blue),
                     transparent 35%),
-                var(--background);
+                var(--surface-soft);
         }
 
         /* =========================
@@ -58,8 +41,8 @@
 
             padding: 0 32px;
 
-            background: rgba(255, 255, 255, 0.85);
-            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            background: rgba(255, 255, 255, 0.9);
+            border-bottom: 1px solid var(--line);
 
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
@@ -73,7 +56,7 @@
             font-size: 24px;
             font-weight: 700;
             letter-spacing: 0.05em;
-            color: var(--lunags-primary-dark);
+            color: var(--blue-700);
         }
 
         .header-right {
@@ -84,19 +67,19 @@
 
         .user-name {
             font-size: 14px;
-            color: var(--text-sub);
+            color: var(--muted);
         }
 
         .logout-button {
             border: none;
             background: transparent;
 
-            color: var(--text-sub);
-
+            color: var(--muted);
+            font-family: inherit;
             font-size: 13px;
 
             padding: 8px 12px;
-            border-radius: 8px;
+            border-radius: var(--radius);
 
             cursor: pointer;
 
@@ -106,8 +89,8 @@
         }
 
         .logout-button:hover {
-            background: #f0f0f0;
-            color: #333;
+            background: var(--surface-blue);
+            color: var(--ink);
         }
 
         /* =========================
@@ -138,12 +121,12 @@
         .welcome p {
             margin: 0;
 
-            color: var(--text-sub);
+            color: var(--muted);
             font-size: 16px;
         }
 
         #displayName {
-            color: var(--lunags-primary-dark);
+            color: var(--blue-700);
             font-weight: 600;
         }
 
@@ -175,13 +158,12 @@
 
             padding: 32px;
 
-            background: var(--card-background);
+            background: var(--surface);
 
-            border: 1px solid rgba(115, 184, 253, 0.18);
-            border-radius: 24px;
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
 
-            box-shadow:
-                0 8px 30px rgba(0, 0, 0, 0.06);
+            box-shadow: var(--shadow);
 
             text-decoration: none;
             color: inherit;
@@ -207,30 +189,34 @@
 
             border-radius: 50%;
 
-            background: var(--lunags-primary-light);
+            background: var(--surface-blue);
 
             transition:
                 transform 0.3s ease;
         }
 
         .launcher-card:hover {
-            transform: translateY(-6px);
+            transform: translateY(-4px);
 
-            border-color:
-                rgba(115, 184, 253, 0.5);
+            border-color: var(--blue-200);
 
             box-shadow:
-                0 16px 40px rgba(0, 0, 0, 0.10);
+                0 20px 48px rgba(29, 75, 150, 0.18);
         }
 
         .launcher-card:hover::before {
             transform: scale(1.25);
         }
 
-        .card-top {
+        .card-top,
+        .card-bottom {
             position: relative;
             z-index: 1;
         }
+
+        /* =========================
+           Card Icon
+        ========================= */
 
         .card-icon {
             width: 64px;
@@ -242,14 +228,18 @@
 
             margin-bottom: 24px;
 
-            border-radius: 18px;
+            border-radius: var(--radius);
 
-            background: var(--lunags-primary-light);
+            background: var(--surface-blue);
 
-            color: var(--lunags-primary-dark);
+            color: var(--blue-700);
 
             font-size: 30px;
         }
+
+        /* =========================
+           Card Text
+        ========================= */
 
         .card-title {
             margin: 0 0 8px;
@@ -261,16 +251,17 @@
         .card-description {
             margin: 0;
 
-            color: var(--text-sub);
+            color: var(--muted);
 
             font-size: 14px;
             line-height: 1.7;
         }
 
-        .card-bottom {
-            position: relative;
-            z-index: 1;
+        /* =========================
+           Card Bottom
+        ========================= */
 
+        .card-bottom {
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -279,7 +270,7 @@
         }
 
         .open-text {
-            color: var(--lunags-primary-dark);
+            color: var(--blue-700);
 
             font-size: 14px;
             font-weight: 600;
@@ -295,9 +286,9 @@
 
             border-radius: 50%;
 
-            background: var(--lunags-primary);
+            background: var(--blue-500);
 
-            color: white;
+            color: var(--surface);
 
             font-size: 18px;
 
@@ -308,7 +299,7 @@
 
         .launcher-card:hover .arrow {
             transform: translateX(4px);
-            background: var(--lunags-primary-hover);
+            background: var(--blue-600);
         }
 
         /* =========================
@@ -323,7 +314,7 @@
             align-items: center;
             justify-content: center;
 
-            background: var(--background);
+            background: var(--surface-soft);
 
             z-index: 1000;
 
@@ -345,11 +336,11 @@
             font-size: 28px;
             font-weight: 700;
 
-            color: var(--lunags-primary-dark);
+            color: var(--blue-700);
         }
 
         .loading-text {
-            color: var(--text-sub);
+            color: var(--muted);
             font-size: 14px;
         }
 
@@ -358,7 +349,6 @@
         ========================= */
 
         @media (max-width: 700px) {
-
             header {
                 height: 62px;
                 padding: 0 18px;
@@ -398,7 +388,6 @@
             .launcher-card {
                 min-height: 220px;
                 padding: 26px;
-                border-radius: 20px;
             }
 
             .card-title {
@@ -411,8 +400,7 @@
 <body>
     <!-- =========================
          Header
-    ========================== -->
-
+    ========================== -->x
     <header>
 
         <div class="logo">
