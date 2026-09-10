@@ -12,7 +12,8 @@
 </head>
 
 <body>
-    <button class="hamburger" id="hamburgerBtn" type="button" aria-label="メニューを開く" aria-controls="sidebar" aria-expanded="false">
+    <button class="hamburger" id="hamburgerBtn" type="button" aria-label="メニューを開く" aria-controls="sidebar"
+        aria-expanded="false">
         <i class="fa-solid fa-bars" aria-hidden="true"></i>
     </button>
 
@@ -21,7 +22,7 @@
             <div class="sidebar__brand">
                 <img src="./images/logo_LUNAGS.png" alt="LUNAGS" class="logo-lunags">
                 <div class="sidebar__brand-divider"></div>
-                <span class="sidebar__brand-subtitle">PORTAL</span>
+                <span class="sidebar__brand-subtitle">SYSTEM</span>
             </div>
 
             <nav class="menu-list" aria-label="メインメニュー">
@@ -33,9 +34,13 @@
                     <i class="fa-solid fa-user" aria-hidden="true"></i>
                     <span>マイページ</span>
                 </a>
-                <a href="./shop/" class="menu">
+                <a href="./shop/shop.html" class="menu">
                     <i class="fa-solid fa-bag-shopping" aria-hidden="true"></i>
                     <span>ショップ</span>
+                </a>
+                <a href="./management/dashboard/dashboard.html" class="menu">
+                    <i class="fa-solid fa-chart-line" aria-hidden="true"></i>
+                    <span>ダッシュボード</span>
                 </a>
                 <a href="./account/admin/admin.html" class="menu is-hidden" id="adminMenu">
                     <i class="fa-solid fa-user-shield" aria-hidden="true"></i>
@@ -44,7 +49,6 @@
             </nav>
 
             <div class="sidebar__footer">
-                <div class="sidebar__user" id="userName">ログイン確認中...</div>
                 <button class="logout-btn" id="logoutButton" type="button">
                     <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
                     <span>ログアウト</span>
@@ -56,7 +60,7 @@
             <header class="topbar">
                 <div>
                     <h1>ランチャー</h1>
-                    <p class="sub"><span id="displayName">ユーザー</span>さんのLUNAGSポータル</p>
+                    <p class="sub"><span id="displayName">ユーザー</span> さんのLUNAGSポータル</p>
                 </div>
             </header>
 
@@ -91,6 +95,18 @@
                         </div>
                     </a>
 
+                    <a href="./management/dashboard/dashboard.html" class="launcher-card">
+                        <div class="card-top">
+                            <div class="card-icon"><i class="fa-solid fa-chart-line" aria-hidden="true"></i></div>
+                            <h2 class="card-title">ダッシュボード</h2>
+                            <p class="card-description">LUNAGSの管理情報を確認し、各種ツールへアクセスできます。</p>
+                        </div>
+                        <div class="card-bottom">
+                            <span class="open-text">ダッシュボードを開く</span>
+                            <span class="arrow" aria-hidden="true"><i class="fa-solid fa-arrow-right"></i></span>
+                        </div>
+                    </a>
+
                     <a href="./account/admin/admin.html" class="launcher-card is-hidden" id="adminCard">
                         <div class="card-top">
                             <div class="card-icon"><i class="fa-solid fa-user-shield" aria-hidden="true"></i></div>
@@ -111,7 +127,6 @@
         import { auth, FUNCTIONS_ENDPOINT } from "./shared/firebase-config.js";
         import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
 
-        const userName = document.getElementById("userName");
         const displayName = document.getElementById("displayName");
         const logoutButton = document.getElementById("logoutButton");
         const adminCard = document.getElementById("adminCard");
@@ -158,7 +173,6 @@
             }
 
             const name = user.displayName || user.email?.split("@")[0] || "ユーザー";
-            userName.textContent = name;
             displayName.textContent = name;
             await renderAdminCard(user);
         });
