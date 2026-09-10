@@ -4,129 +4,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>404 Not Found | LUNAGS System</title>
+    <title>ページが見つかりません | LUNAGS System</title>
     <link rel="stylesheet" href="./shared/normalize.css">
     <link rel="stylesheet" href="./shared/common.css">
-
-    <style>
-        * {
-            box-sizing: border-box;
-        }
-
-        body {
-            margin: 0;
-            min-height: 100vh;
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            padding: 24px;
-
-            font-family: var(--font);
-            color: var(--ink);
-
-            background:
-                radial-gradient(circle at top left,
-                    var(--surface-blue),
-                    transparent 40%),
-                var(--surface-soft);
-        }
-
-        /* =========================
-            404 Page
-        ========================= */
-
-        .error-page {
-            width: min(620px, 100%);
-
-            padding: 48px 40px;
-
-            text-align: center;
-
-            background: var(--surface);
-
-            border: 1px solid var(--line);
-            border-radius: var(--radius);
-
-            box-shadow: var(--shadow);
-        }
-
-        .error-code {
-            margin: 0;
-
-            color: var(--blue-600);
-
-            font-size: clamp(72px, 16vw, 140px);
-            font-weight: 800;
-
-            line-height: 1;
-            letter-spacing: 0.04em;
-        }
-
-        .error-title {
-            margin: 20px 0 10px;
-
-            font-size: clamp(24px, 5vw, 36px);
-            font-weight: 700;
-        }
-
-        .error-message {
-            margin: 0;
-
-            color: var(--muted);
-
-            font-size: 15px;
-            line-height: 1.8;
-        }
-
-        .error-link {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-
-            min-height: 44px;
-
-            margin-top: 28px;
-            padding: 0 22px;
-
-            border-radius: var(--radius);
-
-            background: var(--blue-600);
-            color: var(--surface);
-
-            font-weight: 600;
-            text-decoration: none;
-
-            transition:
-                background 0.2s ease,
-                transform 0.2s ease;
-        }
-
-        .error-link:hover {
-            background: var(--blue-700);
-            transform: translateY(-2px);
-        }
-
-        /* =========================
-            Mobile
-        ========================= */
-
-        @media (max-width: 600px) {
-            body {
-                padding: 16px;
-            }
-
-            .error-page {
-                padding: 36px 24px;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <link rel="stylesheet" href="./404.css">
 </head>
 
 <body>
-    <h1>404 Not Found</h1>
-    <p>お探しのページは見つかりませんでした。</p>
+    <div class="error-layout">
+        <aside class="error-rail">
+            <div class="error-brand">
+                <img src="./images/logo_LUNAGS.png" alt="LUNAGS">
+                <div class="error-brand__divider"></div>
+            </div>
+            <nav class="error-nav" aria-label="メインメニュー">
+                <a class="error-nav__link" href="./launcher.html">
+                    <i class="fa-solid fa-table-cells-large" aria-hidden="true"></i>
+                    <span>ランチャー</span>
+                </a>
+            </nav>
+        </aside>
+
+        <main class="error-main">
+            <header class="error-topbar">
+                <h1>ページが見つかりません</h1>
+                <p>404 Not Found</p>
+            </header>
+
+            <section class="error-card" aria-labelledby="errorTitle">
+                <div class="error-icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                <p class="error-code" aria-label="エラーコード 404">404</p>
+                <h2 class="error-title" id="errorTitle">お探しのページは見つかりませんでした</h2>
+                <p class="error-message">URLが変更または削除された可能性があります。ランチャーから目的のページを開いてください。</p>
+                <a class="error-link" href="./launcher.html">
+                    <i class="fa-solid fa-table-cells-large" aria-hidden="true"></i>
+                    <span>ランチャーへ戻る</span>
+                </a>
+            </section>
+        </main>
+    </div>
 </body>
 
 </html>
