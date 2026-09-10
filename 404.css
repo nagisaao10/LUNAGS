@@ -23,7 +23,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 .error-rail {
-  padding: 28px 24px;
+  padding: 22px 16px;
   color: #eef5ff;
   background: linear-gradient(180deg, var(--blue-900), var(--blue-950));
   border-right: 1px solid rgba(255, 255, 255, 0.18);
@@ -31,8 +31,21 @@ a { color: inherit; text-decoration: none; }
   flex-direction: column;
 }
 
-.error-brand img { width: 178px; max-width: 100%; height: auto; margin: 0 auto; }
-.error-brand__divider { width: 140px; height: 1px; margin: 16px auto 10px; background: rgba(255, 255, 255, 0.18); }
+.error-brand { display: grid; place-items: center; gap: 8px; padding: 6px 8px 12px; }
+.error-brand img { width: 178px; max-width: 100%; height: auto; margin: 6px auto 4px; }
+.error-brand__divider { position: relative; width: 140px; height: 1px; margin: 2px 0; background: rgba(255, 255, 255, 0.18); }
+
+.error-brand__divider::after {
+  content: "✦";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  padding: 0 10px;
+  color: rgba(255, 255, 255, 0.65);
+  background: #153576;
+  font-size: 10px;
+}
 .error-brand__label { display: block; color: rgba(238, 245, 255, 0.78); font-size: 10px; font-weight: 700; letter-spacing: 0.22em; text-align: center; }
 
 .error-nav { display: grid; gap: 6px; margin-top: 24px; }
