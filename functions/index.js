@@ -1645,6 +1645,467 @@ export const cleanupAdminHistory =
     );
 
 /* ============================
+   管理者専用: ユーザー管理 API
+   ============================ */
+
+/**
+ * GET /admin-users
+ * 全ユーザー一覧（管理者アカウント専用）
+ */
+app.get("/admin-users", async (req, res) => {
+    try {
+        await requireAdminAccount(req);
+
+        // Firebase Auth からユーザー一覧取得
+        let authUsers = [];
+        let pageToken;
+        do {
+            const result = await admin.auth().listUsers(1000, pageToken);
+            authUsers = authUsers.concat(result.users);
+            pageToken = result.pageToken;
+        } while (pageToken);
+
+        // adminAccounts コレクションで管理者フラグを確認
+        const adminAccountsSnap = await db
+            .collection("adminAccounts")
+            .where("active", "==", true)
+            .get();
+        const adminEmails = new Set(
+            adminAccountsSnap.docs.map((doc) => normalizeEmail(doc.id))
+        );
+        const adminAccountMap = {};
+        adminAccountsSnap.docs.forEach((doc) => {
+            adminAccountMap[normalizeEmail(doc.id)] = doc.data();
+        });
+
+        // adminSessions で管理者モード中のユーザーを確認
+        const adminSessionsSnap = await db
+            .collection("adminSessions")
+            .where("active", "==", true)
+            .get();
+        const adminModeUids = new Set(
+            adminSessionsSnap.docs.map((doc) => doc.id)
+        );
+
+        const users = authUsers.map((u) => {
+            const email = normalizeEmail(u.email || "");
+            const isAdminAccount = adminEmails.has(email);
+            return {
+                uid: u.uid,
+                email,
+                name: u.displayName || "",
+                emailVerified: u.emailVerified || false,
+                isAdminAccount,
+                adminMode: adminModeUids.has(u.uid),
+                createdAt: u.metadata?.creationTime
+                    ? new Date(u.metadata.creationTime).getTime()
+                    : null,
+                lastLoginAt: u.metadata?.lastSignInTime
+                    ? new Date(u.metadata.lastSignInTime).getTime()
+                    : null
+            };
+        });
+
+        // 管理者アカウントを先頭に、次にメールアドレス順
+        users.sort((a, b) => {
+            if (a.isAdminAccount !== b.isAdminAccount) {
+                return a.isAdminAccount ? -1 : 1;
+            }
+            return a.email.localeCompare(b.email);
+        });
+
+        return res.json({
+            ok: true,
+            total: users.length,
+            users
+        });
+    } catch (err) {
+        return sendError(res, err, "ユーザー一覧の取得に失敗しました");
+    }
+});
+
+/**
+ * GET /admin-users/:uid
+ * 個別ユーザー詳細（管理者アカウント専用）
+ */
+app.get("/admin-users/:uid", async (req, res) => {
+    try {
+        await requireAdminAccount(req);
+
+        const { uid } = req.params;
+
+        let authUser = null;
+        try {
+            authUser = await admin.auth().getUser(uid);
+        } catch {
+            const err = new Error("ユーザーが見つかりません");
+            err.status = 404;
+            throw err;
+        }
+
+        const email = normalizeEmail(authUser.email || "");
+
+        // uidMap 経由でユーザーIDを取得
+        const uidMapSnap = await db.collection("uidMap").doc(uid).get();
+        const userId = uidMapSnap.exists ? (uidMapSnap.data().userId || "") : "";
+
+        // adminAccounts から管理者情報を取得
+        const adminAccountSnap = await db
+            .collection("adminAccounts")
+            .doc(email)
+            .get();
+        const isAdminAccount =
+            adminAccountSnap.exists && adminAccountSnap.data().active === true;
+        const adminAccountDetail = isAdminAccount
+            ? publicAccount(adminAccountSnap.data())
+            : null;
+
+        // adminSessions から管理者モード確認
+        const sessionSnap = await db
+            .collection("adminSessions")
+            .doc(uid)
+            .get();
+        const adminMode =
+            sessionSnap.exists && sessionSnap.data().active === true;
+
+        return res.json({
+            ok: true,
+            user: {
+                uid,
+                userId,
+                email,
+                name: authUser.displayName || "",
+                emailVerified: authUser.emailVerified || false,
+                isAdminAccount,
+                adminMode,
+                adminAccountDetail,
+                createdAt: authUser.metadata?.creationTime
+                    ? new Date(authUser.metadata.creationTime).getTime()
+                    : null,
+                lastLoginAt: authUser.metadata?.lastSignInTime
+                    ? new Date(authUser.metadata.lastSignInTime).getTime()
+                    : null
+            }
+        });
+    } catch (err) {
+        return sendError(res, err, "ユーザー詳細の取得に失敗しました");
+    }
+});
+
+/* ============================
+   管理者専用: システムログ API
+   ============================ */
+
+/**
+ * GET /admin-logs
+ * 監査ログ一覧（管理者アカウント専用）
+ * 既存の adminModeHistory / adminAccountHistory に加え、auditLogs コレクションも取得
+ */
+app.get("/admin-logs", async (req, res) => {
+    try {
+        await requireAdminAccount(req);
+
+        const logs = [];
+
+        // adminModeHistory から認証系・管理者権限ログを生成
+        const modeHistorySnap = await db
+            .collection("adminModeHistory")
+            .orderBy("createdAt", "desc")
+            .limit(200)
+            .get();
+
+        modeHistorySnap.docs.forEach((doc) => {
+            const d = doc.data();
+            const ts = timestampMillis(d.createdAt) || timestampMillis(d.startedAt) || null;
+
+            // 管理者モード付与
+            logs.push({
+                id: `mode_start_${doc.id}`,
+                timestamp: timestampMillis(d.startedAt) || ts,
+                category: "admin",
+                event: "管理者モード付与",
+                userEmail: d.approvedByEmail || "",
+                userName: d.approvedByName || "",
+                target: d.userEmail || "",
+                result: "success",
+                detail: `対象: ${d.userEmail || "-"}`
+            });
+
+            // 管理者モード終了
+            if (d.endedAt) {
+                logs.push({
+                    id: `mode_end_${doc.id}`,
+                    timestamp: timestampMillis(d.endedAt),
+                    category: "admin",
+                    event: "管理者モード終了",
+                    userEmail: d.endedByEmail || d.approvedByEmail || "",
+                    userName: d.endedByName || d.approvedByName || "",
+                    target: d.userEmail || "",
+                    result: "success",
+                    detail: d.endReason || ""
+                });
+            }
+        });
+
+        // adminAccountHistory から管理者昇格・降格ログを生成
+        const accountHistorySnap = await db
+            .collection("adminAccountHistory")
+            .orderBy("createdAt", "desc")
+            .limit(200)
+            .get();
+
+        accountHistorySnap.docs.forEach((doc) => {
+            const d = doc.data();
+
+            // 管理者昇格
+            logs.push({
+                id: `acc_promote_${doc.id}`,
+                timestamp: timestampMillis(d.adminStartedAt) || timestampMillis(d.createdAt),
+                category: "account",
+                event: "管理者アカウント昇格",
+                userEmail: d.approvedByEmail || "",
+                userName: d.approvedByName || "",
+                target: d.userEmail || "",
+                result: "success",
+                detail: `対象: ${d.userEmail || "-"}`
+            });
+
+            // 管理者降格（履歴あり）
+            if (d.adminEndedAt) {
+                logs.push({
+                    id: `acc_demote_${doc.id}`,
+                    timestamp: timestampMillis(d.adminEndedAt),
+                    category: "account",
+                    event: "管理者アカウント降格",
+                    userEmail: d.endedApprovedByEmail || "",
+                    userName: d.endedApprovedByName || "",
+                    target: d.userEmail || "",
+                    result: "success",
+                    detail: `対象: ${d.userEmail || "-"}`
+                });
+            }
+        });
+
+        // auditLogs コレクション（存在する場合）から追加
+        try {
+            const auditSnap = await db
+                .collection("auditLogs")
+                .orderBy("timestamp", "desc")
+                .limit(500)
+                .get();
+
+            auditSnap.docs.forEach((doc) => {
+                const d = doc.data();
+                logs.push({
+                    id: doc.id,
+                    timestamp: timestampMillis(d.timestamp) || timestampMillis(d.createdAt),
+                    category: d.category || "system",
+                    event: d.event || "",
+                    userEmail: d.userEmail || "",
+                    userName: d.userName || "",
+                    target: d.target || "",
+                    result: d.result || "success",
+                    detail: d.detail || ""
+                });
+            });
+        } catch {
+            // auditLogs コレクションが存在しない場合はスキップ
+        }
+
+        // タイムスタンプ降順でソート
+        logs.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+        return res.json({
+            ok: true,
+            total: logs.length,
+            logs
+        });
+    } catch (err) {
+        return sendError(res, err, "ログの取得に失敗しました");
+    }
+});
+
+/* ============================
+   管理者専用: 分析 API
+   ============================ */
+
+/**
+ * GET /admin-analytics?days=30
+ * 利用統計・分析データ（管理者アカウント専用）
+ */
+app.get("/admin-analytics", async (req, res) => {
+    try {
+        await requireAdminAccount(req);
+
+        const days = Math.max(0, parseInt(req.query.days || "30", 10));
+        const cutoff = days > 0 ? Date.now() - days * 24 * 60 * 60 * 1000 : 0;
+
+        // --- 総ユーザー数・新規登録数 ---
+        let allAuthUsers = [];
+        let pageToken;
+        do {
+            const result = await admin.auth().listUsers(1000, pageToken);
+            allAuthUsers = allAuthUsers.concat(result.users);
+            pageToken = result.pageToken;
+        } while (pageToken);
+
+        const totalUsers = allAuthUsers.length;
+        const newUsers = cutoff > 0
+            ? allAuthUsers.filter((u) => {
+                const createdAt = u.metadata?.creationTime
+                    ? new Date(u.metadata.creationTime).getTime()
+                    : 0;
+                return createdAt >= cutoff;
+            }).length
+            : totalUsers;
+
+        // DAU: 直近24時間以内にサインインしたユーザー
+        const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+        const dau = allAuthUsers.filter((u) => {
+            const lastLogin = u.metadata?.lastSignInTime
+                ? new Date(u.metadata.lastSignInTime).getTime()
+                : 0;
+            return lastLogin >= oneDayAgo;
+        }).length;
+
+        // 有効な管理者アカウント数
+        const adminAccountsSnap = await db
+            .collection("adminAccounts")
+            .where("active", "==", true)
+            .get();
+        const activeAdmins = adminAccountsSnap.size;
+
+        // --- adminModeHistory からログイン系・管理者モード統計 ---
+        const modeHistoryQuery = cutoff > 0
+            ? db.collection("adminModeHistory").where("startedAt", ">=", cutoff).orderBy("startedAt", "desc").limit(1000)
+            : db.collection("adminModeHistory").orderBy("startedAt", "desc").limit(1000);
+
+        const modeHistorySnap = await modeHistoryQuery.get();
+        const adminModeCount = modeHistorySnap.size;
+
+        // --- 日別新規登録推移 ---
+        const dailyRegistrations = buildDailyTimeline(
+            allAuthUsers
+                .filter((u) => {
+                    if (!cutoff) return true;
+                    const t = u.metadata?.creationTime ? new Date(u.metadata.creationTime).getTime() : 0;
+                    return t >= cutoff;
+                })
+                .map((u) => u.metadata?.creationTime ? new Date(u.metadata.creationTime).getTime() : null)
+                .filter(Boolean),
+            days || 30
+        );
+
+        // --- 日別管理者モード付与数をログイン推移として使用 ---
+        const modeTimestamps = modeHistorySnap.docs
+            .map((doc) => timestampMillis(doc.data().startedAt))
+            .filter(Boolean);
+
+        const dailyLogins = buildDailyTimeline(modeTimestamps, days || 30);
+
+        // --- 管理者アクション内訳 ---
+        const adminActions = {};
+
+        // adminModeHistory を集計
+        modeHistorySnap.docs.forEach((doc) => {
+            const reason = doc.data().endReason || "管理者モード付与";
+            adminActions[reason] = (adminActions[reason] || 0) + 1;
+        });
+
+        // adminAccountHistory を集計
+        const accountHistoryQuery = cutoff > 0
+            ? db.collection("adminAccountHistory").where("adminStartedAt", ">=", cutoff).limit(500)
+            : db.collection("adminAccountHistory").limit(500);
+
+        const accountHistorySnap = await accountHistoryQuery.get();
+        accountHistorySnap.docs.forEach((doc) => {
+            const key = doc.data().adminEndedAt ? "管理者降格" : "管理者昇格";
+            adminActions[key] = (adminActions[key] || 0) + 1;
+        });
+
+        // --- 機能利用状況（auditLogs のカテゴリー集計）---
+        const featureUsageMap = {};
+
+        try {
+            const auditQuery = cutoff > 0
+                ? db.collection("auditLogs").where("timestamp", ">=", cutoff).limit(2000)
+                : db.collection("auditLogs").limit(2000);
+
+            const auditSnap = await auditQuery.get();
+            auditSnap.docs.forEach((doc) => {
+                const feature = doc.data().feature || doc.data().category || "その他";
+                featureUsageMap[feature] = (featureUsageMap[feature] || 0) + 1;
+            });
+        } catch {
+            // auditLogs がない場合はデフォルト値
+        }
+
+        // auditLogs がない場合は adminModeHistory / accountHistory を機能利用として表示
+        if (!Object.keys(featureUsageMap).length) {
+            featureUsageMap["管理者モード"] = adminModeCount;
+            featureUsageMap["管理者昇格・降格"] = accountHistorySnap.size;
+            featureUsageMap["ユーザー登録"] = newUsers;
+        }
+
+        const featureUsage = Object.entries(featureUsageMap).map(([feature, count]) => ({
+            feature,
+            count
+        }));
+
+        // ログイン数（adminModeHistory をプロキシとして使用、実際のauth logsがある場合は置き換え）
+        const loginCount = adminModeCount;
+
+        return res.json({
+            ok: true,
+            period: {
+                days,
+                from: cutoff > 0 ? cutoff : null,
+                to: Date.now()
+            },
+            totalUsers,
+            newUsers,
+            dau,
+            activeAdmins,
+            loginCount,
+            adminModeCount,
+            dailyRegistrations,
+            dailyLogins,
+            adminActions,
+            featureUsage
+        });
+    } catch (err) {
+        return sendError(res, err, "分析データの取得に失敗しました");
+    }
+});
+
+/**
+ * 日別タイムラインを生成するヘルパー
+ * timestamps: Unix ms の配列
+ * days: 表示日数
+ */
+function buildDailyTimeline(timestamps, days) {
+    const result = [];
+    const now = new Date();
+
+    for (let i = days - 1; i >= 0; i--) {
+        const date = new Date(now);
+        date.setDate(date.getDate() - i);
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, "0");
+        const d = String(date.getDate()).padStart(2, "0");
+        const label = `${m}/${d}`;
+
+        const dayStart = new Date(y, date.getMonth(), date.getDate()).getTime();
+        const dayEnd = dayStart + 24 * 60 * 60 * 1000;
+        const count = timestamps.filter((t) => t >= dayStart && t < dayEnd).length;
+
+        result.push({ label, value: count });
+    }
+
+    return result;
+}
+
+/* ============================
    メール送信
    ============================ */
 

@@ -38,9 +38,25 @@
                     <i class="fas fa-user"></i>
                     <span>マイページ</span>
                 </a>
+
+                <div class="sidebar__divider" style="height:1px; margin:4px 8px; background:rgba(255,255,255,0.1);"></div>
+                <div class="sidebar__section-label" style="padding:14px 8px 4px; color:rgba(238,245,255,0.48); font-size:10px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase;">管理者専用</div>
+
                 <a href="./admin.html" class="menu active">
                     <i class="fa-solid fa-user-shield"></i>
                     <span>管理者</span>
+                </a>
+                <a href="../users/users.html" class="menu" id="usersMenuLink" style="display:none;">
+                    <i class="fa-solid fa-users"></i>
+                    <span>ユーザー管理</span>
+                </a>
+                <a href="../../management/logs/logs.html" class="menu" id="logsMenuLink" style="display:none;">
+                    <i class="fa-solid fa-scroll"></i>
+                    <span>システムログ</span>
+                </a>
+                <a href="../../management/analytics/analytics.html" class="menu" id="analyticsMenuLink" style="display:none;">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>LUNAGS分析</span>
                 </a>
             </div>
 
@@ -417,6 +433,16 @@
             $("loginPill").textContent = status?.user?.email || "未ログイン";
             $("adminPill").classList.toggle("hidden", !status?.isAdminAccount);
             $("modePill").classList.toggle("hidden", !status?.adminMode);
+
+            // 管理者アカウントのみ専用メニューを表示
+            if (status?.isAdminAccount) {
+                const usersLink = $("usersMenuLink");
+                const logsLink = $("logsMenuLink");
+                const analyticsLink = $("analyticsMenuLink");
+                if (usersLink) usersLink.style.display = "";
+                if (logsLink) logsLink.style.display = "";
+                if (analyticsLink) analyticsLink.style.display = "";
+            }
 
             if (!isAllowed) return;
 

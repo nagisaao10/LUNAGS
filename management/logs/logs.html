@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>システムログ | LUNAGS Management</title>
+    <link rel="stylesheet" href="../../shared/normalize.css">
+    <link rel="stylesheet" href="../../shared/common.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <link rel="stylesheet" href="./logs.css">
+</head>
+
+<body>
+    <button class="hamburger" id="hamburgerBtn" aria-label="メニュー">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <div class="page">
+        <!-- 左サイドバー -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar__brand">
+                <img src="../../images/logo_LUNAGS.png" alt="LUNAGS" class="logo-lunags">
+                <div class="sidebar__brand-divider"></div>
+                <span class="sidebar__brand-subtitle">ADMIN</span>
+            </div>
+
+            <div class="menu-list">
+                <a href="../../launcher.html" class="menu">
+                    <i class="fa-solid fa-table-cells-large"></i>
+                    <span>ランチャー</span>
+                </a>
+                <a href="../dashboard/dashboard.html" class="menu">
+                    <i class="fas fa-desktop"></i>
+                    <span>ダッシュボード</span>
+                </a>
+                <a href="../../account/mypage/profile.html" class="menu">
+                    <i class="fas fa-user"></i>
+                    <span>マイページ</span>
+                </a>
+
+                <div class="sidebar__divider"></div>
+                <div class="sidebar__section-label">管理者専用</div>
+
+                <a href="../../account/admin/admin.html" class="menu">
+                    <i class="fa-solid fa-user-shield"></i>
+                    <span>管理者</span>
+                </a>
+                <a href="../../account/users/users.html" class="menu">
+                    <i class="fa-solid fa-users"></i>
+                    <span>ユーザー管理</span>
+                </a>
+                <a href="./logs.html" class="menu active">
+                    <i class="fa-solid fa-scroll"></i>
+                    <span>システムログ</span>
+                </a>
+                <a href="../analytics/analytics.html" class="menu">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>LUNAGS分析</span>
+                </a>
+            </div>
+
+            <div class="sidebar__footer">
+                <button class="btn btn-secondary" id="refreshBtn">
+                    <i class="fa-solid fa-rotate"></i>
+                    <span>再読み込み</span>
+                </button>
+                <button class="btn logout-btn" id="logoutBtn">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>ログアウト</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- メインエリア -->
+        <main class="main fade-in">
+            <header class="topbar">
+                <div>
+                    <h1 class="topbar__title">SYSTEM LOGS</h1>
+                    <div class="topbar__sub">システム・操作ログ — 管理者アカウント専用</div>
+                </div>
+                <div class="status-strip">
+                    <span class="pill pill--muted" id="loginPill">確認中</span>
+                    <span class="pill pill--admin hidden" id="adminPill">管理者アカウント</span>
+                </div>
+            </header>
+
+            <!-- アクセス拒否 -->
+            <div class="access-denied-card hidden" id="accessDeniedCard">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <h2>アクセスできません</h2>
+                <p class="small-note">このページは管理者アカウントのみ利用できます。管理者モードではアクセスできません。</p>
+                <div style="margin-top: 20px;">
+                    <a class="btn btn-primary" href="../../launcher.html">ランチャーへ戻る</a>
+                </div>
+            </div>
+
+            <!-- メインコンテンツ -->
+            <div id="mainContent" class="hidden">
+
+                <!-- イベント凡例 -->
+                <div class="legend">
+                    <span class="legend__label">カテゴリー:</span>
+                    <span class="event-badge event-badge--auth">認証</span>
+                    <span class="event-badge event-badge--admin">管理者権限</span>
+                    <span class="event-badge event-badge--account">アカウント変更</span>
+                    <span class="event-badge event-badge--system">システム</span>
+                    <span class="event-badge event-badge--error">エラー</span>
+                </div>
+
+                <!-- ログカード -->
+                <div class="card">
+                    <div class="card__head">
+                        <h2><i class="fa-solid fa-scroll"></i> 監査ログ</h2>
+                        <span class="pill pill--muted" id="logCountPill">読み込み中</span>
+                    </div>
+
+                    <!-- フィルターバー -->
+                    <div class="filter-bar">
+                        <div class="search-input-wrap">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input class="search-input" type="search" id="searchInput"
+                                placeholder="ユーザー・イベント・対象で検索" autocomplete="off">
+                        </div>
+                        <select class="filter-select" id="filterCategory">
+                            <option value="">すべてのカテゴリー</option>
+                            <option value="auth">認証</option>
+                            <option value="admin">管理者権限</option>
+                            <option value="account">アカウント変更</option>
+                            <option value="system">システム</option>
+                            <option value="error">エラー</option>
+                        </select>
+                        <select class="filter-select" id="filterResult">
+                            <option value="">すべての結果</option>
+                            <option value="success">成功</option>
+                            <option value="failure">失敗</option>
+                        </select>
+                        <select class="filter-select" id="filterPeriod">
+                            <option value="7">過去7日</option>
+                            <option value="30" selected>過去30日</option>
+                            <option value="90">過去90日</option>
+                            <option value="0">すべて</option>
+                        </select>
+                    </div>
+
+                    <!-- テーブル -->
+                    <div class="table-wrap">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>日時</th>
+                                    <th>ユーザー</th>
+                                    <th>カテゴリー</th>
+                                    <th>イベント</th>
+                                    <th>対象</th>
+                                    <th>結果</th>
+                                    <th>詳細</th>
+                                </tr>
+                            </thead>
+                            <tbody id="logsTableBody">
+                                <tr>
+                                    <td colspan="7" style="text-align:center; padding: 32px; color: var(--muted);">
+                                        <span class="spinner"></span>読み込み中...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- ページネーション -->
+                    <div class="pagination" id="pagination">
+                        <span class="pagination__info" id="paginationInfo"></span>
+                        <div class="pagination__controls">
+                            <button class="btn btn-secondary btn-sm" id="prevBtn" disabled>
+                                <i class="fa-solid fa-chevron-left"></i> 前へ
+                            </button>
+                            <button class="btn btn-secondary btn-sm" id="nextBtn" disabled>
+                                次へ <i class="fa-solid fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script type="module">
+        import { auth, FUNCTIONS_ENDPOINT } from "../../shared/firebase-config.js";
+        import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+
+        const PAGE_SIZE = 25;
+
+        const state = {
+            user: null,
+            allLogs: [],
+            filteredLogs: [],
+            currentPage: 1
+        };
+
+        const $ = (id) => document.getElementById(id);
+
+        const CATEGORY_MAP = {
+            auth: { label: "認証", cls: "event-badge--auth" },
+            admin: { label: "管理者権限", cls: "event-badge--admin" },
+            account: { label: "アカウント変更", cls: "event-badge--account" },
+            system: { label: "システム", cls: "event-badge--system" },
+            error: { label: "エラー", cls: "event-badge--error" }
+        };
+
+        function formatDate(value) {
+            if (!value) return "-";
+            const d = new Date(typeof value === "number" ? value : value._seconds ? value._seconds * 1000 : value);
+            if (isNaN(d.getTime())) return "-";
+            return d.toLocaleString("ja-JP", {
+                year: "numeric", month: "2-digit", day: "2-digit",
+                hour: "2-digit", minute: "2-digit", second: "2-digit"
+            });
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+                "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+            }[char]));
+        }
+
+        async function request(path, options = {}) {
+            const idToken = await state.user.getIdToken();
+            const response = await fetch(`${FUNCTIONS_ENDPOINT}${path}`, {
+                ...options,
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${idToken}`,
+                    ...(options.headers || {})
+                }
+            });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok || result.ok === false) {
+                throw new Error(result.error || "通信に失敗しました");
+            }
+            return result;
+        }
+
+        function applyFilter() {
+            const query = $("searchInput").value.trim().toLowerCase();
+            const category = $("filterCategory").value;
+            const resultFilter = $("filterResult").value;
+            const days = parseInt($("filterPeriod").value, 10);
+            const cutoff = days > 0 ? Date.now() - days * 24 * 60 * 60 * 1000 : 0;
+
+            state.filteredLogs = state.allLogs.filter((log) => {
+                const logTime = typeof log.timestamp === "number" ? log.timestamp
+                    : log.timestamp?._seconds ? log.timestamp._seconds * 1000 : 0;
+
+                if (cutoff > 0 && logTime < cutoff) return false;
+                if (category && log.category !== category) return false;
+                if (resultFilter === "success" && log.result !== "success") return false;
+                if (resultFilter === "failure" && log.result === "success") return false;
+
+                if (query) {
+                    const searchable = [
+                        log.userEmail, log.userName,
+                        log.event, log.target, log.detail
+                    ].join(" ").toLowerCase();
+                    if (!searchable.includes(query)) return false;
+                }
+
+                return true;
+            });
+
+            state.currentPage = 1;
+            renderTable();
+        }
+
+        function categoryBadge(category) {
+            const map = CATEGORY_MAP[category];
+            if (!map) return `<span class="event-badge event-badge--system">${escapeHtml(category || "-")}</span>`;
+            return `<span class="event-badge ${map.cls}">${map.label}</span>`;
+        }
+
+        function resultBadge(result) {
+            if (result === "success") {
+                return `<span class="result-badge result-badge--success"><i class="fa-solid fa-check"></i> 成功</span>`;
+            }
+            if (result === "failure") {
+                return `<span class="result-badge result-badge--failure"><i class="fa-solid fa-xmark"></i> 失敗</span>`;
+            }
+            return `<span class="result-badge result-badge--info">${escapeHtml(result || "-")}</span>`;
+        }
+
+        function renderTable() {
+            const body = $("logsTableBody");
+            const total = state.filteredLogs.length;
+            const start = (state.currentPage - 1) * PAGE_SIZE;
+            const end = Math.min(start + PAGE_SIZE, total);
+            const items = state.filteredLogs.slice(start, end);
+
+            $("logCountPill").textContent = `${total}件`;
+            $("paginationInfo").textContent = total ? `${start + 1}〜${end} / ${total}件` : "0件";
+
+            $("prevBtn").disabled = state.currentPage <= 1;
+            $("nextBtn").disabled = end >= total;
+
+            if (!items.length) {
+                body.innerHTML = `<tr><td colspan="7"><div class="empty-state"><i class="fa-solid fa-scroll"></i>ログが見つかりません</div></td></tr>`;
+                return;
+            }
+
+            body.innerHTML = items.map((log) => `
+                <tr>
+                    <td style="white-space:nowrap; font-size:12px;">${formatDate(log.timestamp)}</td>
+                    <td>
+                        <div style="font-weight:700;">${escapeHtml(log.userName || "-")}</div>
+                        <div style="color:var(--muted); font-size:11px;">${escapeHtml(log.userEmail || "-")}</div>
+                    </td>
+                    <td>${categoryBadge(log.category)}</td>
+                    <td style="font-weight:700;">${escapeHtml(log.event || "-")}</td>
+                    <td style="color:var(--muted);">${escapeHtml(log.target || "-")}</td>
+                    <td>${resultBadge(log.result)}</td>
+                    <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12px; color:var(--muted);"
+                        title="${escapeHtml(log.detail || "")}">
+                        ${escapeHtml(log.detail || "-")}
+                    </td>
+                </tr>
+            `).join("");
+        }
+
+        async function loadLogs() {
+            $("logsTableBody").innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 32px; color: var(--muted);"><span class="spinner"></span>読み込み中...</td></tr>`;
+
+            const result = await request("/admin-logs", { method: "GET" });
+            state.allLogs = result.logs || [];
+            applyFilter();
+        }
+
+        function initEvents() {
+            $("hamburgerBtn").addEventListener("click", () => {
+                $("sidebar").classList.toggle("open");
+            });
+
+            document.addEventListener("click", (event) => {
+                const sidebar = $("sidebar");
+                const hamburgerBtn = $("hamburgerBtn");
+                if (window.innerWidth <= 900 && !sidebar.contains(event.target) && !hamburgerBtn.contains(event.target)) {
+                    sidebar.classList.remove("open");
+                }
+            });
+
+            $("refreshBtn").addEventListener("click", () => loadLogs());
+
+            $("logoutBtn").addEventListener("click", async () => {
+                if (confirm("ログアウトしますか？")) {
+                    try {
+                        await signOut(auth);
+                        window.location.href = "../../account/login/login.html";
+                    } catch (error) {
+                        alert("ログアウトに失敗しました: " + error.message);
+                    }
+                }
+            });
+
+            $("searchInput").addEventListener("input", applyFilter);
+            $("filterCategory").addEventListener("change", applyFilter);
+            $("filterResult").addEventListener("change", applyFilter);
+            $("filterPeriod").addEventListener("change", applyFilter);
+
+            $("prevBtn").addEventListener("click", () => {
+                if (state.currentPage > 1) {
+                    state.currentPage--;
+                    renderTable();
+                }
+            });
+
+            $("nextBtn").addEventListener("click", () => {
+                if (state.currentPage * PAGE_SIZE < state.filteredLogs.length) {
+                    state.currentPage++;
+                    renderTable();
+                }
+            });
+        }
+
+        initEvents();
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                window.location.href = "../../account/login/login.html";
+                return;
+            }
+
+            state.user = user;
+
+            try {
+                const status = await request("/admin-status", { method: "GET" });
+
+                $("loginPill").textContent = status.user?.email || user.email;
+                $("adminPill").classList.toggle("hidden", !status.isAdminAccount);
+
+                if (!status.isAdminAccount) {
+                    $("accessDeniedCard").classList.remove("hidden");
+                    return;
+                }
+
+                $("mainContent").classList.remove("hidden");
+                await loadLogs();
+
+            } catch (error) {
+                $("accessDeniedCard").classList.remove("hidden");
+            }
+        });
+    </script>
+</body>
+
+</html>

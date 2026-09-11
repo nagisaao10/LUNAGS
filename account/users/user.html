@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ユーザー詳細 | LUNAGS Account</title>
+    <link rel="stylesheet" href="../../shared/normalize.css">
+    <link rel="stylesheet" href="../../shared/common.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <link rel="stylesheet" href="./users.css">
+    <style>
+        .detail-grid {
+            display: grid;
+            gap: 20px;
+        }
+
+        .info-section {
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.92);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+
+        .info-section__title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0 0 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--line);
+            color: var(--blue-950);
+            font-size: 16px;
+            font-weight: 800;
+        }
+
+        .info-section__title i {
+            color: var(--blue-700);
+        }
+
+        .row-list {
+            display: grid;
+            gap: 0;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: 200px minmax(0, 1fr);
+            align-items: center;
+            gap: 16px;
+            min-height: 54px;
+            padding: 13px 0;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .row:last-child {
+            border-bottom: 0;
+        }
+
+        .label {
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .value {
+            color: var(--blue-950);
+            font-size: 14px;
+            font-weight: 700;
+            overflow-wrap: anywhere;
+        }
+
+        .value.monospace {
+            font-family: monospace;
+            font-size: 12px;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--blue-700);
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-decoration: none;
+        }
+
+        .back-link:hover {
+            color: var(--blue-500);
+        }
+
+        .back-link i {
+            font-size: 13px;
+        }
+
+        @media (max-width: 600px) {
+            .row {
+                grid-template-columns: 1fr;
+                gap: 6px;
+                align-items: start;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <button class="hamburger" id="hamburgerBtn" aria-label="メニュー">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <div class="page">
+        <!-- 左サイドバー -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar__brand">
+                <img src="../../images/logo_LUNAGS.png" alt="LUNAGS" class="logo-lunags">
+                <div class="sidebar__brand-divider"></div>
+                <span class="sidebar__brand-subtitle">ADMIN</span>
+            </div>
+
+            <div class="menu-list">
+                <a href="../../launcher.html" class="menu">
+                    <i class="fa-solid fa-table-cells-large"></i>
+                    <span>ランチャー</span>
+                </a>
+                <a href="../../management/dashboard/dashboard.html" class="menu">
+                    <i class="fas fa-desktop"></i>
+                    <span>ダッシュボード</span>
+                </a>
+                <a href="../mypage/profile.html" class="menu">
+                    <i class="fas fa-user"></i>
+                    <span>マイページ</span>
+                </a>
+
+                <div class="sidebar__divider"></div>
+                <div class="sidebar__section-label">管理者専用</div>
+
+                <a href="../admin/admin.html" class="menu">
+                    <i class="fa-solid fa-user-shield"></i>
+                    <span>管理者</span>
+                </a>
+                <a href="./users.html" class="menu active">
+                    <i class="fa-solid fa-users"></i>
+                    <span>ユーザー管理</span>
+                </a>
+                <a href="../../management/logs/logs.html" class="menu">
+                    <i class="fa-solid fa-scroll"></i>
+                    <span>システムログ</span>
+                </a>
+                <a href="../../management/analytics/analytics.html" class="menu">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>LUNAGS分析</span>
+                </a>
+            </div>
+
+            <div class="sidebar__footer">
+                <button class="btn logout-btn" id="logoutBtn">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>ログアウト</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- メインエリア -->
+        <main class="main fade-in">
+            <a href="./users.html" class="back-link">
+                <i class="fa-solid fa-arrow-left"></i> ユーザー一覧へ戻る
+            </a>
+
+            <header class="topbar">
+                <div>
+                    <h1 class="topbar__title">USER DETAIL</h1>
+                    <div class="topbar__sub">ユーザー詳細 — 管理者アカウント専用</div>
+                </div>
+                <div class="status-strip">
+                    <span class="pill pill--muted" id="loginPill">確認中</span>
+                    <span class="pill pill--admin hidden" id="adminPill">管理者アカウント</span>
+                </div>
+            </header>
+
+            <!-- アクセス拒否 -->
+            <div class="access-denied-card hidden" id="accessDeniedCard">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <h2>アクセスできません</h2>
+                <p class="small-note">このページは管理者アカウントのみ利用できます。</p>
+                <div style="margin-top: 20px;">
+                    <a class="btn btn-primary" href="../../launcher.html">ランチャーへ戻る</a>
+                </div>
+            </div>
+
+            <!-- ローディング -->
+            <div id="loadingContent" class="hidden" style="text-align: center; padding: 60px 0; color: var(--muted);">
+                <span class="spinner"></span>
+                <span>読み込み中...</span>
+            </div>
+
+            <!-- メインコンテンツ -->
+            <div id="mainContent" class="hidden">
+                <div class="detail-grid">
+
+                    <!-- 基本情報 -->
+                    <div class="info-section">
+                        <h3 class="info-section__title">
+                            <i class="fa-solid fa-id-card"></i> 基本情報
+                        </h3>
+                        <div class="row-list">
+                            <div class="row">
+                                <div class="label">ユーザー名</div>
+                                <div class="value" id="userName">-</div>
+                            </div>
+                            <div class="row">
+                                <div class="label">メールアドレス</div>
+                                <div class="value" id="userEmail">-</div>
+                            </div>
+                            <div class="row">
+                                <div class="label">Firebase Auth UID</div>
+                                <div class="value monospace" id="userUid">-</div>
+                            </div>
+                            <div class="row">
+                                <div class="label">LUNAGS ユーザーID</div>
+                                <div class="value monospace" id="userId">-</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- アカウント状態 -->
+                    <div class="info-section">
+                        <h3 class="info-section__title">
+                            <i class="fa-solid fa-circle-info"></i> アカウント状態・権限
+                        </h3>
+                        <div class="row-list">
+                            <div class="row">
+                                <div class="label">管理者アカウント</div>
+                                <div class="value" id="isAdminBadge">-</div>
+                            </div>
+                            <div class="row">
+                                <div class="label">現在の管理者モード</div>
+                                <div class="value" id="adminModeBadge">-</div>
+                            </div>
+                            <div class="row">
+                                <div class="label">メール確認済み</div>
+                                <div class="value" id="emailVerified">-</div>
+                            </div>
+                            <div class="row">
+                                <div class="label">アカウント作成日時</div>
+                                <div class="value" id="createdAt">-</div>
+                            </div>
+                            <div class="row">
+                                <div class="label">最終ログイン日時</div>
+                                <div class="value" id="lastLoginAt">-</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 管理者アカウント詳細（管理者の場合のみ） -->
+                    <div class="info-section hidden" id="adminDetailSection">
+                        <h3 class="info-section__title">
+                            <i class="fa-solid fa-user-shield"></i> 管理者アカウント詳細
+                        </h3>
+                        <div class="row-list">
+                            <div class="row">
+                                <div class="label">付与した管理者</div>
+                                <div class="value" id="adminCreatedBy">-</div>
+                            </div>
+                            <div class="row">
+                                <div class="label">付与日時</div>
+                                <div class="value" id="adminCreatedAt">-</div>
+                            </div>
+                            <div class="row">
+                                <div class="label">管理者モード有効時間設定</div>
+                                <div class="value" id="adminDuration">-</div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script type="module">
+        import { auth, FUNCTIONS_ENDPOINT } from "../../shared/firebase-config.js";
+        import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+
+        const $ = (id) => document.getElementById(id);
+
+        function formatDate(value) {
+            if (!value) return "-";
+            const d = new Date(typeof value === "number" ? value : value._seconds ? value._seconds * 1000 : value);
+            if (isNaN(d.getTime())) return "-";
+            return d.toLocaleString("ja-JP", {
+                year: "numeric", month: "2-digit", day: "2-digit",
+                hour: "2-digit", minute: "2-digit", second: "2-digit"
+            });
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+                "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+            }[char]));
+        }
+
+        async function request(path, options = {}) {
+            const user = auth.currentUser;
+            const idToken = await user.getIdToken();
+            const response = await fetch(`${FUNCTIONS_ENDPOINT}${path}`, {
+                ...options,
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${idToken}`,
+                    ...(options.headers || {})
+                }
+            });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok || result.ok === false) {
+                throw new Error(result.error || "通信に失敗しました");
+            }
+            return result;
+        }
+
+        function renderUser(data) {
+            const u = data.user;
+
+            $("userName").textContent = u.name || "-";
+            $("userEmail").textContent = u.email || "-";
+            $("userUid").textContent = u.uid || "-";
+            $("userId").textContent = u.userId || "-";
+
+            $("isAdminBadge").innerHTML = u.isAdminAccount
+                ? `<span class="pill pill--admin" style="font-size:12px;"><i class="fa-solid fa-star"></i> 管理者アカウント</span>`
+                : `<span class="pill pill--muted" style="font-size:12px;">一般ユーザー</span>`;
+
+            $("adminModeBadge").innerHTML = u.adminMode
+                ? `<span class="pill pill--mode" style="font-size:12px;"><i class="fa-solid fa-clock"></i> 管理者モード中</span>`
+                : `<span class="pill pill--muted" style="font-size:12px;">なし</span>`;
+
+            $("emailVerified").innerHTML = u.emailVerified
+                ? `<span class="pill pill--active" style="font-size:12px;"><i class="fa-solid fa-check"></i> 確認済み</span>`
+                : `<span class="pill pill--inactive" style="font-size:12px;"><i class="fa-solid fa-xmark"></i> 未確認</span>`;
+
+            $("createdAt").textContent = formatDate(u.createdAt);
+            $("lastLoginAt").textContent = formatDate(u.lastLoginAt);
+
+            if (u.isAdminAccount && u.adminAccountDetail) {
+                const detail = u.adminAccountDetail;
+                $("adminDetailSection").classList.remove("hidden");
+                $("adminCreatedBy").textContent =
+                    `${detail.createdByName || "-"} / ${detail.createdByEmail || "-"}`;
+                $("adminCreatedAt").textContent = formatDate(detail.createdAt);
+                $("adminDuration").textContent =
+                    `${detail.adminModeDurationMinutes || 30} 分`;
+            }
+        }
+
+        document.getElementById("hamburgerBtn").addEventListener("click", () => {
+            document.getElementById("sidebar").classList.toggle("open");
+        });
+
+        document.addEventListener("click", (event) => {
+            const sidebar = document.getElementById("sidebar");
+            const hamburgerBtn = document.getElementById("hamburgerBtn");
+            if (window.innerWidth <= 900 && !sidebar.contains(event.target) && !hamburgerBtn.contains(event.target)) {
+                sidebar.classList.remove("open");
+            }
+        });
+
+        document.getElementById("logoutBtn").addEventListener("click", async () => {
+            if (confirm("ログアウトしますか？")) {
+                try {
+                    await signOut(auth);
+                    window.location.href = "../login/login.html";
+                } catch (error) {
+                    alert("ログアウトに失敗しました: " + error.message);
+                }
+            }
+        });
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                window.location.href = "../login/login.html";
+                return;
+            }
+
+            try {
+                const status = await request("/admin-status", { method: "GET" });
+
+                $("loginPill").textContent = status.user?.email || user.email;
+                $("adminPill").classList.toggle("hidden", !status.isAdminAccount);
+
+                if (!status.isAdminAccount) {
+                    $("accessDeniedCard").classList.remove("hidden");
+                    return;
+                }
+
+                // URLからUIDを取得
+                const params = new URLSearchParams(window.location.search);
+                const targetUid = params.get("uid");
+
+                if (!targetUid) {
+                    $("accessDeniedCard").classList.remove("hidden");
+                    $("accessDeniedCard").querySelector("h2").textContent = "ユーザーが指定されていません";
+                    return;
+                }
+
+                $("loadingContent").classList.remove("hidden");
+
+                const result = await request(`/admin-users/${encodeURIComponent(targetUid)}`, { method: "GET" });
+
+                $("loadingContent").classList.add("hidden");
+                $("mainContent").classList.remove("hidden");
+                renderUser(result);
+
+            } catch (error) {
+                $("loadingContent").classList.add("hidden");
+                $("accessDeniedCard").classList.remove("hidden");
+                $("accessDeniedCard").querySelector("p").textContent = error.message;
+            }
+        });
+    </script>
+</body>
+
+</html>

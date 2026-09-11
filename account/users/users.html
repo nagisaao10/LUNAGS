@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ユーザー管理 | LUNAGS Account</title>
+    <link rel="stylesheet" href="../../shared/normalize.css">
+    <link rel="stylesheet" href="../../shared/common.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <link rel="stylesheet" href="./users.css">
+</head>
+
+<body>
+    <button class="hamburger" id="hamburgerBtn" aria-label="メニュー">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <div class="page">
+        <!-- 左サイドバー -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar__brand">
+                <img src="../../images/logo_LUNAGS.png" alt="LUNAGS" class="logo-lunags">
+                <div class="sidebar__brand-divider"></div>
+                <span class="sidebar__brand-subtitle">ADMIN</span>
+            </div>
+
+            <div class="menu-list">
+                <a href="../../launcher.html" class="menu">
+                    <i class="fa-solid fa-table-cells-large"></i>
+                    <span>ランチャー</span>
+                </a>
+                <a href="../../management/dashboard/dashboard.html" class="menu">
+                    <i class="fas fa-desktop"></i>
+                    <span>ダッシュボード</span>
+                </a>
+                <a href="../mypage/profile.html" class="menu">
+                    <i class="fas fa-user"></i>
+                    <span>マイページ</span>
+                </a>
+
+                <div class="sidebar__divider"></div>
+                <div class="sidebar__section-label">管理者専用</div>
+
+                <a href="../admin/admin.html" class="menu">
+                    <i class="fa-solid fa-user-shield"></i>
+                    <span>管理者</span>
+                </a>
+                <a href="./users.html" class="menu active">
+                    <i class="fa-solid fa-users"></i>
+                    <span>ユーザー管理</span>
+                </a>
+                <a href="../../management/logs/logs.html" class="menu">
+                    <i class="fa-solid fa-scroll"></i>
+                    <span>システムログ</span>
+                </a>
+                <a href="../../management/analytics/analytics.html" class="menu">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>LUNAGS分析</span>
+                </a>
+            </div>
+
+            <div class="sidebar__footer">
+                <button class="btn btn-secondary" id="refreshBtn">
+                    <i class="fa-solid fa-rotate"></i>
+                    <span>再読み込み</span>
+                </button>
+                <button class="btn logout-btn" id="logoutBtn">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>ログアウト</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- メインエリア -->
+        <main class="main fade-in">
+            <header class="topbar">
+                <div>
+                    <h1 class="topbar__title">USERS</h1>
+                    <div class="topbar__sub">ユーザー管理 — 管理者アカウント専用</div>
+                </div>
+                <div class="status-strip">
+                    <span class="pill pill--muted" id="loginPill">確認中</span>
+                    <span class="pill pill--admin hidden" id="adminPill">管理者アカウント</span>
+                </div>
+            </header>
+
+            <!-- アクセス拒否 -->
+            <div class="access-denied-card hidden" id="accessDeniedCard">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <h2>アクセスできません</h2>
+                <p class="small-note">このページは管理者アカウントのみ利用できます。管理者モードではアクセスできません。</p>
+                <div style="margin-top: 20px;">
+                    <a class="btn btn-primary" href="../../launcher.html">ランチャーへ戻る</a>
+                </div>
+            </div>
+
+            <!-- メインコンテンツ -->
+            <div id="mainContent" class="hidden">
+
+                <!-- 統計カード -->
+                <div class="stats-row" id="statsRow" style="display: flex; gap: 16px; margin-bottom: 24px; flex-wrap: wrap;">
+                    <div class="stat-card" style="flex: 1; min-width: 160px; background: rgba(255,255,255,0.92); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px 20px;">
+                        <div style="color: var(--muted); font-size: 11px; font-weight: 800; letter-spacing: 0.08em; margin-bottom: 6px;">総ユーザー数</div>
+                        <div style="font-size: 28px; font-weight: 800; color: var(--blue-950);" id="statTotal">-</div>
+                    </div>
+                    <div class="stat-card" style="flex: 1; min-width: 160px; background: rgba(255,255,255,0.92); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px 20px;">
+                        <div style="color: var(--muted); font-size: 11px; font-weight: 800; letter-spacing: 0.08em; margin-bottom: 6px;">管理者アカウント数</div>
+                        <div style="font-size: 28px; font-weight: 800; color: var(--blue-700);" id="statAdmins">-</div>
+                    </div>
+                    <div class="stat-card" style="flex: 1; min-width: 160px; background: rgba(255,255,255,0.92); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px 20px;">
+                        <div style="color: var(--muted); font-size: 11px; font-weight: 800; letter-spacing: 0.08em; margin-bottom: 6px;">一般ユーザー数</div>
+                        <div style="font-size: 28px; font-weight: 800; color: var(--mint-500);" id="statNormal">-</div>
+                    </div>
+                </div>
+
+                <!-- ユーザー一覧カード -->
+                <div class="card">
+                    <div class="card__head">
+                        <h2><i class="fa-solid fa-users"></i> ユーザー一覧</h2>
+                        <span class="pill pill--muted" id="userCountPill">読み込み中</span>
+                    </div>
+
+                    <!-- 検索・フィルター -->
+                    <div class="search-bar">
+                        <div class="search-input-wrap">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input class="search-input" type="search" id="searchInput"
+                                placeholder="ユーザー名・メールアドレスで検索" autocomplete="off">
+                        </div>
+                        <select class="filter-select" id="filterRole">
+                            <option value="">すべてのロール</option>
+                            <option value="admin">管理者アカウント</option>
+                            <option value="normal">一般ユーザー</option>
+                        </select>
+                    </div>
+
+                    <!-- テーブル -->
+                    <div class="table-wrap">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>ユーザー名</th>
+                                    <th>メールアドレス</th>
+                                    <th>UID</th>
+                                    <th>ロール</th>
+                                    <th>アカウント作成日時</th>
+                                    <th>最終ログイン</th>
+                                    <th>詳細</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody">
+                                <tr class="loading-row">
+                                    <td colspan="7"><span class="spinner"></span>読み込み中...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- ページネーション -->
+                    <div class="pagination" id="pagination">
+                        <span class="pagination__info" id="paginationInfo"></span>
+                        <div class="pagination__controls">
+                            <button class="btn btn-secondary btn-sm" id="prevBtn" disabled>
+                                <i class="fa-solid fa-chevron-left"></i> 前へ
+                            </button>
+                            <button class="btn btn-secondary btn-sm" id="nextBtn" disabled>
+                                次へ <i class="fa-solid fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script type="module">
+        import { auth, FUNCTIONS_ENDPOINT } from "../../shared/firebase-config.js";
+        import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+
+        const PAGE_SIZE = 20;
+
+        const state = {
+            user: null,
+            isAdminAccount: false,
+            allUsers: [],
+            filteredUsers: [],
+            currentPage: 1
+        };
+
+        const $ = (id) => document.getElementById(id);
+
+        function formatDate(value) {
+            if (!value) return "-";
+            const d = new Date(typeof value === "number" ? value : value._seconds ? value._seconds * 1000 : value);
+            if (isNaN(d.getTime())) return "-";
+            return d.toLocaleString("ja-JP", {
+                year: "numeric", month: "2-digit", day: "2-digit",
+                hour: "2-digit", minute: "2-digit"
+            });
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+                "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+            }[char]));
+        }
+
+        async function request(path, options = {}) {
+            const idToken = await state.user.getIdToken();
+            const response = await fetch(`${FUNCTIONS_ENDPOINT}${path}`, {
+                ...options,
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${idToken}`,
+                    ...(options.headers || {})
+                }
+            });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok || result.ok === false) {
+                throw new Error(result.error || "通信に失敗しました");
+            }
+            return result;
+        }
+
+        function applyFilter() {
+            const query = $("searchInput").value.trim().toLowerCase();
+            const role = $("filterRole").value;
+
+            state.filteredUsers = state.allUsers.filter((u) => {
+                const matchQuery = !query ||
+                    (u.name || "").toLowerCase().includes(query) ||
+                    (u.email || "").toLowerCase().includes(query);
+                const matchRole = !role ||
+                    (role === "admin" && u.isAdminAccount) ||
+                    (role === "normal" && !u.isAdminAccount);
+                return matchQuery && matchRole;
+            });
+
+            state.currentPage = 1;
+            renderTable();
+        }
+
+        function renderTable() {
+            const body = $("usersTableBody");
+            const total = state.filteredUsers.length;
+            const start = (state.currentPage - 1) * PAGE_SIZE;
+            const end = Math.min(start + PAGE_SIZE, total);
+            const pageItems = state.filteredUsers.slice(start, end);
+
+            $("userCountPill").textContent = `${total}件`;
+            $("paginationInfo").textContent = total ? `${start + 1}〜${end} / ${total}件` : "0件";
+
+            $("prevBtn").disabled = state.currentPage <= 1;
+            $("nextBtn").disabled = end >= total;
+
+            if (!pageItems.length) {
+                body.innerHTML = `<tr><td colspan="7"><div class="empty-state"><i class="fa-solid fa-users-slash"></i>ユーザーが見つかりません</div></td></tr>`;
+                return;
+            }
+
+            body.innerHTML = pageItems.map((u) => `
+                <tr>
+                    <td><strong>${escapeHtml(u.name || "-")}</strong></td>
+                    <td>${escapeHtml(u.email || "-")}</td>
+                    <td style="font-family: monospace; font-size: 11px; color: var(--muted);">${escapeHtml(u.uid || "-")}</td>
+                    <td>
+                        ${u.isAdminAccount
+                            ? `<span class="pill pill--admin" style="font-size:11px;">管理者</span>`
+                            : `<span class="pill pill--muted" style="font-size:11px;">一般</span>`
+                        }
+                    </td>
+                    <td>${formatDate(u.createdAt)}</td>
+                    <td>${formatDate(u.lastLoginAt)}</td>
+                    <td>
+                        <a href="./user.html?uid=${encodeURIComponent(u.uid)}" class="btn btn-secondary btn-sm">
+                            <i class="fa-solid fa-eye"></i> 詳細
+                        </a>
+                    </td>
+                </tr>
+            `).join("");
+        }
+
+        function renderStats() {
+            const total = state.allUsers.length;
+            const admins = state.allUsers.filter((u) => u.isAdminAccount).length;
+            $("statTotal").textContent = total;
+            $("statAdmins").textContent = admins;
+            $("statNormal").textContent = total - admins;
+        }
+
+        async function loadUsers() {
+            $("usersTableBody").innerHTML = `<tr class="loading-row"><td colspan="7"><span class="spinner"></span>読み込み中...</td></tr>`;
+
+            const result = await request("/admin-users", { method: "GET" });
+            state.allUsers = result.users || [];
+            state.filteredUsers = state.allUsers;
+            renderStats();
+            renderTable();
+        }
+
+        function initEvents() {
+            $("hamburgerBtn").addEventListener("click", () => {
+                $("sidebar").classList.toggle("open");
+            });
+
+            document.addEventListener("click", (event) => {
+                const sidebar = $("sidebar");
+                const hamburgerBtn = $("hamburgerBtn");
+                if (window.innerWidth <= 900 && !sidebar.contains(event.target) && !hamburgerBtn.contains(event.target)) {
+                    sidebar.classList.remove("open");
+                }
+            });
+
+            $("refreshBtn").addEventListener("click", () => loadUsers());
+
+            $("logoutBtn").addEventListener("click", async () => {
+                if (confirm("ログアウトしますか？")) {
+                    try {
+                        await signOut(auth);
+                        window.location.href = "../login/login.html";
+                    } catch (error) {
+                        alert("ログアウトに失敗しました: " + error.message);
+                    }
+                }
+            });
+
+            $("searchInput").addEventListener("input", applyFilter);
+            $("filterRole").addEventListener("change", applyFilter);
+
+            $("prevBtn").addEventListener("click", () => {
+                if (state.currentPage > 1) {
+                    state.currentPage--;
+                    renderTable();
+                }
+            });
+
+            $("nextBtn").addEventListener("click", () => {
+                const total = state.filteredUsers.length;
+                if (state.currentPage * PAGE_SIZE < total) {
+                    state.currentPage++;
+                    renderTable();
+                }
+            });
+        }
+
+        initEvents();
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                window.location.href = "../login/login.html";
+                return;
+            }
+
+            state.user = user;
+
+            try {
+                const status = await request("/admin-status", { method: "GET" });
+
+                $("loginPill").textContent = status.user?.email || user.email;
+                $("adminPill").classList.toggle("hidden", !status.isAdminAccount);
+
+                if (!status.isAdminAccount) {
+                    $("accessDeniedCard").classList.remove("hidden");
+                    return;
+                }
+
+                state.isAdminAccount = true;
+                $("mainContent").classList.remove("hidden");
+                await loadUsers();
+
+            } catch (error) {
+                $("accessDeniedCard").classList.remove("hidden");
+            }
+        });
+    </script>
+</body>
+
+</html>
