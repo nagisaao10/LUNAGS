@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LUNAGS分析 | LUNAGS Management</title>
+    <link rel="stylesheet" href="../../shared/normalize.css">
+    <link rel="stylesheet" href="../../shared/common.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <link rel="stylesheet" href="./analytics.css">
+</head>
+
+<body>
+    <button class="hamburger" id="hamburgerBtn" aria-label="メニュー">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <div class="page">
+        <!-- 左サイドバー -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar__brand">
+                <img src="../../images/logo_LUNAGS.png" alt="LUNAGS" class="logo-lunags">
+                <div class="sidebar__brand-divider"></div>
+                <span class="sidebar__brand-subtitle">ADMIN</span>
+            </div>
+
+            <div class="menu-list">
+                <a href="../../launcher.html" class="menu">
+                    <i class="fa-solid fa-table-cells-large"></i>
+                    <span>ランチャー</span>
+                </a>
+                <a href="../dashboard/dashboard.html" class="menu">
+                    <i class="fas fa-desktop"></i>
+                    <span>ダッシュボード</span>
+                </a>
+                <a href="../../account/mypage/profile.html" class="menu">
+                    <i class="fas fa-user"></i>
+                    <span>マイページ</span>
+                </a>
+
+                <div class="sidebar__divider"></div>
+                <div class="sidebar__section-label">管理者専用</div>
+
+                <a href="../../account/admin/admin.html" class="menu">
+                    <i class="fa-solid fa-user-shield"></i>
+                    <span>管理者</span>
+                </a>
+                <a href="../../account/users/users.html" class="menu">
+                    <i class="fa-solid fa-users"></i>
+                    <span>ユーザー管理</span>
+                </a>
+                <a href="../logs/logs.html" class="menu">
+                    <i class="fa-solid fa-scroll"></i>
+                    <span>システムログ</span>
+                </a>
+                <a href="./analytics.html" class="menu active">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>LUNAGS分析</span>
+                </a>
+            </div>
+
+            <div class="sidebar__footer">
+                <button class="btn btn-secondary" id="refreshBtn">
+                    <i class="fa-solid fa-rotate"></i>
+                    <span>再読み込み</span>
+                </button>
+                <button class="btn logout-btn" id="logoutBtn">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>ログアウト</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- メインエリア -->
+        <main class="main fade-in">
+            <header class="topbar">
+                <div>
+                    <h1 class="topbar__title">ANALYTICS</h1>
+                    <div class="topbar__sub">LUNAGS利用分析 — 管理者アカウント専用</div>
+                </div>
+                <div class="status-strip">
+                    <span class="pill pill--muted" id="loginPill">確認中</span>
+                    <span class="pill pill--admin hidden" id="adminPill">管理者アカウント</span>
+                </div>
+            </header>
+
+            <!-- アクセス拒否 -->
+            <div class="access-denied-card hidden" id="accessDeniedCard">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <h2>アクセスできません</h2>
+                <p class="small-note">このページは管理者アカウントのみ利用できます。管理者モードではアクセスできません。</p>
+                <div style="margin-top: 20px;">
+                    <a class="btn btn-primary" href="../../launcher.html">ランチャーへ戻る</a>
+                </div>
+            </div>
+
+            <!-- メインコンテンツ -->
+            <div id="mainContent" class="hidden">
+
+                <!-- 期間フィルター -->
+                <div class="period-bar">
+                    <span class="period-bar__label">期間:</span>
+                    <button class="period-btn" data-days="7">今週 (7日)</button>
+                    <button class="period-btn active" data-days="30">今月 (30日)</button>
+                    <button class="period-btn" data-days="90">過去90日</button>
+                    <button class="period-btn" data-days="0">全期間</button>
+                </div>
+
+                <!-- ローディング -->
+                <div id="loadingOverlay" class="loading-overlay hidden">
+                    <span class="spinner"></span>
+                    データを読み込み中...
+                </div>
+
+                <!-- KPIカード -->
+                <div class="kpi-grid" id="kpiGrid">
+                    <div class="kpi-card">
+                        <div class="kpi-card__label">総ユーザー数</div>
+                        <div class="kpi-card__value accent-blue" id="kpiTotalUsers">-</div>
+                        <div class="kpi-card__sub">登録ユーザー合計</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-card__label">新規登録（期間内）</div>
+                        <div class="kpi-card__value accent-mint" id="kpiNewUsers">-</div>
+                        <div class="kpi-card__sub">選択期間中の新規</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-card__label">アクティブユーザー (DAU)</div>
+                        <div class="kpi-card__value accent-violet" id="kpiDau">-</div>
+                        <div class="kpi-card__sub">直近24時間</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-card__label">管理者アカウント数</div>
+                        <div class="kpi-card__value accent-amber" id="kpiAdmins">-</div>
+                        <div class="kpi-card__sub">有効な管理者</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-card__label">ログイン回数（期間内）</div>
+                        <div class="kpi-card__value accent-blue" id="kpiLogins">-</div>
+                        <div class="kpi-card__sub">認証ログより集計</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-card__label">管理者モード発動回数</div>
+                        <div class="kpi-card__value accent-violet" id="kpiAdminModes">-</div>
+                        <div class="kpi-card__sub">期間内の付与回数</div>
+                    </div>
+                </div>
+
+                <!-- チャートエリア -->
+                <div class="chart-grid">
+
+                    <!-- 新規登録推移 -->
+                    <div class="chart-card chart-card--full">
+                        <h3 class="chart-card__title">
+                            <i class="fa-solid fa-user-plus"></i> 新規登録推移（日別）
+                        </h3>
+                        <div id="registrationChartWrap" class="line-chart-wrap">
+                            <svg id="registrationChart" viewBox="0 0 800 160" preserveAspectRatio="none">
+                                <text x="400" y="85" text-anchor="middle" fill="#637093" font-size="14">読み込み中...</text>
+                            </svg>
+                            <div id="registrationChartLabels" style="display:flex; justify-content:space-between; margin-top:4px; padding: 0 2px;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ログイン回数推移 -->
+                    <div class="chart-card">
+                        <h3 class="chart-card__title">
+                            <i class="fa-solid fa-arrow-right-to-bracket"></i> ログイン推移（日別）
+                        </h3>
+                        <div id="loginChartWrap" class="line-chart-wrap">
+                            <svg id="loginChart" viewBox="0 0 400 160" preserveAspectRatio="none">
+                                <text x="200" y="85" text-anchor="middle" fill="#637093" font-size="14">読み込み中...</text>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- 管理者アクション内訳 -->
+                    <div class="chart-card">
+                        <h3 class="chart-card__title">
+                            <i class="fa-solid fa-shield-halved"></i> 管理者アクション内訳
+                        </h3>
+                        <div class="bar-chart" id="adminActionsChart">
+                            <div class="loading-overlay"><span class="spinner"></span></div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- 機能別利用状況 -->
+                <div class="chart-card" style="margin-bottom: 20px;">
+                    <h3 class="chart-card__title">
+                        <i class="fa-solid fa-chart-bar"></i> 機能別利用状況（ログカウント）
+                    </h3>
+                    <table class="feature-table" id="featureTable">
+                        <thead>
+                            <tr>
+                                <th>機能名</th>
+                                <th>イベント数</th>
+                                <th>利用割合</th>
+                            </tr>
+                        </thead>
+                        <tbody id="featureTableBody">
+                            <tr>
+                                <td colspan="3" style="text-align:center; padding: 24px; color: var(--muted);">
+                                    <span class="spinner"></span> 読み込み中...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script type="module">
+        import { auth, FUNCTIONS_ENDPOINT } from "../../shared/firebase-config.js";
+        import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+
+        let currentDays = 30;
+        let analyticsData = null;
+        let currentUser = null;
+
+        const $ = (id) => document.getElementById(id);
+
+        function escapeHtml(value) {
+            return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+                "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+            }[char]));
+        }
+
+        async function request(path, options = {}) {
+            const idToken = await currentUser.getIdToken();
+            const response = await fetch(`${FUNCTIONS_ENDPOINT}${path}`, {
+                ...options,
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${idToken}`,
+                    ...(options.headers || {})
+                }
+            });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok || result.ok === false) {
+                throw new Error(result.error || "通信に失敗しました");
+            }
+            return result;
+        }
+
+        async function loadAnalytics() {
+            $("loadingOverlay").classList.remove("hidden");
+            $("kpiGrid").style.opacity = "0.4";
+
+            try {
+                const params = currentDays > 0 ? `?days=${currentDays}` : "";
+                analyticsData = await request(`/admin-analytics${params}`, { method: "GET" });
+                renderAll(analyticsData);
+            } catch (error) {
+                console.error("Analytics load error:", error);
+            } finally {
+                $("loadingOverlay").classList.add("hidden");
+                $("kpiGrid").style.opacity = "1";
+            }
+        }
+
+        function renderAll(data) {
+            renderKPI(data);
+            renderRegistrationChart(data.dailyRegistrations || []);
+            renderLoginChart(data.dailyLogins || []);
+            renderAdminActionsChart(data.adminActions || {});
+            renderFeatureTable(data.featureUsage || []);
+        }
+
+        function renderKPI(data) {
+            $("kpiTotalUsers").textContent = data.totalUsers ?? "-";
+            $("kpiNewUsers").textContent = data.newUsers ?? "-";
+            $("kpiDau").textContent = data.dau ?? "-";
+            $("kpiAdmins").textContent = data.activeAdmins ?? "-";
+            $("kpiLogins").textContent = data.loginCount ?? "-";
+            $("kpiAdminModes").textContent = data.adminModeCount ?? "-";
+        }
+
+        function buildLinePath(points, svgWidth, svgHeight, padding = 20) {
+            if (!points || points.length < 2) return { path: "", dots: [] };
+
+            const maxVal = Math.max(...points.map((p) => p.value), 1);
+            const minVal = 0;
+            const range = maxVal - minVal || 1;
+
+            const xs = points.map((_, i) =>
+                padding + (i / (points.length - 1)) * (svgWidth - padding * 2)
+            );
+            const ys = points.map((p) =>
+                (svgHeight - padding) - ((p.value - minVal) / range) * (svgHeight - padding * 2)
+            );
+
+            const pathData = xs.map((x, i) => (i === 0 ? `M${x},${ys[i]}` : `L${x},${ys[i]}`)).join(" ");
+
+            return { path: pathData, xs, ys, maxVal };
+        }
+
+        function renderRegistrationChart(data) {
+            const svg = $("registrationChart");
+            const labelsEl = $("registrationChartLabels");
+
+            if (!data.length) {
+                svg.innerHTML = `<text x="400" y="85" text-anchor="middle" fill="#637093" font-size="14" font-family="sans-serif">データなし</text>`;
+                labelsEl.innerHTML = "";
+                return;
+            }
+
+            const W = 800, H = 160, P = 24;
+            const { path, xs, ys, maxVal } = buildLinePath(data, W, H, P);
+
+            // グリッドライン
+            let gridLines = "";
+            for (let i = 0; i <= 4; i++) {
+                const y = P + (i / 4) * (H - P * 2);
+                gridLines += `<line x1="${P}" y1="${y}" x2="${W - P}" y2="${y}" stroke="#dfeffd" stroke-width="1"/>`;
+            }
+
+            // グラデーション
+            const gradId = "grad_reg";
+            const gradient = `<defs>
+                <linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#4a93ff" stop-opacity="0.25"/>
+                    <stop offset="100%" stop-color="#4a93ff" stop-opacity="0.03"/>
+                </linearGradient>
+            </defs>`;
+
+            // エリア
+            const areaPath = path + ` L${xs[xs.length - 1]},${H - P} L${xs[0]},${H - P} Z`;
+
+            // ドット
+            const dots = xs.map((x, i) =>
+                `<circle cx="${x}" cy="${ys[i]}" r="4" fill="var(--blue-500)" stroke="#fff" stroke-width="2">
+                    <title>${data[i].label}: ${data[i].value}件</title>
+                </circle>`
+            ).join("");
+
+            svg.innerHTML = `${gradient}${gridLines}
+                <path d="${areaPath}" fill="url(#${gradId})"/>
+                <path d="${path}" fill="none" stroke="var(--blue-500)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                ${dots}`;
+
+            // X軸ラベル（間引き）
+            const step = Math.max(1, Math.floor(data.length / 8));
+            labelsEl.innerHTML = data
+                .filter((_, i) => i % step === 0 || i === data.length - 1)
+                .map((p) => `<span style="font-size:10px; color:var(--muted);">${escapeHtml(p.label)}</span>`)
+                .join("");
+        }
+
+        function renderLoginChart(data) {
+            const svg = $("loginChart");
+
+            if (!data.length) {
+                svg.innerHTML = `<text x="200" y="85" text-anchor="middle" fill="#637093" font-size="14" font-family="sans-serif">データなし</text>`;
+                return;
+            }
+
+            const W = 400, H = 160, P = 20;
+            const { path, xs, ys } = buildLinePath(data, W, H, P);
+
+            let gridLines = "";
+            for (let i = 0; i <= 4; i++) {
+                const y = P + (i / 4) * (H - P * 2);
+                gridLines += `<line x1="${P}" y1="${y}" x2="${W - P}" y2="${y}" stroke="#dfeffd" stroke-width="1"/>`;
+            }
+
+            const gradId = "grad_login";
+            const gradient = `<defs>
+                <linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#14b8a6" stop-opacity="0.25"/>
+                    <stop offset="100%" stop-color="#14b8a6" stop-opacity="0.03"/>
+                </linearGradient>
+            </defs>`;
+
+            const areaPath = path + ` L${xs[xs.length - 1]},${H - P} L${xs[0]},${H - P} Z`;
+            const dots = xs.map((x, i) =>
+                `<circle cx="${x}" cy="${ys[i]}" r="3.5" fill="var(--mint-500)" stroke="#fff" stroke-width="2">
+                    <title>${data[i].label}: ${data[i].value}件</title>
+                </circle>`
+            ).join("");
+
+            svg.innerHTML = `${gradient}${gridLines}
+                <path d="${areaPath}" fill="url(#${gradId})"/>
+                <path d="${path}" fill="none" stroke="var(--mint-500)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                ${dots}`;
+        }
+
+        function renderAdminActionsChart(actions) {
+            const container = $("adminActionsChart");
+            const entries = Object.entries(actions);
+
+            if (!entries.length) {
+                container.innerHTML = `<div style="padding:20px; color:var(--muted); text-align:center; font-size:13px;">データなし</div>`;
+                return;
+            }
+
+            const maxVal = Math.max(...entries.map(([, v]) => v), 1);
+            container.innerHTML = entries
+                .sort(([, a], [, b]) => b - a)
+                .map(([label, count]) => `
+                    <div class="bar-row">
+                        <div class="bar-row__label" title="${escapeHtml(label)}">${escapeHtml(label)}</div>
+                        <div class="bar-row__track">
+                            <div class="bar-row__fill" style="width:${Math.round((count / maxVal) * 100)}%;"></div>
+                        </div>
+                        <div class="bar-row__count">${count}</div>
+                    </div>
+                `).join("");
+        }
+
+        function renderFeatureTable(features) {
+            const body = $("featureTableBody");
+            const total = features.reduce((sum, f) => sum + (f.count || 0), 0) || 1;
+
+            if (!features.length) {
+                body.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:24px; color:var(--muted);">データなし</td></tr>`;
+                return;
+            }
+
+            body.innerHTML = features
+                .sort((a, b) => (b.count || 0) - (a.count || 0))
+                .map((f) => {
+                    const pct = Math.round(((f.count || 0) / total) * 100);
+                    return `
+                        <tr>
+                            <td style="font-weight:700;">${escapeHtml(f.feature || "-")}</td>
+                            <td style="font-weight:800; color:var(--blue-900);">${f.count || 0}</td>
+                            <td>
+                                <div class="usage-bar">
+                                    <div class="usage-bar__track">
+                                        <div class="usage-bar__fill" style="width:${pct}%;"></div>
+                                    </div>
+                                    <span style="font-size:12px; font-weight:700; color:var(--muted); white-space:nowrap;">${pct}%</span>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join("");
+        }
+
+        function initPeriodButtons() {
+            document.querySelectorAll(".period-btn").forEach((btn) => {
+                btn.addEventListener("click", () => {
+                    document.querySelectorAll(".period-btn").forEach((b) => b.classList.remove("active"));
+                    btn.classList.add("active");
+                    currentDays = parseInt(btn.dataset.days, 10);
+                    loadAnalytics();
+                });
+            });
+        }
+
+        document.getElementById("hamburgerBtn").addEventListener("click", () => {
+            document.getElementById("sidebar").classList.toggle("open");
+        });
+
+        document.addEventListener("click", (event) => {
+            const sidebar = document.getElementById("sidebar");
+            const hamburgerBtn = document.getElementById("hamburgerBtn");
+            if (window.innerWidth <= 900 && !sidebar.contains(event.target) && !hamburgerBtn.contains(event.target)) {
+                sidebar.classList.remove("open");
+            }
+        });
+
+        document.getElementById("refreshBtn").addEventListener("click", () => loadAnalytics());
+
+        document.getElementById("logoutBtn").addEventListener("click", async () => {
+            if (confirm("ログアウトしますか？")) {
+                try {
+                    await signOut(auth);
+                    window.location.href = "../../account/login/login.html";
+                } catch (error) {
+                    alert("ログアウトに失敗しました: " + error.message);
+                }
+            }
+        });
+
+        initPeriodButtons();
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                window.location.href = "../../account/login/login.html";
+                return;
+            }
+
+            currentUser = user;
+
+            try {
+                const status = await request("/admin-status", { method: "GET" });
+
+                $("loginPill").textContent = status.user?.email || user.email;
+                $("adminPill").classList.toggle("hidden", !status.isAdminAccount);
+
+                if (!status.isAdminAccount) {
+                    $("accessDeniedCard").classList.remove("hidden");
+                    return;
+                }
+
+                $("mainContent").classList.remove("hidden");
+                await loadAnalytics();
+
+            } catch (error) {
+                $("accessDeniedCard").classList.remove("hidden");
+            }
+        });
+    </script>
+</body>
+
+</html>
