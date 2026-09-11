@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>システムログ | LUNAGS Management</title>
+    <link rel="stylesheet" href="../../shared/normalize.css">
+    <link rel="stylesheet" href="../../shared/common.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <link rel="stylesheet" href="./logs.css">
+</head>
+
+<body>
+    <button class="hamburger" id="hamburgerBtn" type="button" aria-label="メニュー">
+        <i class="fa-solid fa-bars"></i>
+    </button>
+
+    <div class="page">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar__brand">
+                <img src="../../images/logo_LUNAGS.png" alt="LUNAGS" class="logo-lunags">
+                <div class="sidebar__brand-divider"></div>
+                <span class="sidebar__brand-subtitle">ADMIN ACCOUNT</span>
+            </div>
+
+            <nav class="menu-list" aria-label="管理者メニュー">
+                <a href="../../launcher.html" class="menu">
+                    <i class="fa-solid fa-table-cells-large"></i>
+                    <span>ランチャー</span>
+                </a>
+                <a href="../../account/admin/admin.html" class="menu">
+                    <i class="fa-solid fa-user-shield"></i>
+                    <span>管理者</span>
+                </a>
+                <a href="../../account/users/users.html" class="menu">
+                    <i class="fa-solid fa-users-gear"></i>
+                    <span>ユーザー管理</span>
+                </a>
+                <a href="./logs.html" class="menu active">
+                    <i class="fa-solid fa-clipboard-list"></i>
+                    <span>ログ</span>
+                </a>
+                <a href="../analytics/analytics.html" class="menu">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>分析</span>
+                </a>
+            </nav>
+
+            <div class="sidebar__footer">
+                <button class="btn" id="refreshBtn" type="button">
+                    <i class="fa-solid fa-rotate"></i>
+                    <span>再読み込み</span>
+                </button>
+            </div>
+        </aside>
+
+        <main class="main fade-in">
+            <header class="topbar">
+                <div>
+                    <h1 class="topbar__title">LOGS</h1>
+                    <div class="topbar__sub">管理者操作と権限関連イベント</div>
+                </div>
+                <span class="pill" id="statusPill">確認中</span>
+            </header>
+
+            <section class="card hidden" id="accessDenied">
+                <div class="card__head">
+                    <h2><i class="fa-solid fa-triangle-exclamation"></i> アクセスできません</h2>
+                </div>
+                <p class="error">このページは管理者アカウント専用です。</p>
+                <a class="btn btn-primary" href="../../launcher.html">ランチャーへ戻る</a>
+            </section>
+
+            <div id="content" class="hidden">
+                <section class="toolbar">
+                    <label class="search-box">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input id="searchInput" type="search" placeholder="ユーザー・イベント・対象・結果で検索" autocomplete="off">
+                    </label>
+                    <span class="pill pill--muted" id="countPill">0件</span>
+                </section>
+
+                <section class="card">
+                    <div class="card__head">
+                        <h2><i class="fa-solid fa-clipboard-list"></i> 監査ログ</h2>
+                    </div>
+                    <div class="table-wrap">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>日時</th>
+                                    <th>イベント</th>
+                                    <th>ユーザー</th>
+                                    <th>対象</th>
+                                    <th>結果</th>
+                                    <th>ソース</th>
+                                </tr>
+                            </thead>
+                            <tbody id="logsBody"></tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <script type="module">
+        import { auth, FUNCTIONS_ENDPOINT } from "../../shared/firebase-config.js";
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+
+        const $ = (id) => document.getElementById(id);
+        const state = { logs: [] };
+
+        function formatDate(value) {
+            if (!value) return "-";
+            const date = typeof value === "number" ? new Date(value) : new Date(value);
+            if (Number.isNaN(date.getTime())) return "-";
+            return date.toLocaleString("ja-JP");
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? "")
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;")
+                .replaceAll("'", "&#039;");
+        }
+
+        async function request(path) {
+            const user = auth.currentUser;
+            if (!user) throw new Error("ログインが必要です");
+            const token = await user.getIdToken();
+            const response = await fetch(`${FUNCTIONS_ENDPOINT}${path}`, {
+                method: "GET",
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || !data.ok) {
+                const error = new Error(data.error || "通信に失敗しました");
+                error.status = response.status;
+                throw error;
+            }
+            return data;
+        }
+
+        function renderLogs() {
+            const keyword = $("searchInput").value.trim().toLowerCase();
+            const logs = state.logs.filter((log) => {
+                const haystack = [
+                    log.type,
+                    log.actorEmail,
+                    log.actorName,
+                    log.target,
+                    log.result,
+                    log.source
+                ].join(" ").toLowerCase();
+                return !keyword || haystack.includes(keyword);
+            });
+
+            $("countPill").textContent = `${logs.length}件`;
+            $("logsBody").innerHTML = logs.length
+                ? logs.map((log) => `
+                    <tr>
+                        <td>${formatDate(log.occurredAt)}</td>
+                        <td><span class="log-type"><i class="fa-solid fa-circle-dot"></i>${escapeHtml(log.type)}</span></td>
+                        <td>${escapeHtml(log.actorEmail || log.actorName || "-")}</td>
+                        <td>${escapeHtml(log.target || "-")}</td>
+                        <td>${escapeHtml(log.result || "-")}</td>
+                        <td><span class="pill pill--muted">${escapeHtml(log.source)}</span></td>
+                    </tr>
+                `).join("")
+                : `<tr><td colspan="6"><div class="empty">ログはありません。</div></td></tr>`;
+        }
+
+        async function loadLogs() {
+            $("statusPill").textContent = "読み込み中";
+            const data = await request("/admin-logs");
+            state.logs = data.logs || [];
+            renderLogs();
+            $("statusPill").textContent = "管理者アカウント";
+            $("accessDenied").classList.add("hidden");
+            $("content").classList.remove("hidden");
+        }
+
+        function handleError(error) {
+            console.error(error);
+            if (error.status === 401 || error.status === 403) {
+                $("statusPill").textContent = "拒否";
+                $("accessDenied").classList.remove("hidden");
+                $("content").classList.add("hidden");
+                return;
+            }
+            $("statusPill").textContent = "エラー";
+            alert(error.message);
+        }
+
+        $("hamburgerBtn").addEventListener("click", () => {
+            $("sidebar").classList.toggle("open");
+        });
+        $("refreshBtn").addEventListener("click", () => loadLogs().catch(handleError));
+        $("searchInput").addEventListener("input", renderLogs);
+
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                window.location.href = "../../account/login/login.html";
+                return;
+            }
+            loadLogs().catch(handleError);
+        });
+    </script>
+</body>
+
+</html>

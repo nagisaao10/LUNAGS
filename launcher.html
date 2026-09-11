@@ -46,6 +46,18 @@
                     <i class="fa-solid fa-user-shield" aria-hidden="true"></i>
                     <span>管理者</span>
                 </a>
+                <a href="./account/users/users.html" class="menu is-hidden" id="adminUsersMenu">
+                    <i class="fa-solid fa-users-gear" aria-hidden="true"></i>
+                    <span>ユーザー管理</span>
+                </a>
+                <a href="./management/logs/logs.html" class="menu is-hidden" id="adminLogsMenu">
+                    <i class="fa-solid fa-clipboard-list" aria-hidden="true"></i>
+                    <span>ログ</span>
+                </a>
+                <a href="./management/analytics/analytics.html" class="menu is-hidden" id="adminAnalyticsMenu">
+                    <i class="fa-solid fa-chart-pie" aria-hidden="true"></i>
+                    <span>分析</span>
+                </a>
             </nav>
 
             <div class="sidebar__footer">
@@ -118,6 +130,43 @@
                             <span class="arrow" aria-hidden="true"><i class="fa-solid fa-arrow-right"></i></span>
                         </div>
                     </a>
+
+                    <a href="./account/users/users.html" class="launcher-card is-hidden" id="adminUsersCard">
+                        <div class="card-top">
+                            <div class="card-icon"><i class="fa-solid fa-users-gear" aria-hidden="true"></i></div>
+                            <h2 class="card-title">ユーザー管理</h2>
+                            <p class="card-description">登録ユーザー、UID、ユーザーID、管理者アカウント状態を確認します。</p>
+                        </div>
+                        <div class="card-bottom">
+                            <span class="open-text">ユーザー一覧を開く</span>
+                            <span class="arrow" aria-hidden="true"><i class="fa-solid fa-arrow-right"></i></span>
+                        </div>
+                    </a>
+
+                    <a href="./management/logs/logs.html" class="launcher-card is-hidden" id="adminLogsCard">
+                        <div class="card-top">
+                            <div class="card-icon"><i class="fa-solid fa-clipboard-list" aria-hidden="true"></i></div>
+                            <h2 class="card-title">システムログ</h2>
+                            <p class="card-description">管理者モード、管理者アカウント、降格申請の監査履歴を確認します。</p>
+                        </div>
+                        <div class="card-bottom">
+                            <span class="open-text">ログを開く</span>
+                            <span class="arrow" aria-hidden="true"><i class="fa-solid fa-arrow-right"></i></span>
+                        </div>
+                    </a>
+
+                    <a href="./management/analytics/analytics.html" class="launcher-card is-hidden"
+                        id="adminAnalyticsCard">
+                        <div class="card-top">
+                            <div class="card-icon"><i class="fa-solid fa-chart-pie" aria-hidden="true"></i></div>
+                            <h2 class="card-title">LUNAGS分析</h2>
+                            <p class="card-description">ユーザー数、アクティブ率、管理者関連イベントの集計を確認します。</p>
+                        </div>
+                        <div class="card-bottom">
+                            <span class="open-text">分析を開く</span>
+                            <span class="arrow" aria-hidden="true"><i class="fa-solid fa-arrow-right"></i></span>
+                        </div>
+                    </a>
                 </div>
             </section>
         </main>
@@ -131,6 +180,14 @@
         const logoutButton = document.getElementById("logoutButton");
         const adminCard = document.getElementById("adminCard");
         const adminMenu = document.getElementById("adminMenu");
+        const adminAccountOnlyItems = [
+            document.getElementById("adminUsersMenu"),
+            document.getElementById("adminLogsMenu"),
+            document.getElementById("adminAnalyticsMenu"),
+            document.getElementById("adminUsersCard"),
+            document.getElementById("adminLogsCard"),
+            document.getElementById("adminAnalyticsCard")
+        ];
         const hamburgerBtn = document.getElementById("hamburgerBtn");
         const sidebar = document.getElementById("sidebar");
 
@@ -139,8 +196,15 @@
             adminMenu.classList.toggle("is-hidden", !isVisible);
         }
 
+        function setAdminAccountLinksVisible(isVisible) {
+            adminAccountOnlyItems.forEach((item) => {
+                item.classList.toggle("is-hidden", !isVisible);
+            });
+        }
+
         async function renderAdminCard(user) {
             setAdminLinksVisible(false);
+            setAdminAccountLinksVisible(false);
 
             try {
                 const token = await user.getIdToken();
@@ -156,6 +220,7 @@
 
                 const result = await response.json();
                 setAdminLinksVisible(Boolean(result.ok && (result.isAdminAccount || result.adminMode)));
+                setAdminAccountLinksVisible(Boolean(result.ok && result.isAdminAccount));
             } catch (error) {
                 console.error("管理者状態を取得できませんでした:", error);
             }

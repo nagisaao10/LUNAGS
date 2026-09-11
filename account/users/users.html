@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ユーザー管理 | LUNAGS Account</title>
+    <link rel="stylesheet" href="../../shared/normalize.css">
+    <link rel="stylesheet" href="../../shared/common.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <link rel="stylesheet" href="./users.css">
+</head>
+
+<body>
+    <button class="hamburger" id="hamburgerBtn" type="button" aria-label="メニュー">
+        <i class="fa-solid fa-bars"></i>
+    </button>
+
+    <div class="page">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar__brand">
+                <img src="../../images/logo_LUNAGS.png" alt="LUNAGS" class="logo-lunags">
+                <div class="sidebar__brand-divider"></div>
+                <span class="sidebar__brand-subtitle">ADMIN ACCOUNT</span>
+            </div>
+
+            <nav class="menu-list" aria-label="管理者メニュー">
+                <a href="../../launcher.html" class="menu">
+                    <i class="fa-solid fa-table-cells-large"></i>
+                    <span>ランチャー</span>
+                </a>
+                <a href="../admin/admin.html" class="menu">
+                    <i class="fa-solid fa-user-shield"></i>
+                    <span>管理者</span>
+                </a>
+                <a href="./users.html" class="menu active">
+                    <i class="fa-solid fa-users-gear"></i>
+                    <span>ユーザー管理</span>
+                </a>
+                <a href="../../management/logs/logs.html" class="menu">
+                    <i class="fa-solid fa-clipboard-list"></i>
+                    <span>ログ</span>
+                </a>
+                <a href="../../management/analytics/analytics.html" class="menu">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>分析</span>
+                </a>
+            </nav>
+
+            <div class="sidebar__footer">
+                <button class="btn" id="refreshBtn" type="button">
+                    <i class="fa-solid fa-rotate"></i>
+                    <span>再読み込み</span>
+                </button>
+            </div>
+        </aside>
+
+        <main class="main fade-in">
+            <header class="topbar">
+                <div>
+                    <h1 class="topbar__title">USERS</h1>
+                    <div class="topbar__sub">登録ユーザーと管理者アカウント状態</div>
+                </div>
+                <span class="pill" id="statusPill">確認中</span>
+            </header>
+
+            <section class="card hidden" id="accessDenied">
+                <div class="card__head">
+                    <h2><i class="fa-solid fa-triangle-exclamation"></i> アクセスできません</h2>
+                </div>
+                <p class="error">このページは管理者アカウント専用です。</p>
+                <a class="btn btn-primary" href="../../launcher.html">ランチャーへ戻る</a>
+            </section>
+
+            <div id="content" class="hidden">
+                <section class="metrics-grid">
+                    <div class="metric">
+                        <div class="metric__label">総ユーザー</div>
+                        <div class="metric__value" id="metricTotal">0</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric__label">有効</div>
+                        <div class="metric__value" id="metricEnabled">0</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric__label">停止中</div>
+                        <div class="metric__value" id="metricDisabled">0</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric__label">管理者アカウント</div>
+                        <div class="metric__value" id="metricAdmins">0</div>
+                    </div>
+                </section>
+
+                <section class="toolbar">
+                    <label class="search-box">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input id="searchInput" type="search" placeholder="名前・メール・UID・ユーザーIDで検索" autocomplete="off">
+                    </label>
+                    <span class="pill pill--muted" id="countPill">0件</span>
+                </section>
+
+                <section class="card">
+                    <div class="card__head">
+                        <h2><i class="fa-solid fa-users"></i> ユーザー一覧</h2>
+                    </div>
+                    <div class="table-wrap">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>ユーザー名</th>
+                                    <th>メール</th>
+                                    <th>UID</th>
+                                    <th>ユーザーID</th>
+                                    <th>作成日時</th>
+                                    <th>最終ログイン</th>
+                                    <th>状態</th>
+                                    <th>管理者</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersBody"></tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <script type="module">
+        import { auth, FUNCTIONS_ENDPOINT } from "../../shared/firebase-config.js";
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+
+        const $ = (id) => document.getElementById(id);
+        const state = { users: [] };
+
+        function formatDate(value) {
+            if (!value) return "-";
+            const date = typeof value === "number" ? new Date(value) : new Date(value);
+            if (Number.isNaN(date.getTime())) return "-";
+            return date.toLocaleString("ja-JP");
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? "")
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;")
+                .replaceAll("'", "&#039;");
+        }
+
+        async function request(path) {
+            const user = auth.currentUser;
+            if (!user) throw new Error("ログインが必要です");
+            const token = await user.getIdToken();
+            const response = await fetch(`${FUNCTIONS_ENDPOINT}${path}`, {
+                method: "GET",
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || !data.ok) {
+                const error = new Error(data.error || "通信に失敗しました");
+                error.status = response.status;
+                throw error;
+            }
+            return data;
+        }
+
+        function setAccessDenied() {
+            $("statusPill").textContent = "拒否";
+            $("accessDenied").classList.remove("hidden");
+            $("content").classList.add("hidden");
+        }
+
+        function renderMetrics(users) {
+            $("metricTotal").textContent = users.length;
+            $("metricEnabled").textContent = users.filter((user) => !user.disabled).length;
+            $("metricDisabled").textContent = users.filter((user) => user.disabled).length;
+            $("metricAdmins").textContent = users.filter((user) => user.isAdminAccount).length;
+        }
+
+        function renderUsers() {
+            const keyword = $("searchInput").value.trim().toLowerCase();
+            const users = state.users.filter((user) => {
+                const haystack = [
+                    user.name,
+                    user.email,
+                    user.uid,
+                    user.userId
+                ].join(" ").toLowerCase();
+                return !keyword || haystack.includes(keyword);
+            });
+
+            $("countPill").textContent = `${users.length}件`;
+            $("usersBody").innerHTML = users.length
+                ? users.map((user) => `
+                    <tr>
+                        <td>${escapeHtml(user.name || "-")}</td>
+                        <td>${escapeHtml(user.email || "-")}</td>
+                        <td>${escapeHtml(user.uid)}</td>
+                        <td>${escapeHtml(user.userId || "-")}</td>
+                        <td>${formatDate(user.createdAt)}</td>
+                        <td>${formatDate(user.lastLoginAt)}</td>
+                        <td><span class="pill ${user.disabled ? "pill--danger" : ""}">${user.disabled ? "停止中" : "有効"}</span></td>
+                        <td><span class="pill ${user.isAdminAccount ? "" : "pill--muted"}">${user.isAdminAccount ? "管理者" : "一般"}</span></td>
+                        <td><a class="btn" href="./user.html?uid=${encodeURIComponent(user.uid)}"><i class="fa-solid fa-circle-info"></i><span>詳細</span></a></td>
+                    </tr>
+                `).join("")
+                : `<tr><td colspan="9"><div class="empty">該当するユーザーはありません。</div></td></tr>`;
+        }
+
+        async function loadUsers() {
+            $("statusPill").textContent = "読み込み中";
+            const data = await request("/admin-users");
+            state.users = data.users || [];
+            renderMetrics(state.users);
+            renderUsers();
+            $("statusPill").textContent = "管理者アカウント";
+            $("accessDenied").classList.add("hidden");
+            $("content").classList.remove("hidden");
+        }
+
+        $("hamburgerBtn").addEventListener("click", () => {
+            $("sidebar").classList.toggle("open");
+        });
+        $("refreshBtn").addEventListener("click", () => loadUsers().catch(handleError));
+        $("searchInput").addEventListener("input", renderUsers);
+
+        function handleError(error) {
+            console.error(error);
+            if (error.status === 401 || error.status === 403) {
+                setAccessDenied();
+                return;
+            }
+            $("statusPill").textContent = "エラー";
+            alert(error.message);
+        }
+
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                window.location.href = "../login/login.html";
+                return;
+            }
+            loadUsers().catch(handleError);
+        });
+    </script>
+</body>
+
+</html>

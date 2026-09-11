@@ -1,0 +1,16 @@
+@import url("../../account/users/users.css");
+
+.log-type {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--blue-900);
+  font-weight: 800;
+}
+
+.log-detail {
+  max-width: 420px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

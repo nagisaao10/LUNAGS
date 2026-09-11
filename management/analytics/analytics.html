@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LUNAGS分析 | LUNAGS Management</title>
+    <link rel="stylesheet" href="../../shared/normalize.css">
+    <link rel="stylesheet" href="../../shared/common.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <link rel="stylesheet" href="./analytics.css">
+</head>
+
+<body>
+    <button class="hamburger" id="hamburgerBtn" type="button" aria-label="メニュー">
+        <i class="fa-solid fa-bars"></i>
+    </button>
+
+    <div class="page">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar__brand">
+                <img src="../../images/logo_LUNAGS.png" alt="LUNAGS" class="logo-lunags">
+                <div class="sidebar__brand-divider"></div>
+                <span class="sidebar__brand-subtitle">ADMIN ACCOUNT</span>
+            </div>
+
+            <nav class="menu-list" aria-label="管理者メニュー">
+                <a href="../../launcher.html" class="menu">
+                    <i class="fa-solid fa-table-cells-large"></i>
+                    <span>ランチャー</span>
+                </a>
+                <a href="../../account/admin/admin.html" class="menu">
+                    <i class="fa-solid fa-user-shield"></i>
+                    <span>管理者</span>
+                </a>
+                <a href="../../account/users/users.html" class="menu">
+                    <i class="fa-solid fa-users-gear"></i>
+                    <span>ユーザー管理</span>
+                </a>
+                <a href="../logs/logs.html" class="menu">
+                    <i class="fa-solid fa-clipboard-list"></i>
+                    <span>ログ</span>
+                </a>
+                <a href="./analytics.html" class="menu active">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>分析</span>
+                </a>
+            </nav>
+
+            <div class="sidebar__footer">
+                <button class="btn" id="refreshBtn" type="button">
+                    <i class="fa-solid fa-rotate"></i>
+                    <span>再読み込み</span>
+                </button>
+            </div>
+        </aside>
+
+        <main class="main fade-in">
+            <header class="topbar">
+                <div>
+                    <h1 class="topbar__title">ANALYTICS</h1>
+                    <div class="topbar__sub" id="generatedAt">読み込み中</div>
+                </div>
+                <span class="pill" id="statusPill">確認中</span>
+            </header>
+
+            <section class="card hidden" id="accessDenied">
+                <div class="card__head">
+                    <h2><i class="fa-solid fa-triangle-exclamation"></i> アクセスできません</h2>
+                </div>
+                <p class="error">このページは管理者アカウント専用です。</p>
+                <a class="btn btn-primary" href="../../launcher.html">ランチャーへ戻る</a>
+            </section>
+
+            <div id="content" class="hidden">
+                <section class="metrics-grid">
+                    <div class="metric">
+                        <div class="metric__label">総ユーザー</div>
+                        <div class="metric__value" id="totalUsers">0</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric__label">30日アクティブ</div>
+                        <div class="metric__value" id="activeLast30Days">0</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric__label">管理者アカウント</div>
+                        <div class="metric__value" id="activeAdminAccounts">0</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric__label">管理者モード中</div>
+                        <div class="metric__value" id="activeAdminSessions">0</div>
+                    </div>
+                </section>
+
+                <section class="analytics-grid">
+                    <div class="card">
+                        <div class="card__head">
+                            <h2><i class="fa-solid fa-chart-column"></i> 新規登録推移</h2>
+                            <span class="pill pill--muted">過去30日</span>
+                        </div>
+                        <div class="bar-chart" id="growthChart"></div>
+                        <div class="bar-labels">
+                            <span id="growthStart">-</span>
+                            <span id="growthEnd">-</span>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card__head">
+                            <h2><i class="fa-solid fa-gauge-high"></i> 状態比率</h2>
+                        </div>
+                        <div class="ratio-list" id="ratioList"></div>
+                    </div>
+                </section>
+
+                <section class="card" style="margin-top: 16px;">
+                    <div class="card__head">
+                        <h2><i class="fa-solid fa-shield-halved"></i> 管理イベント集計</h2>
+                    </div>
+                    <div class="metrics-grid">
+                        <div class="metric">
+                            <div class="metric__label">管理者モード履歴</div>
+                            <div class="metric__value" id="adminModeHistory">0</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric__label">管理者アカウント履歴</div>
+                            <div class="metric__value" id="adminAccountHistory">0</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric__label">降格申請</div>
+                            <div class="metric__value" id="demotionRequests">0</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric__label">停止中ユーザー</div>
+                            <div class="metric__value" id="disabledUsers">0</div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <script type="module">
+        import { auth, FUNCTIONS_ENDPOINT } from "../../shared/firebase-config.js";
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+
+        const $ = (id) => document.getElementById(id);
+
+        function formatDate(value) {
+            if (!value) return "-";
+            const date = typeof value === "number" ? new Date(value) : new Date(value);
+            if (Number.isNaN(date.getTime())) return "-";
+            return date.toLocaleString("ja-JP");
+        }
+
+        async function request(path) {
+            const user = auth.currentUser;
+            if (!user) throw new Error("ログインが必要です");
+            const token = await user.getIdToken();
+            const response = await fetch(`${FUNCTIONS_ENDPOINT}${path}`, {
+                method: "GET",
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || !data.ok) {
+                const error = new Error(data.error || "通信に失敗しました");
+                error.status = response.status;
+                throw error;
+            }
+            return data;
+        }
+
+        function renderRatio(label, value, total) {
+            const percent = total ? Math.round((value / total) * 100) : 0;
+            return `
+                <div class="ratio-row">
+                    <div class="ratio-head">
+                        <span>${label}</span>
+                        <span>${value} / ${total}</span>
+                    </div>
+                    <div class="ratio-track">
+                        <div class="ratio-fill" style="width:${percent}%"></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderGrowth(buckets) {
+            const max = Math.max(1, ...buckets.map((bucket) => bucket.count));
+            $("growthChart").innerHTML = buckets.map((bucket) => {
+                const height = Math.max(4, Math.round((bucket.count / max) * 100));
+                return `<div class="bar" title="${bucket.key}: ${bucket.count}件" style="height:${height}%"></div>`;
+            }).join("");
+            $("growthStart").textContent = buckets[0]?.key || "-";
+            $("growthEnd").textContent = buckets.at(-1)?.key || "-";
+        }
+
+        function renderAnalytics(data) {
+            const summary = data.summary || {};
+            [
+                "totalUsers",
+                "activeLast30Days",
+                "activeAdminAccounts",
+                "activeAdminSessions",
+                "adminModeHistory",
+                "adminAccountHistory",
+                "demotionRequests",
+                "disabledUsers"
+            ].forEach((id) => {
+                $(id).textContent = summary[id] || 0;
+            });
+
+            $("ratioList").innerHTML = [
+                renderRatio("有効ユーザー", summary.enabledUsers || 0, summary.totalUsers || 0),
+                renderRatio("メール確認済み", summary.verifiedUsers || 0, summary.totalUsers || 0),
+                renderRatio("30日アクティブ", summary.activeLast30Days || 0, summary.totalUsers || 0),
+                renderRatio("管理者アカウント", summary.activeAdminAccounts || 0, summary.totalUsers || 0)
+            ].join("");
+            renderGrowth(data.userGrowth || []);
+            $("generatedAt").textContent = `最終更新: ${formatDate(data.generatedAt)}`;
+        }
+
+        async function loadAnalytics() {
+            $("statusPill").textContent = "読み込み中";
+            const data = await request("/admin-analytics");
+            renderAnalytics(data);
+            $("statusPill").textContent = "管理者アカウント";
+            $("accessDenied").classList.add("hidden");
+            $("content").classList.remove("hidden");
+        }
+
+        function handleError(error) {
+            console.error(error);
+            if (error.status === 401 || error.status === 403) {
+                $("statusPill").textContent = "拒否";
+                $("accessDenied").classList.remove("hidden");
+                $("content").classList.add("hidden");
+                return;
+            }
+            $("statusPill").textContent = "エラー";
+            alert(error.message);
+        }
+
+        $("hamburgerBtn").addEventListener("click", () => {
+            $("sidebar").classList.toggle("open");
+        });
+        $("refreshBtn").addEventListener("click", () => loadAnalytics().catch(handleError));
+
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                window.location.href = "../../account/login/login.html";
+                return;
+            }
+            loadAnalytics().catch(handleError);
+        });
+    </script>
+</body>
+
+</html>
