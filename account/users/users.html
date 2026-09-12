@@ -43,7 +43,7 @@
                 </a>
                 <a href="../../management/logs/logs.html" class="menu">
                     <i class="fa-solid fa-clipboard-list"></i>
-                    <span>ログ</span>
+                    <span>システムログ</span>
                 </a>
                 <a href="../../management/analytics/analytics.html" class="menu">
                     <i class="fa-solid fa-chart-pie"></i>
@@ -55,6 +55,10 @@
                 <button class="btn" id="refreshBtn" type="button">
                     <i class="fa-solid fa-rotate"></i>
                     <span>再読み込み</span>
+                </button>
+                <button class="btn logout-btn" id="logoutBtn" type="button">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>ログアウト</span>
                 </button>
             </div>
         </aside>
@@ -133,7 +137,7 @@
 
     <script type="module">
         import { auth, FUNCTIONS_ENDPOINT } from "../../shared/firebase-config.js";
-        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+        import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
 
         const $ = (id) => document.getElementById(id);
         const state = { users: [] };
@@ -208,7 +212,7 @@
                         <td>${formatDate(user.lastLoginAt)}</td>
                         <td><span class="pill ${user.disabled ? "pill--danger" : ""}">${user.disabled ? "停止中" : "有効"}</span></td>
                         <td><span class="pill ${user.isAdminAccount ? "" : "pill--muted"}">${user.isAdminAccount ? "管理者" : "一般"}</span></td>
-                        <td><a class="btn" href="./user.html?uid=${encodeURIComponent(user.uid)}"><i class="fa-solid fa-circle-info"></i><span>詳細</span></a></td>
+                        <td><a class="btn" href="./users.html"><i class="fa-solid fa-circle-info"></i><span>詳細</span></a></td>
                     </tr>
                 `).join("")
                 : `<tr><td colspan="9"><div class="empty">該当するユーザーはありません。</div></td></tr>`;
@@ -229,6 +233,17 @@
             $("sidebar").classList.toggle("open");
         });
         $("refreshBtn").addEventListener("click", () => loadUsers().catch(handleError));
+        $("logoutBtn").addEventListener("click", async () => {
+            if (confirm("ログアウトしますか？")) {
+                try {
+                    await signOut(auth);
+                    window.location.href = "../login/login.html";
+                } catch (error) {
+                    console.error("ログアウトに失敗しました:", error);
+                    alert("ログアウトに失敗しました: " + error.message);
+                }
+            }
+        });
         $("searchInput").addEventListener("input", renderUsers);
 
         function handleError(error) {
