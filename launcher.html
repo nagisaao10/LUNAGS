@@ -42,6 +42,10 @@
                     <i class="fa-solid fa-chart-line" aria-hidden="true"></i>
                     <span>ダッシュボード</span>
                 </a>
+
+                <div class="sidebar__divider is-hidden" id="adminDivider" style="height:1px; margin:4px 8px; background:rgba(255,255,255,0.1);"></div>
+                <div class="sidebar__section-label is-hidden" id="adminSectionLabel" style="padding:14px 8px 4px; color:rgba(238,245,255,0.48); font-size:10px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase;">管理者専用</div>
+
                 <a href="./account/admin/admin.html" class="menu is-hidden" id="adminMenu">
                     <i class="fa-solid fa-user-shield" aria-hidden="true"></i>
                     <span>管理者</span>
@@ -159,7 +163,7 @@
                         id="adminAnalyticsCard">
                         <div class="card-top">
                             <div class="card-icon"><i class="fa-solid fa-chart-pie" aria-hidden="true"></i></div>
-                            <h2 class="card-title">LUNAGS分析</h2>
+                            <h2 class="card-title">分析</h2>
                             <p class="card-description">ユーザー数、アクティブ率、管理者関連イベントの集計を確認します。</p>
                         </div>
                         <div class="card-bottom">
@@ -180,6 +184,8 @@
         const logoutButton = document.getElementById("logoutButton");
         const adminCard = document.getElementById("adminCard");
         const adminMenu = document.getElementById("adminMenu");
+        const adminDivider = document.getElementById("adminDivider");
+        const adminSectionLabel = document.getElementById("adminSectionLabel");
         const adminAccountOnlyItems = [
             document.getElementById("adminUsersMenu"),
             document.getElementById("adminLogsMenu"),
@@ -194,6 +200,8 @@
         function setAdminLinksVisible(isVisible) {
             adminCard.classList.toggle("is-hidden", !isVisible);
             adminMenu.classList.toggle("is-hidden", !isVisible);
+            if (adminDivider) adminDivider.classList.toggle("is-hidden", !isVisible);
+            if (adminSectionLabel) adminSectionLabel.classList.toggle("is-hidden", !isVisible);
         }
 
         function setAdminAccountLinksVisible(isVisible) {
