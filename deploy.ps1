@@ -29,6 +29,11 @@ if (-not (Test-Path ".firebaserc")) {
     throw ".firebaserc が見つかりません。"
 }
 
+# Firebase CLI確認
+if (-not (Get-Command firebase -ErrorAction SilentlyContinue)) {
+    throw "Firebase CLIが見つかりません。"
+}
+
 # Firebase Deploy実行関数
 function Invoke-FirebaseDeploy {
     param (
@@ -38,8 +43,10 @@ function Invoke-FirebaseDeploy {
 
     Write-Host ""
     Write-Host "Firebase Deploy: $Target" -ForegroundColor Cyan
+    Write-Host "Project: $Project" -ForegroundColor DarkGray
 
     & firebase deploy --only $Target --project $Project
+
     $exitCode = $LASTEXITCODE
 
     if ($exitCode -ne 0) {
@@ -53,8 +60,8 @@ function Invoke-FirebaseDeploy {
 # Gitの変更確認
 Write-Host ""
 Write-Host "[1/5] Git変更を確認" -ForegroundColor Cyan
-git status --short
 
+git status --short
 $status = git status --porcelain
 
 if (-not $status) {
@@ -79,6 +86,7 @@ else {
 
     Write-Host ""
     Write-Host "[2/5] Git add" -ForegroundColor Cyan
+
     git add .
 
     if ($LASTEXITCODE -ne 0) {
@@ -87,6 +95,7 @@ else {
 
     Write-Host ""
     Write-Host "[3/5] Git commit" -ForegroundColor Cyan
+
     git commit -m $commitMessage
 
     if ($LASTEXITCODE -ne 0) {
@@ -95,6 +104,7 @@ else {
 
     Write-Host ""
     Write-Host "[4/5] Git push" -ForegroundColor Cyan
+
     git push
 
     if ($LASTEXITCODE -ne 0) {
@@ -116,13 +126,18 @@ $target = Read-Host "Deploy target"
 switch ($target) {
     "1" {
         $project = "lunags-development"
+        $hostingTarget = "development"
+        $environmentName = "Development"
     }
 
     "2" {
         $project = "lunags-production"
+        $hostingTarget = "production"
+        $environmentName = "Production"
 
         Write-Host ""
         Write-Host "WARNING: ProductionへDeployします。" -ForegroundColor Red
+
         $confirm = Read-Host "本当にProductionへDeployしますか？ (YES)"
 
         if ($confirm -cne "YES") {
@@ -155,51 +170,63 @@ Write-Host "[0] Cancel"
 $deployType = Read-Host "Deploy type"
 
 switch ($deployType) {
+
+    # Hostingのみ
     "1" {
-        Invoke-FirebaseDeploy -Target "hosting" -Project $project
+        $firebaseTarget = "hosting:$hostingTarget"
+
+        Invoke-FirebaseDeploy `
+            -Target $firebaseTarget `
+            -Project $project
     }
 
+    # Functionsのみ
     "2" {
         $env:FUNCTIONS_DISCOVERY_TIMEOUT = "120"
 
         Write-Host ""
         Write-Host "Functions Discovery Timeout: 120 seconds" -ForegroundColor DarkGray
 
-        Invoke-FirebaseDeploy -Target "functions" -Project $project
+        Invoke-FirebaseDeploy `
+            -Target "functions" `
+            -Project $project
     }
 
+    # Hosting + Functions
     "3" {
-        Invoke-FirebaseDeploy -Target "hosting" -Project $project
-
         $env:FUNCTIONS_DISCOVERY_TIMEOUT = "120"
 
         Write-Host ""
         Write-Host "Functions Discovery Timeout: 120 seconds" -ForegroundColor DarkGray
 
-        Invoke-FirebaseDeploy -Target "functions" -Project $project
+        $firebaseTarget = "hosting:$hostingTarget,functions"
+
+        Invoke-FirebaseDeploy `
+            -Target $firebaseTarget `
+            -Project $project
     }
 
+    # All
+    # 選択した環境のHosting + FunctionsのみDeploy
     "4" {
-    $env:FUNCTIONS_DISCOVERY_TIMEOUT = "120"
+        $env:FUNCTIONS_DISCOVERY_TIMEOUT = "120"
 
-    Write-Host ""
-    Write-Host "Functions Discovery Timeout: 120 seconds" -ForegroundColor DarkGray
+        Write-Host ""
+        Write-Host "Functions Discovery Timeout: 120 seconds" -ForegroundColor DarkGray
 
-    Write-Host ""
-    Write-Host "Firebase Deploy: All" -ForegroundColor Cyan
+        $firebaseTarget = "hosting:$hostingTarget,functions"
 
-    & firebase deploy --project $project
+        Write-Host ""
+        Write-Host "Firebase Deploy: All" -ForegroundColor Cyan
+        Write-Host "Environment: $environmentName" -ForegroundColor DarkGray
+        Write-Host "Target: $firebaseTarget" -ForegroundColor DarkGray
 
-    $exitCode = $LASTEXITCODE
-
-    if ($exitCode -ne 0) {
-        throw "Firebase All Deployに失敗しました。終了コード: $exitCode"
+        Invoke-FirebaseDeploy `
+            -Target $firebaseTarget `
+            -Project $project
     }
 
-    Write-Host ""
-    Write-Host "Firebase All Deploy 完了" -ForegroundColor Green
-    }
-
+    # Cancel
     "0" {
         Write-Host "Deployを中止しました。" -ForegroundColor Yellow
         exit 0
@@ -216,10 +243,19 @@ Write-Host " Deploy Complete" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Green
 Write-Host ""
 
-Write-Host "Git:      完了"
-Write-Host "Firebase: 完了"
-Write-Host "Project:  $project"
-Write-Host "Target:   $deployType"
+Write-Host "Git:         完了"
+Write-Host "Firebase:    完了"
+Write-Host "Environment: $environmentName"
+Write-Host "Project:     $project"
+Write-Host "Target:      $deployType"
+
 Write-Host ""
 
-Write-Host "Production URL / Development URLをブラウザで確認してください。" -ForegroundColor Yellow
+if ($environmentName -eq "Production") {
+    Write-Host "Production URL: https://lunags.web.app" -ForegroundColor Yellow
+}
+else {
+    Write-Host "Development URL: https://lunags-development.web.app" -ForegroundColor Yellow
+}
+
+Write-Host ""
