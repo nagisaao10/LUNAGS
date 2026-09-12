@@ -45,16 +45,27 @@ function Invoke-FirebaseDeploy {
     Write-Host "Firebase Deploy: $Target" -ForegroundColor Cyan
     Write-Host "Project: $Project" -ForegroundColor DarkGray
 
-    & firebase deploy --only $Target --project $Project
+    $firebaseOutput = & firebase deploy --only $Target --project $Project 2>&1 |
+        Tee-Object -Variable deployOutput
 
     $exitCode = $LASTEXITCODE
 
-    if ($exitCode -ne 0) {
-        throw "Firebase $Target Deployに失敗しました。終了コード: $exitCode"
+    $deployText = $deployOutput -join "`n"
+    $deployCompleted = $deployText -match "Deploy complete!"
+
+    if ($deployCompleted) {
+        Write-Host ""
+        Write-Host "Firebase $Target Deploy 完了" -ForegroundColor Green
+
+        if ($exitCode -ne 0) {
+            Write-Host "Firebase CLI終了コード: $exitCode" -ForegroundColor Yellow
+            Write-Host "Deploy complete! を確認したため、Deploy成功として扱います。" -ForegroundColor Yellow
+        }
+
+        return
     }
 
-    Write-Host ""
-    Write-Host "Firebase $Target Deploy 完了" -ForegroundColor Green
+    throw "Firebase $Target Deployに失敗しました。終了コード: $exitCode"
 }
 
 # Gitの変更確認
