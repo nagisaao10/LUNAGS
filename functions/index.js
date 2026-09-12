@@ -126,12 +126,77 @@ function publicHistory(doc) {
     };
 }
 
-function sendError(res, error, fallback = "処理に失敗しました") {
+function getErrorStatus(error) {
+    if (Number.isInteger(error?.status)) {
+        return error.status;
+    }
+
+    switch (error?.code) {
+        case "auth/id-token-expired":
+        case "auth/id-token-revoked":
+        case "auth/invalid-id-token":
+            return 401;
+
+        case "auth/user-disabled":
+            return 403;
+
+        case "auth/user-not-found":
+        case "not-found":
+            return 404;
+
+        case "auth/email-already-exists":
+        case "already-exists":
+            return 409;
+
+        default:
+            return 500;
+    }
+}
+
+function getErrorCode(status) {
+    switch (status) {
+        case 400:
+            return "BAD_REQUEST";
+
+        case 401:
+            return "UNAUTHORIZED";
+
+        case 403:
+            return "FORBIDDEN";
+
+        case 404:
+            return "NOT_FOUND";
+
+        case 409:
+            return "CONFLICT";
+
+        case 500:
+        default:
+            return "INTERNAL_SERVER_ERROR";
+    }
+}
+
+function sendError(
+    res,
+    error,
+    fallback = "処理に失敗しました"
+) {
     console.error(error);
 
-    return res.status(error.status || 500).json({
+    const status = getErrorStatus(error);
+    const errorCode = getErrorCode(status);
+
+    const isKnownError =
+        Number.isInteger(error?.status) ||
+        status !== 500;
+
+    return res.status(status).json({
         ok: false,
-        error: error.message || fallback
+        error: isKnownError
+            ? error?.message || fallback
+            : fallback,
+        errorCode,
+        status
     });
 }
 
@@ -2577,6 +2642,21 @@ app.post("/", async (req, res) => {
         const result = await resend.emails.send(
             req.body
         );
+
+        if (result?.error) {
+            const error = new Error(
+                result.error.message || "メール送信に失敗しました"
+            );
+
+            // Resendの入力エラーはLUNAGSでは400として扱う
+            if (result.error.statusCode === 422) {
+                error.status = 400;
+            } else {
+                error.status = 500;
+            }
+
+            throw error;
+        }
 
         return res.json({
             ok: true,
