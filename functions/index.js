@@ -2671,6 +2671,21 @@ app.post("/", async (req, res) => {
     }
 });
 
+// 未定義API用の404ハンドラー
+app.use((req, res) => {
+    const error = new Error("指定されたAPIが見つかりません");
+    error.status = 404;
+
+    return sendError(res, error);
+});
+
+signupSkipApp.use((req, res) => {
+    const error = new Error("指定されたAPIが見つかりません");
+    error.status = 404;
+
+    return sendError(res, error);
+});
+
 /* ============================
    Functions公開
    ============================ */
