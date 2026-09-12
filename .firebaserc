@@ -14,7 +14,7 @@
     "lunags-production": {
       "hosting": {
         "production": [
-          "lunags-production"
+          "lunags"
         ]
       }
     }
