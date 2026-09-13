@@ -7,7 +7,7 @@
     "lunags-development": {
       "hosting": {
         "development": [
-          "lunags-development"
+          "lunags-dev"
         ]
       }
     },

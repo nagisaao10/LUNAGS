@@ -23,15 +23,19 @@ const allowedOrigins = [
     "https://lunags-development.firebaseapp.com",
     "https://lunags-production.web.app",
     "https://lunags-production.firebaseapp.com",
+    "https://lunags.web.app",
 ];
 
-app.use(cors({
+const corsOptions = {
     origin: allowedOrigins,
     methods: ["GET", "POST", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"]
-}));
+};
 
+app.use(cors(corsOptions));
 app.use(express.json());
+
+signupSkipApp.use(cors(corsOptions));
 signupSkipApp.use(express.json());
 
 const DEFAULT_ADMIN_MODE_MINUTES = 30;
@@ -2711,6 +2715,7 @@ export const signupSkip = onRequest(
             "https://lunags-development.firebaseapp.com",
             "https://lunags-production.web.app",
             "https://lunags-production.firebaseapp.com",
+            "https://lunags.web.app",
             "http://localhost:8000",
             "http://127.0.0.1:8000",
             "http://localhost:5174",
