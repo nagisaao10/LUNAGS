@@ -21,8 +21,6 @@ const db = admin.firestore();
 const allowedOrigins = [
     "https://lunags-development.web.app",
     "https://lunags-development.firebaseapp.com",
-    "https://lunags-production.web.app",
-    "https://lunags-production.firebaseapp.com",
     "https://lunags.web.app",
 ];
 
@@ -2713,8 +2711,6 @@ export const signupSkip = onRequest(
         cors: [
             "https://lunags-development.web.app",
             "https://lunags-development.firebaseapp.com",
-            "https://lunags-production.web.app",
-            "https://lunags-production.firebaseapp.com",
             "https://lunags.web.app",
             "http://localhost:8000",
             "http://127.0.0.1:8000",

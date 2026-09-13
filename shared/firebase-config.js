@@ -11,16 +11,6 @@ const firebaseConfigs = {
         messagingSenderId: "166567508771",
         appId: "1:166567508771:web:128bf4357b23a69fde2a96",
         measurementId: "G-R98GTPV4QC"
-    },
-
-    production: {
-        apiKey: "AIzaSyBmF6jINHFqldOMJQNlg_1VQ9-ft1w8OiM",
-        authDomain: "lunags-production.firebaseapp.com",
-        projectId: "lunags-production",
-        storageBucket: "lunags-production.firebasestorage.app",
-        messagingSenderId: "732060625909",
-        appId: "1:732060625909:web:9ce8f0266666210ba04ebc",
-        measurementId: "G-H28DDGEZWB"
     }
 };
 

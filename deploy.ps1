@@ -45,12 +45,12 @@ function Invoke-FirebaseDeploy {
     Write-Host "Firebase Deploy: $Target" -ForegroundColor Cyan
     Write-Host "Project: $Project" -ForegroundColor DarkGray
 
-    $firebaseOutput = & firebase deploy --only $Target --project $Project 2>&1 |
-        Tee-Object -Variable deployOutput
+    & firebase deploy --only $Target --project $Project 2>&1 |
+    Tee-Object -Variable deployOutput
 
     $exitCode = $LASTEXITCODE
-
     $deployText = $deployOutput -join "`n"
+
     $deployCompleted = $deployText -match "Deploy complete!"
 
     if ($deployCompleted) {
@@ -73,9 +73,11 @@ Write-Host ""
 Write-Host "[1/5] Git変更を確認" -ForegroundColor Cyan
 
 git status --short
+
 $status = git status --porcelain
 
 if (-not $status) {
+
     Write-Host ""
     Write-Host "Gitにコミットする変更がありません。" -ForegroundColor Yellow
     Write-Host "Firebase Deployだけ実行することもできます。"
@@ -86,8 +88,10 @@ if (-not $status) {
         Write-Host "処理を中止しました。" -ForegroundColor Yellow
         exit 0
     }
+
 }
 else {
+
     Write-Host ""
     $commitMessage = Read-Host "Commit message"
 
@@ -128,21 +132,25 @@ Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host " Firebase Deploy Target" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "[1] Development  (lunags-development)" -ForegroundColor Yellow
-Write-Host "[2] Production   (lunags-production)" -ForegroundColor Red
+
+Write-Host "[1] Development  (lunags-development / hosting:development)" -ForegroundColor Yellow
+Write-Host "[2] Production   (lunags-development / hosting:production)" -ForegroundColor Red
 Write-Host "[0] Cancel"
 
 $target = Read-Host "Deploy target"
 
 switch ($target) {
+
     "1" {
+
         $project = "lunags-development"
         $hostingTarget = "development"
         $environmentName = "Development"
     }
 
     "2" {
-        $project = "lunags-production"
+
+        $project = "lunags-development"
         $hostingTarget = "production"
         $environmentName = "Production"
 
@@ -158,11 +166,13 @@ switch ($target) {
     }
 
     "0" {
+
         Write-Host "Deployを中止しました。" -ForegroundColor Yellow
         exit 0
     }
 
     default {
+
         throw "無効な選択です。"
     }
 }
@@ -172,6 +182,7 @@ Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host " Firebase Deploy Type" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
+
 Write-Host "[1] Hosting"
 Write-Host "[2] Functions"
 Write-Host "[3] Hosting + Functions"
@@ -184,6 +195,7 @@ switch ($deployType) {
 
     # Hostingのみ
     "1" {
+
         $firebaseTarget = "hosting:$hostingTarget"
 
         Invoke-FirebaseDeploy `
@@ -193,6 +205,7 @@ switch ($deployType) {
 
     # Functionsのみ
     "2" {
+
         $env:FUNCTIONS_DISCOVERY_TIMEOUT = "120"
 
         Write-Host ""
@@ -205,6 +218,7 @@ switch ($deployType) {
 
     # Hosting + Functions
     "3" {
+
         $env:FUNCTIONS_DISCOVERY_TIMEOUT = "120"
 
         Write-Host ""
@@ -220,6 +234,7 @@ switch ($deployType) {
     # All
     # 選択した環境のHosting + FunctionsのみDeploy
     "4" {
+
         $env:FUNCTIONS_DISCOVERY_TIMEOUT = "120"
 
         Write-Host ""
@@ -239,11 +254,13 @@ switch ($deployType) {
 
     # Cancel
     "0" {
+
         Write-Host "Deployを中止しました。" -ForegroundColor Yellow
         exit 0
     }
 
     default {
+
         throw "無効な選択です。"
     }
 }
@@ -252,8 +269,8 @@ Write-Host ""
 Write-Host "========================================" -ForegroundColor Green
 Write-Host " Deploy Complete" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Green
-Write-Host ""
 
+Write-Host ""
 Write-Host "Git:         完了"
 Write-Host "Firebase:    完了"
 Write-Host "Environment: $environmentName"
@@ -263,10 +280,13 @@ Write-Host "Target:      $deployType"
 Write-Host ""
 
 if ($environmentName -eq "Production") {
+
     Write-Host "Production URL: https://lunags.web.app" -ForegroundColor Yellow
+
 }
 else {
-    Write-Host "Development URL: https://lunags-development.web.app" -ForegroundColor Yellow
+
+    Write-Host "Development URL: https://lunags-dev.web.app" -ForegroundColor Yellow
 }
 
 Write-Host ""
