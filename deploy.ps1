@@ -133,8 +133,8 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host " Firebase Deploy Target" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 
-Write-Host "[1] Development  (lunags-development / hosting:development)" -ForegroundColor Yellow
-Write-Host "[2] Production   (lunags-development / hosting:production)" -ForegroundColor Red
+Write-Host "[1] Development  (lunags-development)" -ForegroundColor Yellow
+Write-Host "[2] Production   (lunags-development)" -ForegroundColor Red
 Write-Host "[0] Cancel"
 
 $target = Read-Host "Deploy target"
