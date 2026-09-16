@@ -1,15 +1,15 @@
 {
   "projects": {
-    "default": "lunags-development"
+    "default": "lunags"
   },
   "targets": {
-    "lunags-development": {
+    "lunags": {
       "hosting": {
         "development": [
-          "lunags-dev"
+          "lunags-42343"
         ],
         "production": [
-          "lunags"
+          "lunags-59cc1"
         ]
       }
     }

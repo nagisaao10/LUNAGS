@@ -1,8 +1,16 @@
+# ========================================
 # LUNAGS Deploy Script
-# Git add/commit/push -> Firebase deploy
-# 実行: .\deploy.ps1
+# Git add / commit / push -> Firebase deploy
+#
+# 実行:
+# .\deploy.ps1
+# ========================================
 
 $ErrorActionPreference = "Stop"
+
+# ========================================
+# LUNAGS Deploy System
+# ========================================
 
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host " LUNAGS Deploy System" -ForegroundColor Cyan
@@ -45,12 +53,13 @@ function Invoke-FirebaseDeploy {
     Write-Host "Firebase Deploy: $Target" -ForegroundColor Cyan
     Write-Host "Project: $Project" -ForegroundColor DarkGray
 
-    & firebase deploy --only $Target --project $Project 2>&1 |
-    Tee-Object -Variable deployOutput
+    & firebase deploy `
+        --only $Target `
+        --project $Project 2>&1 |
+        Tee-Object -Variable deployOutput
 
     $exitCode = $LASTEXITCODE
     $deployText = $deployOutput -join "`n"
-
     $deployCompleted = $deployText -match "Deploy complete!"
 
     if ($deployCompleted) {
@@ -61,23 +70,24 @@ function Invoke-FirebaseDeploy {
             Write-Host "Firebase CLI終了コード: $exitCode" -ForegroundColor Yellow
             Write-Host "Deploy complete! を確認したため、Deploy成功として扱います。" -ForegroundColor Yellow
         }
-
         return
     }
 
     throw "Firebase $Target Deployに失敗しました。終了コード: $exitCode"
 }
 
+# ========================================
 # Gitの変更確認
+# ========================================
+
 Write-Host ""
 Write-Host "[1/5] Git変更を確認" -ForegroundColor Cyan
 
 git status --short
-
 $status = git status --porcelain
+$gitCompleted = $false
 
 if (-not $status) {
-
     Write-Host ""
     Write-Host "Gitにコミットする変更がありません。" -ForegroundColor Yellow
     Write-Host "Firebase Deployだけ実行することもできます。"
@@ -91,14 +101,15 @@ if (-not $status) {
 
 }
 else {
-
     Write-Host ""
+
     $commitMessage = Read-Host "Commit message"
 
     if ([string]::IsNullOrWhiteSpace($commitMessage)) {
         throw "Commit messageが空です。"
     }
 
+    # Git add
     Write-Host ""
     Write-Host "[2/5] Git add" -ForegroundColor Cyan
 
@@ -108,6 +119,7 @@ else {
         throw "Git addに失敗しました。"
     }
 
+    # Git commit
     Write-Host ""
     Write-Host "[3/5] Git commit" -ForegroundColor Cyan
 
@@ -117,6 +129,7 @@ else {
         throw "Git commitに失敗しました。"
     }
 
+    # Git push
     Write-Host ""
     Write-Host "[4/5] Git push" -ForegroundColor Cyan
 
@@ -125,37 +138,51 @@ else {
     if ($LASTEXITCODE -ne 0) {
         throw "Git pushに失敗しました。"
     }
+
+    $gitCompleted = $true
 }
 
+
+# ========================================
 # Firebaseプロジェクト選択
+# ========================================
+
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host " Firebase Deploy Target" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 
-Write-Host "[1] Development  (lunags-development)" -ForegroundColor Yellow
-Write-Host "[2] Production   (lunags-development)" -ForegroundColor Red
+Write-Host "[1] Development  (lunags / lunags-42343)" -ForegroundColor Yellow
+Write-Host "[2] Production   (lunags / lunags-59cc1)" -ForegroundColor Red
 Write-Host "[0] Cancel"
 
 $target = Read-Host "Deploy target"
 
 switch ($target) {
 
+    # Development
     "1" {
 
-        $project = "lunags-development"
+        $project = "lunags"
         $hostingTarget = "development"
+        $hostingSite = "lunags-42343"
         $environmentName = "Development"
+        $environmentUrl = "https://dev.lunags.jp"
     }
 
+    # Production
     "2" {
 
-        $project = "lunags-development"
+        $project = "lunags"
         $hostingTarget = "production"
+        $hostingSite = "lunags-59cc1"
         $environmentName = "Production"
+        $environmentUrl = "https://lunags.jp"
 
         Write-Host ""
         Write-Host "WARNING: ProductionへDeployします。" -ForegroundColor Red
+        Write-Host "Hosting: $hostingSite" -ForegroundColor Yellow
+        Write-Host "URL:     $environmentUrl" -ForegroundColor Yellow
 
         $confirm = Read-Host "本当にProductionへDeployしますか？ (YES)"
 
@@ -165,19 +192,21 @@ switch ($target) {
         }
     }
 
+    # Cancel
     "0" {
-
         Write-Host "Deployを中止しました。" -ForegroundColor Yellow
         exit 0
     }
 
     default {
-
         throw "無効な選択です。"
     }
 }
 
+# ========================================
 # Firebase Deploy対象選択
+# ========================================
+
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host " Firebase Deploy Type" -ForegroundColor Cyan
@@ -191,11 +220,20 @@ Write-Host "[0] Cancel"
 
 $deployType = Read-Host "Deploy type"
 
+# Functions Discovery Timeout
+if ($deployType -in @("2", "3", "4")) {
+
+    $env:FUNCTIONS_DISCOVERY_TIMEOUT = "120"
+
+    Write-Host ""
+    Write-Host "Functions Discovery Timeout: 120 seconds" -ForegroundColor DarkGray
+}
+
+# Firebase Deploy
 switch ($deployType) {
 
     # Hostingのみ
     "1" {
-
         $firebaseTarget = "hosting:$hostingTarget"
 
         Invoke-FirebaseDeploy `
@@ -205,12 +243,6 @@ switch ($deployType) {
 
     # Functionsのみ
     "2" {
-
-        $env:FUNCTIONS_DISCOVERY_TIMEOUT = "120"
-
-        Write-Host ""
-        Write-Host "Functions Discovery Timeout: 120 seconds" -ForegroundColor DarkGray
-
         Invoke-FirebaseDeploy `
             -Target "functions" `
             -Project $project
@@ -218,12 +250,6 @@ switch ($deployType) {
 
     # Hosting + Functions
     "3" {
-
-        $env:FUNCTIONS_DISCOVERY_TIMEOUT = "120"
-
-        Write-Host ""
-        Write-Host "Functions Discovery Timeout: 120 seconds" -ForegroundColor DarkGray
-
         $firebaseTarget = "hosting:$hostingTarget,functions"
 
         Invoke-FirebaseDeploy `
@@ -234,18 +260,14 @@ switch ($deployType) {
     # All
     # 選択した環境のHosting + FunctionsのみDeploy
     "4" {
-
-        $env:FUNCTIONS_DISCOVERY_TIMEOUT = "120"
-
-        Write-Host ""
-        Write-Host "Functions Discovery Timeout: 120 seconds" -ForegroundColor DarkGray
-
         $firebaseTarget = "hosting:$hostingTarget,functions"
 
         Write-Host ""
         Write-Host "Firebase Deploy: All" -ForegroundColor Cyan
         Write-Host "Environment: $environmentName" -ForegroundColor DarkGray
-        Write-Host "Target: $firebaseTarget" -ForegroundColor DarkGray
+        Write-Host "Project:     $project" -ForegroundColor DarkGray
+        Write-Host "Hosting:     $hostingSite" -ForegroundColor DarkGray
+        Write-Host "Target:      $firebaseTarget" -ForegroundColor DarkGray
 
         Invoke-FirebaseDeploy `
             -Target $firebaseTarget `
@@ -254,16 +276,18 @@ switch ($deployType) {
 
     # Cancel
     "0" {
-
         Write-Host "Deployを中止しました。" -ForegroundColor Yellow
         exit 0
     }
 
     default {
-
         throw "無効な選択です。"
     }
 }
+
+# ========================================
+# Deploy Complete
+# ========================================
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Green
@@ -271,22 +295,22 @@ Write-Host " Deploy Complete" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Green
 
 Write-Host ""
-Write-Host "Git:         完了"
-Write-Host "Firebase:    完了"
-Write-Host "Environment: $environmentName"
-Write-Host "Project:     $project"
-Write-Host "Target:      $deployType"
+
+if ($gitCompleted) {
+    Write-Host "Git:         完了"
+}
+else {
+    Write-Host "Git:         変更なし（Deployのみ）" -ForegroundColor Yellow
+}
+
+Write-Host "Firebase:     完了"
+Write-Host "Environment:  $environmentName"
+Write-Host "Project:      $project"
+Write-Host "Hosting:      $hostingSite"
+Write-Host "Target:       $deployType"
 
 Write-Host ""
 
-if ($environmentName -eq "Production") {
-
-    Write-Host "Production URL: https://lunags.web.app" -ForegroundColor Yellow
-
-}
-else {
-
-    Write-Host "Development URL: https://lunags-dev.web.app" -ForegroundColor Yellow
-}
+Write-Host "$environmentName URL: $environmentUrl" -ForegroundColor Yellow
 
 Write-Host ""

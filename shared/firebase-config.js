@@ -1,30 +1,64 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
-import { getAuth } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
-import { getFirestore, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+import {
+    initializeApp
+} from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
 
-const firebaseConfigs = {
-    development: {
-        apiKey: "AIzaSyD89vXJuiPBTi8F19qI1bwAecrygUdwZZo",
-        authDomain: "lunags-development.firebaseapp.com",
-        projectId: "lunags-development",
-        storageBucket: "lunags-development.firebasestorage.app",
-        messagingSenderId: "166567508771",
-        appId: "1:166567508771:web:128bf4357b23a69fde2a96",
-        measurementId: "G-R98GTPV4QC"
-    }
+import {
+    getAuth
+} from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+
+import {
+    getFirestore,
+    serverTimestamp
+} from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+
+
+// ========================================
+// Firebase 設定
+// ========================================
+
+// 本番環境
+const firebaseConfigProduction = {
+    apiKey: "AIzaSyBm7Wo-ZgF48F07IDDqazbOd4JDz9mEvOQ",
+    authDomain: "lunags-59cc1.firebaseapp.com",
+    projectId: "lunags",
+    storageBucket: "lunags.firebasestorage.app",
+    messagingSenderId: "1046443805230",
+    appId: "1:1046443805230:web:2bf48b5b3c46e3a1aa2dbf",
+    measurementId: "G-J0V3ENKZ69"
 };
 
+
+// 検証環境
+const firebaseConfigDevelopment = {
+    apiKey: "AIzaSyBm7Wo-ZgF48F07IDDqazbOd4JDz9mEvOQ",
+    authDomain: "lunags-59cc1.firebaseapp.com",
+    projectId: "lunags",
+    storageBucket: "lunags.firebasestorage.app",
+    messagingSenderId: "1046443805230",
+    appId: "1:1046443805230:web:8f5c7631aedbbdd4aa2dbf",
+    measurementId: "G-0W20KY4V22"
+};
+
+
+// ========================================
+// 環境判定
+// ========================================
 
 const hostname = window.location.hostname;
 
 const isDevelopment =
     hostname === "localhost" ||
     hostname === "127.0.0.1" ||
-    hostname.includes("lunags-development");
+    hostname === "dev.lunags.jp";
+
+
+// ========================================
+// Firebase 初期化
+// ========================================
 
 const firebaseConfig = isDevelopment
-    ? firebaseConfigs.development
-    : firebaseConfigs.production;
+    ? firebaseConfigDevelopment
+    : firebaseConfigProduction;
 
 const app = initializeApp(firebaseConfig);
 
@@ -34,27 +68,49 @@ export const db = getFirestore(app);
 export const FIREBASE_PROJECT_ID =
     app.options.projectId;
 
-export const FUNCTIONS_ENDPOINT =
+
+// ========================================
+// Cloud Functions
+// ========================================
+
+const isLocalhost =
     hostname === "localhost" ||
-        hostname === "127.0.0.1"
-        ? `http://127.0.0.1:5001/${FIREBASE_PROJECT_ID}/us-central1/send`
-        : `https://us-central1-${FIREBASE_PROJECT_ID}.cloudfunctions.net/send`;
+    hostname === "127.0.0.1";
+
+const FUNCTIONS_BASE_URL = isLocalhost
+    ? `http://127.0.0.1:5001/${FIREBASE_PROJECT_ID}/us-central1`
+    : `https://us-central1-${FIREBASE_PROJECT_ID}.cloudfunctions.net`;
+
+export const FUNCTIONS_ENDPOINT =
+    `${FUNCTIONS_BASE_URL}/send`;
 
 export const SIGNUP_SKIP_ENDPOINT =
-    hostname === "localhost" ||
-        hostname === "127.0.0.1"
-        ? `http://127.0.0.1:5001/${FIREBASE_PROJECT_ID}/us-central1/signupSkip`
-        : `https://us-central1-${FIREBASE_PROJECT_ID}.cloudfunctions.net/signupSkip`;
+    `${FUNCTIONS_BASE_URL}/signupSkip`;
+
+
+// ========================================
+// 共通設定
+// ========================================
 
 export { serverTimestamp };
 
-export const VERIFICATION_COLLECTION = "emailVerifications";
-export const CODE_TTL_MS = 5 * 60 * 1000;
-export const MAX_ATTEMPTS = 5;
-export const RESEND_COOLDOWN_MS = 60 * 1000;
+export const VERIFICATION_COLLECTION =
+    "emailVerifications";
 
-export const FIREBASE_TIMEOUT_MS = 30000;
-export const LOCAL_VERIFICATION_KEY_PREFIX = "verify_";
+export const CODE_TTL_MS =
+    5 * 60 * 1000;
+
+export const MAX_ATTEMPTS =
+    5;
+
+export const RESEND_COOLDOWN_MS =
+    60 * 1000;
+
+export const FIREBASE_TIMEOUT_MS =
+    30000;
+
+export const LOCAL_VERIFICATION_KEY_PREFIX =
+    "verify_";
 
 export function normalizeEmail(email) {
     return email.trim().toLowerCase();

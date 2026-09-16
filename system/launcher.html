@@ -5,8 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ランチャー | LUNAGS System</title>
-    <link rel="stylesheet" href="./shared/normalize.css">
-    <link rel="stylesheet" href="./shared/common.css">
+    <link rel="stylesheet" href="../shared/normalize.css">
+    <link rel="stylesheet" href="../shared/common.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <link rel="stylesheet" href="./launcher.css">
 </head>
@@ -20,7 +20,7 @@
     <div class="page">
         <aside class="sidebar" id="sidebar">
             <div class="sidebar__brand">
-                <img src="./images/logo_LUNAGS.png" alt="LUNAGS" class="logo-lunags">
+                <img src="../images/logo_LUNAGS.png" alt="LUNAGS" class="logo-lunags">
                 <div class="sidebar__brand-divider"></div>
                 <span class="sidebar__brand-subtitle">SYSTEM</span>
             </div>
@@ -30,15 +30,15 @@
                     <i class="fa-solid fa-table-cells-large" aria-hidden="true"></i>
                     <span>ランチャー</span>
                 </a>
-                <a href="./account/mypage/profile.html" class="menu">
+                <a href="../account/mypage/profile.html" class="menu">
                     <i class="fa-solid fa-user" aria-hidden="true"></i>
                     <span>マイページ</span>
                 </a>
-                <a href="./shop/shop.html" class="menu">
+                <a href="../shop/shop.html" class="menu">
                     <i class="fa-solid fa-bag-shopping" aria-hidden="true"></i>
                     <span>ショップ</span>
                 </a>
-                <a href="./management/dashboard/dashboard.html" class="menu">
+                <a href="../management/dashboard/dashboard.html" class="menu">
                     <i class="fa-solid fa-chart-line" aria-hidden="true"></i>
                     <span>ダッシュボード</span>
                 </a>
@@ -46,19 +46,19 @@
                 <div class="sidebar__divider is-hidden" id="adminDivider" style="height:1px; margin:4px 8px; background:rgba(255,255,255,0.1);"></div>
                 <div class="sidebar__section-label is-hidden" id="adminSectionLabel" style="padding:14px 8px 4px; color:rgba(238,245,255,0.48); font-size:10px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase;">管理者専用</div>
 
-                <a href="./account/admin/admin.html" class="menu is-hidden" id="adminMenu">
+                <a href="../account/admin/admin.html" class="menu is-hidden" id="adminMenu">
                     <i class="fa-solid fa-user-shield" aria-hidden="true"></i>
                     <span>管理者</span>
                 </a>
-                <a href="./account/users/users.html" class="menu is-hidden" id="adminUsersMenu">
+                <a href="../account/users/users.html" class="menu is-hidden" id="adminUsersMenu">
                     <i class="fa-solid fa-users-gear" aria-hidden="true"></i>
                     <span>ユーザー管理</span>
                 </a>
-                <a href="./management/logs/logs.html" class="menu is-hidden" id="adminLogsMenu">
+                <a href="../management/logs/logs.html" class="menu is-hidden" id="adminLogsMenu">
                     <i class="fa-solid fa-clipboard-list" aria-hidden="true"></i>
                     <span>システムログ</span>
                 </a>
-                <a href="./management/analytics/analytics.html" class="menu is-hidden" id="adminAnalyticsMenu">
+                <a href="../management/analytics/analytics.html" class="menu is-hidden" id="adminAnalyticsMenu">
                     <i class="fa-solid fa-chart-pie" aria-hidden="true"></i>
                     <span>分析</span>
                 </a>
@@ -87,7 +87,7 @@
                 </div>
 
                 <div class="launcher-grid">
-                    <a href="./account/mypage/profile.html" class="launcher-card">
+                    <a href="../account/mypage/profile.html" class="launcher-card">
                         <div class="card-top">
                             <div class="card-icon"><i class="fa-solid fa-user" aria-hidden="true"></i></div>
                             <h2 class="card-title">マイページ</h2>
@@ -99,7 +99,7 @@
                         </div>
                     </a>
 
-                    <a href="./shop/" class="launcher-card">
+                    <a href="../shop/shop.html" class="launcher-card">
                         <div class="card-top">
                             <div class="card-icon"><i class="fa-solid fa-bag-shopping" aria-hidden="true"></i></div>
                             <h2 class="card-title">ショップ</h2>
@@ -111,7 +111,7 @@
                         </div>
                     </a>
 
-                    <a href="./management/dashboard/dashboard.html" class="launcher-card">
+                    <a href="../management/dashboard/dashboard.html" class="launcher-card">
                         <div class="card-top">
                             <div class="card-icon"><i class="fa-solid fa-chart-line" aria-hidden="true"></i></div>
                             <h2 class="card-title">ダッシュボード</h2>
@@ -123,7 +123,7 @@
                         </div>
                     </a>
 
-                    <a href="./account/admin/admin.html" class="launcher-card is-hidden" id="adminCard">
+                    <a href="../account/admin/admin.html" class="launcher-card is-hidden" id="adminCard">
                         <div class="card-top">
                             <div class="card-icon"><i class="fa-solid fa-user-shield" aria-hidden="true"></i></div>
                             <h2 class="card-title">管理者</h2>
@@ -135,7 +135,7 @@
                         </div>
                     </a>
 
-                    <a href="./account/users/users.html" class="launcher-card is-hidden" id="adminUsersCard">
+                    <a href="../account/users/users.html" class="launcher-card is-hidden" id="adminUsersCard">
                         <div class="card-top">
                             <div class="card-icon"><i class="fa-solid fa-users-gear" aria-hidden="true"></i></div>
                             <h2 class="card-title">ユーザー管理</h2>
@@ -147,7 +147,7 @@
                         </div>
                     </a>
 
-                    <a href="./management/logs/logs.html" class="launcher-card is-hidden" id="adminLogsCard">
+                    <a href="../management/logs/logs.html" class="launcher-card is-hidden" id="adminLogsCard">
                         <div class="card-top">
                             <div class="card-icon"><i class="fa-solid fa-clipboard-list" aria-hidden="true"></i></div>
                             <h2 class="card-title">システムログ</h2>
@@ -159,7 +159,7 @@
                         </div>
                     </a>
 
-                    <a href="./management/analytics/analytics.html" class="launcher-card is-hidden"
+                    <a href="../management/analytics/analytics.html" class="launcher-card is-hidden"
                         id="adminAnalyticsCard">
                         <div class="card-top">
                             <div class="card-icon"><i class="fa-solid fa-chart-pie" aria-hidden="true"></i></div>
