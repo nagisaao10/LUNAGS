@@ -677,7 +677,7 @@ async function getCurrentContext(req) {
             profile.name ||
             decoded.name ||
             email,
-        isAdminAccount: !!adminAccount,
+        adminAccounts: !!adminAccount,
         adminAccount,
         adminMode: !!session,
         session
@@ -688,7 +688,7 @@ async function requireAdminAccount(req) {
     const context =
         await getCurrentContext(req);
 
-    if (!context.isAdminAccount) {
+    if (!context.adminAccounts) {
         const error = new Error(
             "管理者アカウント権限がありません"
         );
@@ -704,7 +704,7 @@ async function requireAdminAccountOrMode(req) {
         await getCurrentContext(req);
 
     if (
-        !context.isAdminAccount &&
+        !context.adminAccounts &&
         !context.adminMode
     ) {
         const error = new Error(
@@ -767,7 +767,7 @@ function publicUserRecord(user, profile = {}, adminAccount = null) {
             profile.lastLoginAt ||
             user.metadata?.lastSignInTime ||
             null,
-        isAdminAccount: !!adminAccount,
+        adminAccounts: !!adminAccount,
         adminAccount,
         providers: providerIds,
         phoneNumber: user.phoneNumber || profile.phoneNumber || "",
@@ -898,8 +898,8 @@ app.get("/admin-status", async (req, res) => {
                 email: context.email,
                 name: context.name
             },
-            isAdminAccount:
-                context.isAdminAccount,
+            adminAccounts:
+                context.adminAccounts,
             adminAccount:
                 context.adminAccount,
             adminMode:
@@ -2208,13 +2208,13 @@ app.get("/admin-users", async (req, res) => {
 
         const users = authUsers.map((u) => {
             const email = normalizeEmail(u.email || "");
-            const isAdminAccount = adminEmails.has(email);
+            const adminAccounts = adminEmails.has(email);
             return {
                 uid: u.uid,
                 email,
                 name: u.displayName || "",
                 emailVerified: u.emailVerified || false,
-                isAdminAccount,
+                adminAccounts,
                 adminMode: adminModeUids.has(u.uid),
                 createdAt: u.metadata?.creationTime
                     ? new Date(u.metadata.creationTime).getTime()
@@ -2227,8 +2227,8 @@ app.get("/admin-users", async (req, res) => {
 
         // 管理者アカウントを先頭に、次にメールアドレス順
         users.sort((a, b) => {
-            if (a.isAdminAccount !== b.isAdminAccount) {
-                return a.isAdminAccount ? -1 : 1;
+            if (a.adminAccounts !== b.adminAccounts) {
+                return a.adminAccounts ? -1 : 1;
             }
             return a.email.localeCompare(b.email);
         });
@@ -2273,9 +2273,9 @@ app.get("/admin-users/:uid", async (req, res) => {
             .collection("adminAccounts")
             .doc(email)
             .get();
-        const isAdminAccount =
+        const adminAccounts =
             adminAccountSnap.exists && adminAccountSnap.data().active === true;
-        const adminAccountDetail = isAdminAccount
+        const adminAccountDetail = adminAccounts
             ? publicAccount(adminAccountSnap.data())
             : null;
 
@@ -2295,7 +2295,7 @@ app.get("/admin-users/:uid", async (req, res) => {
                 email,
                 name: authUser.displayName || "",
                 emailVerified: authUser.emailVerified || false,
-                isAdminAccount,
+                adminAccounts,
                 adminMode,
                 adminAccountDetail,
                 createdAt: authUser.metadata?.creationTime

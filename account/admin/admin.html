@@ -421,17 +421,17 @@
 
         function renderStatus() {
             const status = state.status;
-            const isAllowed = status?.isAdminAccount || status?.adminMode;
+            const isAllowed = status?.adminAccounts || status?.adminMode;
 
             $("adminContent").classList.toggle("hidden", !isAllowed);
             $("accessDeniedCard").classList.toggle("hidden", isAllowed);
 
             $("loginPill").textContent = status?.user?.email || "未ログイン";
-            $("adminPill").classList.toggle("hidden", !status?.isAdminAccount);
+            $("adminPill").classList.toggle("hidden", !status?.adminAccounts);
             $("modePill").classList.toggle("hidden", !status?.adminMode);
 
             // 管理者アカウントのみ専用メニューを表示
-            if (status?.isAdminAccount) {
+            if (status?.adminAccounts) {
                 const usersLink = $("usersMenuLink");
                 const logsLink = $("logsMenuLink");
                 const analyticsLink = $("analyticsMenuLink");
@@ -444,12 +444,12 @@
 
             $("selfEmail").textContent = status.user?.email || "-";
             $("selfName").textContent = status.user?.name || "-";
-            $("selfAdminAccount").textContent = status.isAdminAccount ? "有効" : "なし";
+            $("selfAdminAccount").textContent = status.adminAccounts ? "有効" : "なし";
 
-            $("selfAdminAccountRow").classList.toggle("hidden", !status.isAdminAccount);
+            $("selfAdminAccountRow").classList.toggle("hidden", !status.adminAccounts);
             $("selfSessionSection").classList.toggle("hidden", !status.adminMode);
 
-            if (status.isAdminAccount) {
+            if (status.adminAccounts) {
                 $("pageLead").textContent = "管理者アカウント";
                 $("selfCardTitle").textContent = "自分の情報・設定";
             } else if (status.adminMode) {
@@ -457,7 +457,7 @@
                 $("selfCardTitle").textContent = "自分の管理者モード情報";
             }
 
-            setAdminSectionsVisible(!!status.isAdminAccount);
+            setAdminSectionsVisible(!!status.adminAccounts);
 
             if (status.adminMode && status.session) {
                 $("sessionApprover").textContent =
@@ -467,7 +467,7 @@
                 $("sessionRemain").textContent = formatRemain(status.session.expiresAt);
             }
 
-            if (status.isAdminAccount) {
+            if (status.adminAccounts) {
                 $("durationInput").value =
                     status.adminAccount?.adminModeDurationMinutes || 30;
             }
@@ -627,7 +627,7 @@
             state.status = await request("/admin-status", { method: "GET" });
             renderStatus();
 
-            if (!state.status.isAdminAccount) {
+            if (!state.status.adminAccounts) {
                 state.accounts = [];
                 state.sessions = [];
                 state.demotionRequests = [];
