@@ -58,7 +58,7 @@
 
         onAuthStateChanged(auth, (user) => {
             if (user && !isGoogleProcessing) {
-                window.location.href = "../../launcher.html";
+                window.location.href = "../../system/launcher.html";
             }
         });
 
@@ -126,7 +126,7 @@
 
                 setTimeout(() => {
                     window.location.href =
-                        "../../launcher.html";
+                        "../../system/launcher.html";
                 }, 1000);
 
             } catch (err) {
@@ -239,7 +239,7 @@
                     setTimeout(() => {
 
                         window.location.href =
-                            "../../launcher.html";
+                            "../../system/launcher.html";
 
                     }, 1000);
                 })
