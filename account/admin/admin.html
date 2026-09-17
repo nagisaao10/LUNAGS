@@ -113,9 +113,9 @@
                             <div class="label">ユーザー名</div>
                             <div class="value" id="selfName">-</div>
                         </div>
-                        <div class="row" id="selfAdminAccountRow">
+                        <div class="row" id="selfadminAccountRow">
                             <div class="label">管理者アカウント</div>
-                            <div class="value" id="selfAdminAccount">-</div>
+                            <div class="value" id="selfadminAccount">-</div>
                         </div>
                     </div>
 
@@ -171,7 +171,7 @@
 
 
                 <!-- 3. 管理者アカウントの管理（管理者アカウントのみ） -->
-                <section class="card hidden" id="adminAccountsSection">
+                <section class="card hidden" id="adminAccountection">
                     <div class="card__head">
                         <h2><i class="fa-solid fa-user-gear"></i> 管理者アカウント管理</h2>
                     </div>
@@ -226,7 +226,7 @@
                                     <th>操作</th>
                                 </tr>
                             </thead>
-                            <tbody id="adminAccountsBody"></tbody>
+                            <tbody id="adminAccountBody"></tbody>
                         </table>
                     </div>
 
@@ -410,7 +410,7 @@
         function setAdminSectionsVisible(isVisible) {
             [
                 "selfDurationSection",
-                "adminAccountsSection",
+                "adminAccountection",
                 "adminSessionsSection",
                 "historySection"
             ].forEach((id) => {
@@ -421,17 +421,17 @@
 
         function renderStatus() {
             const status = state.status;
-            const isAllowed = status?.adminAccounts || status?.adminMode;
+            const isAllowed = status?.adminAccount || status?.adminMode;
 
             $("adminContent").classList.toggle("hidden", !isAllowed);
             $("accessDeniedCard").classList.toggle("hidden", isAllowed);
 
             $("loginPill").textContent = status?.user?.email || "未ログイン";
-            $("adminPill").classList.toggle("hidden", !status?.adminAccounts);
+            $("adminPill").classList.toggle("hidden", !status?.adminAccount);
             $("modePill").classList.toggle("hidden", !status?.adminMode);
 
             // 管理者アカウントのみ専用メニューを表示
-            if (status?.adminAccounts) {
+            if (status?.adminAccount) {
                 const usersLink = $("usersMenuLink");
                 const logsLink = $("logsMenuLink");
                 const analyticsLink = $("analyticsMenuLink");
@@ -444,12 +444,12 @@
 
             $("selfEmail").textContent = status.user?.email || "-";
             $("selfName").textContent = status.user?.name || "-";
-            $("selfAdminAccount").textContent = status.adminAccounts ? "有効" : "なし";
+            $("selfadminAccount").textContent = status.adminAccount ? "有効" : "なし";
 
-            $("selfAdminAccountRow").classList.toggle("hidden", !status.adminAccounts);
+            $("selfadminAccountRow").classList.toggle("hidden", !status.adminAccount);
             $("selfSessionSection").classList.toggle("hidden", !status.adminMode);
 
-            if (status.adminAccounts) {
+            if (status.adminAccount) {
                 $("pageLead").textContent = "管理者アカウント";
                 $("selfCardTitle").textContent = "自分の情報・設定";
             } else if (status.adminMode) {
@@ -457,7 +457,7 @@
                 $("selfCardTitle").textContent = "自分の管理者モード情報";
             }
 
-            setAdminSectionsVisible(!!status.adminAccounts);
+            setAdminSectionsVisible(!!status.adminAccount);
 
             if (status.adminMode && status.session) {
                 $("sessionApprover").textContent =
@@ -467,14 +467,14 @@
                 $("sessionRemain").textContent = formatRemain(status.session.expiresAt);
             }
 
-            if (status.adminAccounts) {
+            if (status.adminAccount) {
                 $("durationInput").value =
                     status.adminAccount?.adminModeDurationMinutes || 30;
             }
         }
 
         function renderAccounts() {
-            const body = $("adminAccountsBody");
+            const body = $("adminAccountBody");
             if (!body) return;
 
             if (!state.accounts.length) {
@@ -627,7 +627,7 @@
             state.status = await request("/admin-status", { method: "GET" });
             renderStatus();
 
-            if (!state.status.adminAccounts) {
+            if (!state.status.adminAccount) {
                 state.accounts = [];
                 state.sessions = [];
                 state.demotionRequests = [];

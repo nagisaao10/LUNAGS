@@ -54,7 +54,7 @@ account/
   - ユーザーID（LUNAGS）
   - アカウント作成日時 / 最終ログイン日時
   - アカウント状態（有効 / 一時停止 など）
-  - 管理者アカウントフラグ（`adminAccounts`）
+  - 管理者アカウントフラグ（`adminAccount`）
 - **ユーザー詳細 (`user.html`)**
   - 基本プロフィール情報
   - アカウント状態および権限ステータス
@@ -129,11 +129,11 @@ management/
 
 ### 4.1 権限モデルの明確な分離
 
-1. **管理者アカウント (`adminAccounts = true`)**
+1. **管理者アカウント (`adminAccount = true`)**
    - 恒久的な最高権限を持つアカウント。
    - 今回追加する3機能（`users`, `logs`, `analytics`）を含む、すべての領域にアクセス可能。
 
-2. **管理者モード (`adminAccounts = false` / `adminMode = true`)**
+2. **管理者モード (`adminAccount = false` / `adminMode = true`)**
    - 一般ユーザーが一時的な操作等のために付与された時限的・制限付き権限。
    - **今回追加する3機能には一切アクセス不可能**。
 
@@ -154,12 +154,12 @@ management/
          ▼
 [ Cloud Functions ]
          │
-         │ 3. adminAccounts フラグの厳格なチェック
+         │ 3. adminAccount フラグの厳格なチェック
          ▼
 [ Firestore / Database ]
 ```
 
-- Direct URL直打ち、または API の直接叩きに対しても、`adminAccounts !== true` の場合は **HTTP 403 Forbidden** で確実に拒否します。
+- Direct URL直打ち、または API の直接叩きに対しても、`adminAccount !== true` の場合は **HTTP 403 Forbidden** で確実に拒否します。
 - これにより、管理者モードの権限境界の検証課題を解決します。
 
 ---

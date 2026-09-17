@@ -535,13 +535,13 @@ async function findUserByEmail(email) {
     };
 }
 
-async function getAdminAccountByEmail(email) {
+async function getadminAccountByEmail(email) {
     const normalized = normalizeEmail(email);
 
     if (!normalized) return null;
 
     const accountSnap = await db
-        .collection("adminAccounts")
+        .collection("adminAccount")
         .doc(normalized)
         .get();
 
@@ -664,7 +664,7 @@ async function getCurrentContext(req) {
     );
 
     const adminAccount =
-        await getAdminAccountByEmail(email);
+        await getadminAccountByEmail(email);
 
     const session =
         await getActiveSession(decoded.uid);
@@ -677,18 +677,18 @@ async function getCurrentContext(req) {
             profile.name ||
             decoded.name ||
             email,
-        adminAccounts: !!adminAccount,
+        adminAccount: !!adminAccount,
         adminAccount,
         adminMode: !!session,
         session
     };
 }
 
-async function requireAdminAccount(req) {
+async function requireadminAccount(req) {
     const context =
         await getCurrentContext(req);
 
-    if (!context.adminAccounts) {
+    if (!context.adminAccount) {
         const error = new Error(
             "管理者アカウント権限がありません"
         );
@@ -699,12 +699,12 @@ async function requireAdminAccount(req) {
     return context;
 }
 
-async function requireAdminAccountOrMode(req) {
+async function requireadminAccountOrMode(req) {
     const context =
         await getCurrentContext(req);
 
     if (
-        !context.adminAccounts &&
+        !context.adminAccount &&
         !context.adminMode
     ) {
         const error = new Error(
@@ -717,9 +717,9 @@ async function requireAdminAccountOrMode(req) {
     return context;
 }
 
-async function getActiveAdminAccounts() {
+async function getActiveadminAccount() {
     const snap = await db
-        .collection("adminAccounts")
+        .collection("adminAccount")
         .where("active", "==", true)
         .get();
 
@@ -730,7 +730,7 @@ async function getActiveAdminAccounts() {
 
 async function assertMinimumAdminCountAfterOneRemoval() {
     const accounts =
-        await getActiveAdminAccounts();
+        await getActiveadminAccount();
 
     if (accounts.length - 1 < 2) {
         const error = new Error(
@@ -767,7 +767,7 @@ function publicUserRecord(user, profile = {}, adminAccount = null) {
             profile.lastLoginAt ||
             user.metadata?.lastSignInTime ||
             null,
-        adminAccounts: !!adminAccount,
+        adminAccount: !!adminAccount,
         adminAccount,
         providers: providerIds,
         phoneNumber: user.phoneNumber || profile.phoneNumber || "",
@@ -822,8 +822,8 @@ async function listAllAuthUsers() {
     return users;
 }
 
-async function getAdminAccountsByUid() {
-    const accounts = await getActiveAdminAccounts();
+async function getadminAccountByUid() {
+    const accounts = await getActiveadminAccount();
     const map = new Map();
 
     accounts.forEach((account) => {
@@ -898,8 +898,8 @@ app.get("/admin-status", async (req, res) => {
                 email: context.email,
                 name: context.name
             },
-            adminAccounts:
-                context.adminAccounts,
+            adminAccount:
+                context.adminAccount,
             adminAccount:
                 context.adminAccount,
             adminMode:
@@ -919,19 +919,19 @@ app.get("/admin-status", async (req, res) => {
 app.post("/admin-auth", async (req, res) => {
     try {
         const context =
-            await requireAdminAccount(req);
+            await requireadminAccount(req);
 
         const targetUser =
             await findUserByEmail(
                 req.body.email
             );
 
-        const targetAdminAccount =
-            await getAdminAccountByEmail(
+        const targetadminAccount =
+            await getadminAccountByEmail(
                 targetUser.email
             );
 
-        if (targetAdminAccount) {
+        if (targetadminAccount) {
             const error = new Error(
                 "管理者モードは普通アカウントにのみ付与できます"
             );
@@ -1027,10 +1027,10 @@ app.post("/admin-logout", async (req, res) => {
 
 app.get("/admin-accounts", async (req, res) => {
     try {
-        await requireAdminAccount(req);
+        await requireadminAccount(req);
 
         const accounts =
-            await getActiveAdminAccounts();
+            await getActiveadminAccount();
 
         return res.json({
             ok: true,
@@ -1051,7 +1051,7 @@ app.get("/admin-accounts", async (req, res) => {
 app.post("/admin-accounts", async (req, res) => {
     try {
         const context =
-            await requireAdminAccount(req);
+            await requireadminAccount(req);
 
         const targetUser =
             await findUserByEmail(
@@ -1067,7 +1067,7 @@ app.post("/admin-accounts", async (req, res) => {
                 );
 
         const accountRef = db
-            .collection("adminAccounts")
+            .collection("adminAccount")
             .doc(targetUser.email);
 
         const existingSnap =
@@ -1165,7 +1165,7 @@ app.patch(
     async (req, res) => {
         try {
             const context =
-                await requireAdminAccount(req);
+                await requireadminAccount(req);
 
             const duration =
                 validateAdminModeDuration(
@@ -1174,7 +1174,7 @@ app.patch(
                 );
 
             const ref = db
-                .collection("adminAccounts")
+                .collection("adminAccount")
                 .doc(context.email);
 
             const snap =
@@ -1215,7 +1215,7 @@ app.patch(
 
 app.get("/admin-sessions", async (req, res) => {
     try {
-        await requireAdminAccount(req);
+        await requireadminAccount(req);
 
         const snap = await db
             .collection("adminSessions")
@@ -1269,7 +1269,7 @@ app.post(
     async (req, res) => {
         try {
             const context =
-                await requireAdminAccount(req);
+                await requireadminAccount(req);
 
             await finishAdminSession(
                 req.params.uid,
@@ -1295,7 +1295,7 @@ app.post(
     async (req, res) => {
         try {
             const context =
-                await requireAdminAccount(req);
+                await requireadminAccount(req);
 
             const snap = await db
                 .collection("adminSessions")
@@ -1335,7 +1335,7 @@ app.get(
     "/admin-mode-history",
     async (req, res) => {
         try {
-            await requireAdminAccount(req);
+            await requireadminAccount(req);
 
             const snap = await db
                 .collection("adminModeHistory")
@@ -1362,7 +1362,7 @@ app.get(
     "/admin-account-history",
     async (req, res) => {
         try {
-            await requireAdminAccount(req);
+            await requireadminAccount(req);
 
             const snap = await db
                 .collection("adminAccountHistory")
@@ -1389,7 +1389,7 @@ app.get(
     "/admin-demotion-requests",
     async (req, res) => {
         try {
-            await requireAdminAccount(req);
+            await requireadminAccount(req);
 
             const snap = await db
                 .collection("adminDemotionRequests")
@@ -1420,7 +1420,7 @@ app.post(
     async (req, res) => {
         try {
             const context =
-                await requireAdminAccount(req);
+                await requireadminAccount(req);
 
             const target =
                 await findUserByEmail(
@@ -1429,7 +1429,7 @@ app.post(
                 );
 
             const targetAccount =
-                await getAdminAccountByEmail(
+                await getadminAccountByEmail(
                     target.email
                 );
 
@@ -1497,7 +1497,7 @@ app.post(
     async (req, res) => {
         try {
             const context =
-                await requireAdminAccount(req);
+                await requireadminAccount(req);
 
             const ref = db
                 .collection(
@@ -1581,7 +1581,7 @@ app.post(
     async (req, res) => {
         try {
             const context =
-                await requireAdminAccount(req);
+                await requireadminAccount(req);
 
             const ref = db
                 .collection(
@@ -1632,7 +1632,7 @@ app.post(
                         await transaction.get(
                             db
                                 .collection(
-                                    "adminAccounts"
+                                    "adminAccount"
                                 )
                                 .where(
                                     "active",
@@ -1655,7 +1655,7 @@ app.post(
                     const targetRef =
                         db
                             .collection(
-                                "adminAccounts"
+                                "adminAccount"
                             )
                             .doc(
                                 request.targetEmail
@@ -1792,16 +1792,16 @@ app.post(
 
 app.get("/admin-users", async (req, res) => {
     try {
-        await requireAdminAccount(req);
+        await requireadminAccount(req);
 
         const [
             authUsers,
             profilesByUid,
-            adminAccountsByUid
+            adminAccountByUid
         ] = await Promise.all([
             listAllAuthUsers(),
             getUserProfilesByUid(),
-            getAdminAccountsByUid()
+            getadminAccountByUid()
         ]);
 
         const users = authUsers
@@ -1809,7 +1809,7 @@ app.get("/admin-users", async (req, res) => {
                 publicUserRecord(
                     user,
                     profilesByUid.get(user.uid) || {},
-                    adminAccountsByUid.get(user.uid) || null
+                    adminAccountByUid.get(user.uid) || null
                 )
             )
             .sort((a, b) =>
@@ -1831,7 +1831,7 @@ app.get("/admin-users", async (req, res) => {
 
 app.get("/admin-users/:uid", async (req, res) => {
     try {
-        await requireAdminAccount(req);
+        await requireadminAccount(req);
 
         const uid = String(req.params.uid || "").trim();
 
@@ -1846,11 +1846,11 @@ app.get("/admin-users/:uid", async (req, res) => {
         const [
             authUser,
             profile,
-            adminAccountsByUid
+            adminAccountByUid
         ] = await Promise.all([
             admin.auth().getUser(uid),
             getUserProfileByUid(uid),
-            getAdminAccountsByUid()
+            getadminAccountByUid()
         ]);
 
         const [modeSnap, accountHistorySnap] =
@@ -1889,7 +1889,7 @@ app.get("/admin-users/:uid", async (req, res) => {
             user: publicUserRecord(
                 authUser,
                 profile,
-                adminAccountsByUid.get(uid) || null
+                adminAccountByUid.get(uid) || null
             ),
             history
         });
@@ -1904,7 +1904,7 @@ app.get("/admin-users/:uid", async (req, res) => {
 
 app.get("/admin-logs", async (req, res) => {
     try {
-        await requireAdminAccount(req);
+        await requireadminAccount(req);
 
         const [
             modeSnap,
@@ -1971,7 +1971,7 @@ app.get("/admin-logs", async (req, res) => {
 
 app.get("/admin-analytics", async (req, res) => {
     try {
-        await requireAdminAccount(req);
+        await requireadminAccount(req);
 
         const [
             authUsers,
@@ -1982,7 +1982,7 @@ app.get("/admin-analytics", async (req, res) => {
             demotionRequestCount
         ] = await Promise.all([
             listAllAuthUsers(),
-            getActiveAdminAccounts(),
+            getActiveadminAccount(),
             db
                 .collection("adminSessions")
                 .where("active", "==", true)
@@ -2077,7 +2077,7 @@ app.get("/admin-analytics", async (req, res) => {
                     authUsers.length - disabledUsers,
                 verifiedUsers,
                 activeLast30Days,
-                activeAdminAccounts:
+                activeadminAccount:
                     activeAdmins.length,
                 activeAdminSessions:
                     activeSessions.length,
@@ -2173,7 +2173,7 @@ export const cleanupAdminHistory =
  */
 app.get("/admin-users", async (req, res) => {
     try {
-        await requireAdminAccount(req);
+        await requireadminAccount(req);
 
         // Firebase Auth からユーザー一覧取得
         let authUsers = [];
@@ -2184,16 +2184,16 @@ app.get("/admin-users", async (req, res) => {
             pageToken = result.pageToken;
         } while (pageToken);
 
-        // adminAccounts コレクションで管理者フラグを確認
-        const adminAccountsSnap = await db
-            .collection("adminAccounts")
+        // adminAccount コレクションで管理者フラグを確認
+        const adminAccountnap = await db
+            .collection("adminAccount")
             .where("active", "==", true)
             .get();
         const adminEmails = new Set(
-            adminAccountsSnap.docs.map((doc) => normalizeEmail(doc.id))
+            adminAccountnap.docs.map((doc) => normalizeEmail(doc.id))
         );
         const adminAccountMap = {};
-        adminAccountsSnap.docs.forEach((doc) => {
+        adminAccountnap.docs.forEach((doc) => {
             adminAccountMap[normalizeEmail(doc.id)] = doc.data();
         });
 
@@ -2208,13 +2208,13 @@ app.get("/admin-users", async (req, res) => {
 
         const users = authUsers.map((u) => {
             const email = normalizeEmail(u.email || "");
-            const adminAccounts = adminEmails.has(email);
+            const adminAccount = adminEmails.has(email);
             return {
                 uid: u.uid,
                 email,
                 name: u.displayName || "",
                 emailVerified: u.emailVerified || false,
-                adminAccounts,
+                adminAccount,
                 adminMode: adminModeUids.has(u.uid),
                 createdAt: u.metadata?.creationTime
                     ? new Date(u.metadata.creationTime).getTime()
@@ -2227,8 +2227,8 @@ app.get("/admin-users", async (req, res) => {
 
         // 管理者アカウントを先頭に、次にメールアドレス順
         users.sort((a, b) => {
-            if (a.adminAccounts !== b.adminAccounts) {
-                return a.adminAccounts ? -1 : 1;
+            if (a.adminAccount !== b.adminAccount) {
+                return a.adminAccount ? -1 : 1;
             }
             return a.email.localeCompare(b.email);
         });
@@ -2249,7 +2249,7 @@ app.get("/admin-users", async (req, res) => {
  */
 app.get("/admin-users/:uid", async (req, res) => {
     try {
-        await requireAdminAccount(req);
+        await requireadminAccount(req);
 
         const { uid } = req.params;
 
@@ -2268,15 +2268,15 @@ app.get("/admin-users/:uid", async (req, res) => {
         const uidMapSnap = await db.collection("uidMap").doc(uid).get();
         const userId = uidMapSnap.exists ? (uidMapSnap.data().userId || "") : "";
 
-        // adminAccounts から管理者情報を取得
-        const adminAccountSnap = await db
-            .collection("adminAccounts")
+        // adminAccount から管理者情報を取得
+        const adminAccountnap = await db
+            .collection("adminAccount")
             .doc(email)
             .get();
-        const adminAccounts =
-            adminAccountSnap.exists && adminAccountSnap.data().active === true;
-        const adminAccountDetail = adminAccounts
-            ? publicAccount(adminAccountSnap.data())
+        const adminAccount =
+            adminAccountnap.exists && adminAccountnap.data().active === true;
+        const adminAccountDetail = adminAccount
+            ? publicAccount(adminAccountnap.data())
             : null;
 
         // adminSessions から管理者モード確認
@@ -2295,7 +2295,7 @@ app.get("/admin-users/:uid", async (req, res) => {
                 email,
                 name: authUser.displayName || "",
                 emailVerified: authUser.emailVerified || false,
-                adminAccounts,
+                adminAccount,
                 adminMode,
                 adminAccountDetail,
                 createdAt: authUser.metadata?.creationTime
@@ -2322,7 +2322,7 @@ app.get("/admin-users/:uid", async (req, res) => {
  */
 app.get("/admin-logs", async (req, res) => {
     try {
-        await requireAdminAccount(req);
+        await requireadminAccount(req);
 
         const logs = [];
 
@@ -2454,7 +2454,7 @@ app.get("/admin-logs", async (req, res) => {
  */
 app.get("/admin-analytics", async (req, res) => {
     try {
-        await requireAdminAccount(req);
+        await requireadminAccount(req);
 
         const days = Math.max(0, parseInt(req.query.days || "30", 10));
         const cutoff = days > 0 ? Date.now() - days * 24 * 60 * 60 * 1000 : 0;
@@ -2488,11 +2488,11 @@ app.get("/admin-analytics", async (req, res) => {
         }).length;
 
         // 有効な管理者アカウント数
-        const adminAccountsSnap = await db
-            .collection("adminAccounts")
+        const adminAccountnap = await db
+            .collection("adminAccount")
             .where("active", "==", true)
             .get();
-        const activeAdmins = adminAccountsSnap.size;
+        const activeAdmins = adminAccountnap.size;
 
         // --- adminModeHistory からログイン系・管理者モード統計 ---
         const modeHistoryQuery = cutoff > 0

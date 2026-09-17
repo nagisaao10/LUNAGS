@@ -565,7 +565,7 @@ async function createInitialAdmin() {
 
             await lunagsUser.userRef.set(
                 {
-                    adminAccounts: true,
+                    adminAccount: true,
                     updatedAt: now
                 },
                 {
@@ -597,7 +597,7 @@ async function createInitialAdmin() {
 
             const accountRef =
                 db
-                    .collection("adminAccounts")
+                    .collection("adminAccount")
                     .doc(email);
 
             const existingAdminSnap =
@@ -660,6 +660,16 @@ async function createInitialAdmin() {
                     historyId:
                         existingAdminData.historyId ||
                         null
+                },
+                {
+                    merge: true
+                }
+            );
+
+            await lunagsUser.userRef.set(
+                {
+                    adminAccount: true,
+                    updatedAt: Timestamp.now()
                 },
                 {
                     merge: true
@@ -960,7 +970,7 @@ async function createInitialAdmin() {
 
         const accountRef =
             db
-                .collection("adminAccounts")
+                .collection("adminAccount")
                 .doc(email);
 
         const batch =
@@ -1015,7 +1025,7 @@ async function createInitialAdmin() {
         );
 
         /*
-         * adminAccounts
+         * adminAccount
          */
 
         batch.set(
@@ -1078,7 +1088,7 @@ async function createInitialAdmin() {
 
         if (!finalAdmin.exists) {
             throw new Error(
-                "adminAccountsの作成確認に失敗しました。"
+                "adminAccountの作成確認に失敗しました。"
             );
         }
 
@@ -1197,7 +1207,7 @@ function printCompleteInfo(
         `uidMap/${user.uid}`
     );
     console.log(
-        `adminAccounts/${user.email}`
+        `adminAccount/${user.email}`
     );
     console.log("");
 

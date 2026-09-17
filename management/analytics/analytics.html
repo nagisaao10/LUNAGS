@@ -95,7 +95,7 @@
                     </div>
                     <div class="metric">
                         <div class="metric__label">管理者アカウント</div>
-                        <div class="metric__value" id="activeAdminAccounts">0</div>
+                        <div class="metric__value" id="activeadminAccount">0</div>
                     </div>
                     <div class="metric">
                         <div class="metric__label">管理者モード中</div>
@@ -211,7 +211,7 @@
             [
                 "totalUsers",
                 "activeLast30Days",
-                "activeAdminAccounts",
+                "activeadminAccount",
                 "activeAdminSessions",
                 "adminModeHistory",
                 "adminAccountHistory",
@@ -225,7 +225,7 @@
                 renderRatio("有効ユーザー", summary.enabledUsers || 0, summary.totalUsers || 0),
                 renderRatio("メール確認済み", summary.verifiedUsers || 0, summary.totalUsers || 0),
                 renderRatio("30日アクティブ", summary.activeLast30Days || 0, summary.totalUsers || 0),
-                renderRatio("管理者アカウント", summary.activeAdminAccounts || 0, summary.totalUsers || 0)
+                renderRatio("管理者アカウント", summary.activeadminAccount || 0, summary.totalUsers || 0)
             ].join("");
             renderGrowth(data.userGrowth || []);
             $("generatedAt").textContent = `最終更新: ${formatDate(data.generatedAt)}`;

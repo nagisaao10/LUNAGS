@@ -188,7 +188,7 @@
             $("metricTotal").textContent = users.length;
             $("metricEnabled").textContent = users.filter((user) => !user.disabled).length;
             $("metricDisabled").textContent = users.filter((user) => user.disabled).length;
-            $("metricAdmins").textContent = users.filter((user) => user.adminAccounts).length;
+            $("metricAdmins").textContent = users.filter((user) => user.adminAccount).length;
         }
 
         function renderUsers() {
@@ -214,7 +214,7 @@
                         <td>${formatDate(user.createdAt)}</td>
                         <td>${formatDate(user.lastLoginAt)}</td>
                         <td><span class="pill ${user.disabled ? "pill--danger" : ""}">${user.disabled ? "停止中" : "有効"}</span></td>
-                        <td><span class="pill ${user.adminAccounts ? "" : "pill--muted"}">${user.adminAccounts ? "管理者" : "一般"}</span></td>
+                        <td><span class="pill ${user.adminAccount ? "" : "pill--muted"}">${user.adminAccount ? "管理者" : "一般"}</span></td>
                         <td><a class="btn" href="./users.html"><i class="fa-solid fa-circle-info"></i><span>詳細</span></a></td>
                     </tr>
                 `).join("")

@@ -207,7 +207,7 @@
             if (adminSectionLabel) adminSectionLabel.classList.toggle("is-hidden", !isVisible);
         }
 
-        function setAdminAccountLinksVisible(isVisible) {
+        function setadminAccountLinksVisible(isVisible) {
             adminAccountOnlyItems.forEach((item) => {
                 item.classList.toggle("is-hidden", !isVisible);
             });
@@ -215,7 +215,7 @@
 
         async function renderAdminCard(user) {
             setAdminLinksVisible(false);
-            setAdminAccountLinksVisible(false);
+            setadminAccountLinksVisible(false);
 
             try {
                 const token = await user.getIdToken();
@@ -230,8 +230,8 @@
                 }
 
                 const result = await response.json();
-                setAdminLinksVisible(Boolean(result.ok && (result.adminAccounts || result.adminMode)));
-                setAdminAccountLinksVisible(Boolean(result.ok && result.adminAccounts));
+                setAdminLinksVisible(Boolean(result.ok && (result.adminAccount || result.adminMode)));
+                setadminAccountLinksVisible(Boolean(result.ok && result.adminAccount));
             } catch (error) {
                 console.error("管理者状態を取得できませんでした:", error);
             }
