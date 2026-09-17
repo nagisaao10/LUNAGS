@@ -2630,42 +2630,376 @@ function buildDailyTimeline(timestamps, days) {
 
 app.post("/", async (req, res) => {
     try {
+        console.log("========================================");
+        console.log(" RESEND EMAIL REQUEST");
+        console.log("========================================");
+
+        const body = req.body || {};
+
+        console.log("Request body:", JSON.stringify(body));
+
+        /*
+         * ========================================
+         * 環境変数確認
+         * ========================================
+         */
+
         const apiKey = process.env.RESEND_KEY;
+        const from = process.env.RESEND_FROM;
 
         if (!apiKey) {
             const error = new Error(
                 "RESEND_KEYが設定されていません"
             );
+
             error.status = 500;
+            error.errorCode = "RESEND_KEY_MISSING";
+
             throw error;
         }
 
+        if (!from) {
+            const error = new Error(
+                "RESEND_FROMが設定されていません"
+            );
+
+            error.status = 500;
+            error.errorCode = "RESEND_FROM_MISSING";
+
+            throw error;
+        }
+
+        /*
+         * ========================================
+         * リクエスト取得
+         * ========================================
+         */
+
+        const {
+            to,
+            code,
+            name
+        } = body;
+
+        /*
+         * ========================================
+         * 入力チェック
+         * ========================================
+         */
+
+        if (
+            typeof to !== "string" ||
+            !to.trim()
+        ) {
+            const error = new Error(
+                "送信先メールアドレスがありません"
+            );
+
+            error.status = 400;
+            error.errorCode = "EMAIL_TO_MISSING";
+
+            throw error;
+        }
+
+        if (
+            typeof code !== "string" ||
+            !code.trim()
+        ) {
+            const error = new Error(
+                "確認コードがありません"
+            );
+
+            error.status = 400;
+            error.errorCode = "VERIFICATION_CODE_MISSING";
+
+            throw error;
+        }
+
+        /*
+         * ========================================
+         * メールアドレス簡易チェック
+         * ========================================
+         */
+
+        const email = to.trim();
+
+        const emailPattern =
+            /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if (!emailPattern.test(email)) {
+            const error = new Error(
+                "メールアドレスの形式が正しくありません"
+            );
+
+            error.status = 400;
+            error.errorCode = "INVALID_EMAIL";
+
+            throw error;
+        }
+
+        /*
+         * ========================================
+         * 確認コードチェック
+         * ========================================
+         */
+
+        const verificationCode = code.trim();
+
+        if (
+            !/^\d{6}$/.test(verificationCode)
+        ) {
+            const error = new Error(
+                "確認コードは6桁の数字である必要があります"
+            );
+
+            error.status = 400;
+            error.errorCode = "INVALID_VERIFICATION_CODE";
+
+            throw error;
+        }
+
+        /*
+         * ========================================
+         * 名前の安全化
+         * ========================================
+         */
+
+        const displayName =
+            typeof name === "string" && name.trim()
+                ? name.trim()
+                : "ユーザー";
+
+        /*
+         * HTMLエスケープ
+         *
+         * ユーザー入力をそのままHTMLに入れない
+         */
+
+        const escapeHtml = (value) => {
+            return String(value ?? "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        };
+
+        const safeName =
+            escapeHtml(displayName);
+
+        const safeCode =
+            escapeHtml(verificationCode);
+
+        /*
+         * ========================================
+         * Resend初期化
+         * ========================================
+         */
+
         const resend = new Resend(apiKey);
 
-        const result = await resend.emails.send(
-            req.body
+        /*
+         * ========================================
+         * メール本文
+         * ========================================
+         */
+
+        const text = `${displayName} さん
+
+LUNAGSへの登録ありがとうございます。
+
+確認コードは以下です。
+
+${verificationCode}
+
+このコードを新規登録画面に入力してください。
+
+このメールに心当たりがない場合は、
+このメールを無視してください。
+
+LUNAGS
+`;
+
+        const html = `
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>LUNAGS 確認コード</title>
+</head>
+
+<body style="
+    margin: 0;
+    padding: 0;
+    background: #f5f7fa;
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        'Segoe UI',
+        sans-serif;
+">
+
+    <div style="
+        max-width: 600px;
+        margin: 40px auto;
+        padding: 30px;
+        background: #ffffff;
+        border-radius: 12px;
+        box-sizing: border-box;
+    ">
+
+        <h1 style="
+            margin: 0 0 24px;
+            font-size: 24px;
+        ">
+            LUNAGS 確認コード
+        </h1>
+
+        <p>
+            ${safeName} さん
+        </p>
+
+        <p>
+            LUNAGSへの登録ありがとうございます。
+        </p>
+
+        <p>
+            新規登録を続行するには、
+            以下の確認コードを入力してください。
+        </p>
+
+        <div style="
+            margin: 30px 0;
+            padding: 20px;
+            text-align: center;
+            background: #f1f3f5;
+            border-radius: 10px;
+        ">
+
+            <div style="
+                margin-bottom: 8px;
+                font-size: 13px;
+                color: #666666;
+            ">
+                確認コード
+            </div>
+
+            <div style="
+                font-size: 36px;
+                font-weight: bold;
+                letter-spacing: 8px;
+            ">
+                ${safeCode}
+            </div>
+
+        </div>
+
+        <p style="
+            color: #555555;
+            font-size: 14px;
+            line-height: 1.7;
+        ">
+            このコードを新規登録画面に入力してください。
+        </p>
+
+        <p style="
+            margin-top: 30px;
+            color: #777777;
+            font-size: 13px;
+            line-height: 1.7;
+        ">
+            このメールに心当たりがない場合は、
+            このメールを無視してください。
+        </p>
+
+        <hr style="
+            margin: 30px 0;
+            border: 0;
+            border-top: 1px solid #eeeeee;
+        ">
+
+        <p style="
+            margin: 0;
+            color: #999999;
+            font-size: 12px;
+        ">
+            LUNAGS
+        </p>
+
+    </div>
+
+</body>
+</html>
+`;
+
+        /*
+         * ========================================
+         * Resend送信
+         * ========================================
+         */
+
+        console.log("Sending email...");
+        console.log("To:", email);
+        console.log("From:", from);
+
+        const result = await resend.emails.send({
+            from: from,
+            to: email,
+            subject: "LUNAGS 確認コード",
+            text: text,
+            html: html
+        });
+
+        console.log(
+            "Resend result:",
+            JSON.stringify(result)
         );
+
+        /*
+         * ========================================
+         * Resendエラー
+         * ========================================
+         */
 
         if (result?.error) {
             const error = new Error(
-                result.error.message || "メール送信に失敗しました"
+                result.error.message ||
+                "メール送信に失敗しました"
             );
 
-            // Resendの入力エラーはLUNAGSでは400として扱う
-            if (result.error.statusCode === 422) {
+            if (
+                result.error.statusCode === 400 ||
+                result.error.statusCode === 422
+            ) {
                 error.status = 400;
             } else {
                 error.status = 500;
             }
 
+            error.errorCode =
+                "RESEND_SEND_ERROR";
+
             throw error;
         }
 
+        /*
+         * ========================================
+         * 成功
+         * ========================================
+         */
+
         return res.json({
             ok: true,
-            result
+            message: "確認メールを送信しました",
+            id: result?.data?.id || null
         });
+
     } catch (err) {
+        console.error(
+            "RESEND EMAIL ERROR:",
+            err
+        );
+
         return sendError(
             res,
             err,

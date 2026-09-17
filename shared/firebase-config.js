@@ -337,27 +337,71 @@ export async function prepareSignupSkip({
     return data;
 }
 
-export async function sendVerificationEmail({ email, code, name }) {
-    const response = await fetch(FUNCTIONS_ENDPOINT, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            email,
-            code,
-            name
-        })
-    });
+export async function sendVerificationEmail({
+    email,
+    code,
+    name
+}) {
+    const payload = {
+        to: email,
+        code: code,
+        name: name
+    };
 
-    console.log("status =", response.status);
+    console.log(
+        "SEND PAYLOAD =",
+        payload
+    );
 
-    const text = await response.text();
-    console.log("response =", text);
+    const response = await fetch(
+        FUNCTIONS_ENDPOINT,
+        {
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify(payload)
+        }
+    );
+
+    console.log(
+        "status =",
+        response.status
+    );
+
+    const text =
+        await response.text();
+
+    console.log(
+        "response =",
+        text
+    );
+
+    let data = null;
+
+    try {
+        data = JSON.parse(text);
+    } catch {
+        data = null;
+    }
 
     if (!response.ok) {
-        throw new Error("メール送信に失敗しました");
+        throw new Error(
+            data?.error ||
+            "メール送信に失敗しました"
+        );
     }
+
+    if (!data?.ok) {
+        throw new Error(
+            data?.error ||
+            "メール送信に失敗しました"
+        );
+    }
+
+    return data;
 }
 
 export function savePendingSignup(signup) {
