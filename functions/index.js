@@ -378,44 +378,30 @@ signupSkipApp.post("/", async (req, res) => {
                 }
             }
 
-            const userId = req.body.userId ? String(req.body.userId).trim() : null;
-
-            if (userId) {
-                await db
-                    .collection("users")
-                    .doc(userId)
-                    .set({
-                        userId,
-                        name,
-                        displayName: name,
-                        email,
-                        status: "pending",
-                        emailVerification: {
-                            codeHash: "",
-                            verified: true,
-                            skipMode: true,
-                            attemptCount: 0,
-                            maxAttempts: 0,
-                            expiresAt:
-                                Date.now() +
-                                SIGNUP_SKIP_TOKEN_TTL_MS,
-                            createdAt:
-                                admin.firestore.FieldValue.serverTimestamp(),
-                            updatedAt:
-                                admin.firestore.FieldValue.serverTimestamp()
-                        },
-                        createdAt:
-                            admin.firestore.FieldValue.serverTimestamp(),
-                        updatedAt:
-                            admin.firestore.FieldValue.serverTimestamp()
-                    }, { merge: true });
-            }
+            await db
+                .collection("emailVerifications")
+                .doc(email)
+                .set({
+                    name,
+                    email,
+                    codeHash: "",
+                    verified: true,
+                    skipMode: true,
+                    attemptCount: 0,
+                    maxAttempts: 0,
+                    expiresAt:
+                        Date.now() +
+                        SIGNUP_SKIP_TOKEN_TTL_MS,
+                    createdAt:
+                        admin.firestore.FieldValue.serverTimestamp(),
+                    updatedAt:
+                        admin.firestore.FieldValue.serverTimestamp()
+                });
 
             return res.json({
                 ok: true,
                 verified: true,
-                skipMode: true,
-                userId
+                skipMode: true
             });
         }
 
