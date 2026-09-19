@@ -94,9 +94,6 @@ export const SIGNUP_SKIP_ENDPOINT =
 
 export { serverTimestamp };
 
-export const VERIFICATION_COLLECTION =
-    "emailVerifications";
-
 export const CODE_TTL_MS =
     5 * 60 * 1000;
 
@@ -108,9 +105,6 @@ export const RESEND_COOLDOWN_MS =
 
 export const FIREBASE_TIMEOUT_MS =
     30000;
-
-export const LOCAL_VERIFICATION_KEY_PREFIX =
-    "verify_";
 
 export function normalizeEmail(email) {
     return email.trim().toLowerCase();
@@ -415,19 +409,6 @@ export function loadPendingSignup() {
 
 export function clearPendingSignup() {
     localStorage.removeItem("pendingSignup");
-}
-
-export function saveLocalVerification(email, verification) {
-    localStorage.setItem(LOCAL_VERIFICATION_KEY_PREFIX + email, JSON.stringify(verification));
-}
-
-export function loadLocalVerification(email) {
-    const raw = localStorage.getItem(LOCAL_VERIFICATION_KEY_PREFIX + email);
-    return raw ? JSON.parse(raw) : null;
-}
-
-export function clearLocalVerification(email) {
-    localStorage.removeItem(LOCAL_VERIFICATION_KEY_PREFIX + email);
 }
 
 export function withTimeout(
