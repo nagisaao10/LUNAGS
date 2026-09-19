@@ -209,6 +209,10 @@ function sendError(
    新規登録スキップモード
    ============================ */
 
+function getSignupSkipPassword() {
+    return String(SIGNUP_SKIP_PASSWORD.value() || "").trim();
+}
+
 function createSignupSkipToken() {
     const payload = {
         type: "signupSkip",
@@ -221,7 +225,7 @@ function createSignupSkipToken() {
     const encodedPayload = Buffer.from(payloadText).toString("base64url");
 
     const signature = crypto
-        .createHmac("sha256", SIGNUP_SKIP_PASSWORD.value())
+        .createHmac("sha256", getSignupSkipPassword())
         .update(encodedPayload)
         .digest("base64url");
 
@@ -243,7 +247,7 @@ function verifySignupSkipToken(token) {
 
     try {
         const expectedSignature = crypto
-            .createHmac("sha256", SIGNUP_SKIP_PASSWORD.value())
+            .createHmac("sha256", getSignupSkipPassword())
             .update(encodedPayload)
             .digest("base64url");
 
@@ -286,9 +290,8 @@ signupSkipApp.post("/", async (req, res) => {
         const { action } = req.body || {};
 
         if (action === "enable") {
-            const password = String(req.body.password || "");
-            const expectedPassword =
-                SIGNUP_SKIP_PASSWORD.value();
+            const password = String(req.body.password || "").trim();
+            const expectedPassword = getSignupSkipPassword();
 
             if (!password) {
                 const error = new Error(
