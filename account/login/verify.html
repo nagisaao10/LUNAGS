@@ -21,8 +21,15 @@
     </div>
 
     <script type="module">
-        import { doc, getDoc, runTransaction } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
-        import { db, VERIFICATION_COLLECTION, sha256, loadPendingSignup, saveLocalVerification, clearLocalVerification, withTimeout, getFriendlyErrorMessage } from "../../shared/firebase-config.js";
+        import { doc, runTransaction } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+        import {
+            db,
+            sha256,
+            loadPendingSignup,
+            clearPendingSignup,
+            withTimeout,
+            getFriendlyErrorMessage
+        } from "../../shared/firebase-config.js";
 
         function setMessage(text, type = "") {
             const message = document.getElementById("message");
@@ -30,62 +37,16 @@
             message.innerText = text;
         }
 
-        async function verifyLocalCode(inputHash, email) {
-            const ref = doc(db, VERIFICATION_COLLECTION, email);
-            const snap = await getDoc(ref);
-            if (!snap.exists()) return { ok: false, message: "確認コードが見つかりません", cleanup: true };
-
-            const data = snap.data();
-            if (data.verified) return { ok: true, message: "すでに認証済みです" };
-
-            if (Date.now() > data.expiresAt) {
-                clearLocalVerification(email);
-                return { ok: false, message: "有効期限切れ", cleanup: true };
-            }
-
-            if (data.attemptCount >= data.maxAttempts) {
-                clearLocalVerification(email);
-                return { ok: false, message: "試行回数上限", cleanup: true };
-            }
-
-            if (data.codeHash !== inputHash) {
-                const next = data.attemptCount + 1;
-                if (next >= data.maxAttempts) {
-                    clearLocalVerification(email);
-                    return { ok: false, message: "試行回数上限", cleanup: true };
-                }
-
-                saveLocalVerification(email, {
-                    ...data,
-                    attemptCount: next,
-                    updatedAt: Date.now()
-                });
-
-                return {
-                    ok: false,
-                    message: `コードが違います（残り ${data.maxAttempts - next} 回）`
-                };
-            }
-
-            saveLocalVerification(email, {
-                ...data,
-                verified: true,
-                verifiedAt: Date.now(),
-                updatedAt: Date.now()
-            });
-
-            return { ok: true, message: "認証が完了しました" };
-        }
-
         window.addEventListener("DOMContentLoaded", () => {
             const pendingSignup = loadPendingSignup();
 
-            if (!pendingSignup?.email) {
+            if (!pendingSignup?.email || !pendingSignup?.userId) {
                 window.location.href = "signup.html";
                 return;
             }
 
             const email = pendingSignup.email;
+            const userId = pendingSignup.userId;
             document.getElementById("emailLabel").innerText = email;
 
             window.verifyCode = async () => {
@@ -107,78 +68,84 @@
                     }
 
                     // ========================================
-                    // 通常の6桁コード認証
+                    // 6桁コード認証 (users/{userId} の emailVerification)
                     // ========================================
 
                     const inputHash = await sha256(inputCode);
-                    const ref = doc(db, VERIFICATION_COLLECTION, email);
+                    const userRef = doc(db, "users", userId);
 
                     const result = await withTimeout(
                         runTransaction(db, async (transaction) => {
-                            const snap = await transaction.get(ref);
+                            const snap = await transaction.get(userRef);
 
                             if (!snap.exists()) {
                                 return {
                                     ok: false,
-                                    message: "確認コードが見つかりません",
+                                    message: "登録情報が見つかりません。最初からやり直してください。",
                                     cleanup: true
                                 };
                             }
 
                             const data = snap.data() || {};
+                            const verification = data.emailVerification;
 
-                            if (data.verified) {
+                            if (!verification) {
+                                return {
+                                    ok: false,
+                                    message: "確認コード情報が見つかりません。最初からやり直してください。",
+                                    cleanup: true
+                                };
+                            }
+
+                            if (verification.verified) {
                                 return { ok: true, message: "すでに認証済みです" };
                             }
 
-                            if (Date.now() > data.expiresAt) {
-                                transaction.delete(ref);
+                            if (Date.now() > verification.expiresAt) {
                                 return {
                                     ok: false,
-                                    message: "有効期限切れ",
+                                    message: "有効期限が切れました。最初からやり直してください。",
                                     cleanup: true
                                 };
                             }
 
-                            if (data.attemptCount >= data.maxAttempts) {
-                                transaction.delete(ref);
+                            if (verification.attemptCount >= verification.maxAttempts) {
                                 return {
                                     ok: false,
-                                    message: "試行回数上限",
+                                    message: "試行回数の上限に達しました。最初からやり直してください。",
                                     cleanup: true
                                 };
                             }
 
-                            if (data.codeHash !== inputHash) {
-                                const next = data.attemptCount + 1;
+                            if (verification.codeHash !== inputHash) {
+                                const next = (verification.attemptCount || 0) + 1;
 
-                                if (next >= data.maxAttempts) {
-                                    transaction.delete(ref);
+                                if (next >= verification.maxAttempts) {
                                     return {
                                         ok: false,
-                                        message: "試行回数上限",
+                                        message: "試行回数の上限に達しました。最初からやり直してください。",
                                         cleanup: true
                                     };
                                 }
 
-                                transaction.update(ref, {
-                                    attemptCount: next,
-                                    updatedAt: Date.now()
+                                transaction.update(userRef, {
+                                    "emailVerification.attemptCount": next,
+                                    "emailVerification.updatedAt": Date.now()
                                 });
 
                                 return {
                                     ok: false,
-                                    message: `コードが違います（残り ${data.maxAttempts - next} 回）`
+                                    message: `コードが違います（残り ${verification.maxAttempts - next} 回）`
                                 };
                             }
 
-                            transaction.update(ref, {
-                                verified: true,
-                                verifiedAt: Date.now(),
-                                updatedAt: Date.now()
+                            transaction.update(userRef, {
+                                "emailVerification.verified": true,
+                                "emailVerification.verifiedAt": Date.now(),
+                                "emailVerification.updatedAt": Date.now()
                             });
 
-                            return { ok: true, message: "認証完了" };
+                            return { ok: true, message: "認証が完了しました" };
                         })
                     );
 
@@ -186,9 +153,10 @@
                         setMessage(result.message, "error");
 
                         if (result.cleanup) {
+                            clearPendingSignup();
                             setTimeout(() => {
                                 window.location.href = "./signup.html";
-                            }, 1200);
+                            }, 1500);
                         }
 
                         return;

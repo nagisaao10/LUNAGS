@@ -47,12 +47,46 @@
             sendVerificationEmail,
             savePendingSignup,
             withTimeout,
+            isOfflineDocumentError,
+            getFriendlyErrorMessage,
             isSignupSkipEnabled,
-            prepareSignupSkip
+            prepareSignupSkip,
+            enableSignupSkip
         } from "../../shared/firebase-config.js";
 
         import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
         import { fetchSignInMethodsForEmail } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+
+        function setMessage(text, type = "") {
+            const message = document.getElementById("message");
+            if (message) {
+                message.className = `message ${type}`;
+                message.innerText = text;
+            }
+        }
+
+        /*
+         * ========================================
+         * LUNAGS 新規登録スキップ API
+         * ========================================
+         */
+        window.LUNAGS_signup = window.LUNAGS_signup || {};
+
+        window.LUNAGS_signup.skip = async (password) => {
+            try {
+                await enableSignupSkip(password);
+                console.log(
+                    "LUNAGS_signup: 新規登録スキップモードを有効化しました"
+                );
+                return true;
+            } catch (error) {
+                console.error(
+                    "LUNAGS_signup: 新規登録スキップモードの有効化に失敗しました",
+                    error
+                );
+                return false;
+            }
+        };
 
         function generateUserId() {
             const letters =
@@ -125,6 +159,7 @@
             event?.preventDefault();
 
             const button = event?.currentTarget ||
+                document.getElementById("submitButton") ||
                 document.querySelector("button");
 
             const name = document
@@ -137,12 +172,12 @@
             );
 
             if (!name) {
-                alert("ユーザー名を入力してください");
+                setMessage("ユーザー名を入力してください", "error");
                 return;
             }
 
             if (!email) {
-                alert("メールアドレスを入力してください");
+                setMessage("メールアドレスを入力してください", "error");
                 return;
             }
 
@@ -150,27 +185,78 @@
                 button.disabled = true;
             }
 
-            try {
-                const methods = await withTimeout(
-                    fetchSignInMethodsForEmail(auth, email)
-                );
+            setMessage("確認中...");
 
-                if (methods.length > 0) {
-                    throw new Error(
-                        "このメールアドレスはすでに登録されています"
+            try {
+                try {
+                    const methods = await withTimeout(
+                        fetchSignInMethodsForEmail(auth, email)
                     );
+
+                    if (methods.length > 0) {
+                        throw new Error(
+                            "このメールアドレスはすでに登録されています"
+                        );
+                    }
+                } catch (err) {
+                    if (!isOfflineDocumentError(err) && err.message.includes("すでに登録されています")) {
+                        throw err;
+                    }
                 }
 
                 /*
                  * 登録スキップ
                  */
                 if (isSignupSkipEnabled()) {
-                    await prepareSignupSkip({
+                    setMessage("新規登録スキップモードで登録しています...");
+
+                    const userId = await generateUniqueUserId();
+                    const userRef = doc(db, "users", userId);
+
+                    await withTimeout(
+                        setDoc(userRef, {
+                            userId,
+                            name,
+                            displayName: name,
+                            email,
+                            status: "pending",
+                            emailVerification: {
+                                codeHash: "",
+                                verified: true,
+                                skipMode: true,
+                                attemptCount: 0,
+                                maxAttempts: MAX_ATTEMPTS,
+                                expiresAt: Date.now() + CODE_TTL_MS,
+                                createdAt: serverTimestamp(),
+                                updatedAt: serverTimestamp()
+                            },
+                            createdAt: serverTimestamp(),
+                            updatedAt: serverTimestamp()
+                        })
+                    );
+
+                    savePendingSignup({
+                        name,
                         email,
-                        name
+                        userId
                     });
 
-                    location.href = "./set-password.html";
+                    try {
+                        await prepareSignupSkip({
+                            email,
+                            name,
+                            userId
+                        });
+                    } catch (skipErr) {
+                        console.warn("prepareSignupSkip warning:", skipErr);
+                    }
+
+                    setMessage("確認をスキップしました", "success");
+
+                    setTimeout(() => {
+                        window.location.href = "./set-password.html";
+                    }, 500);
+
                     return;
                 }
 
@@ -178,6 +264,7 @@
                  * 通常登録
                  * 先にユーザーIDを確保する。
                  */
+                setMessage("ユーザーIDを生成しています...");
                 const userId = await generateUniqueUserId();
 
                 const code = generateCode();
@@ -193,6 +280,7 @@
                  * users/{userId} に
                  * 登録途中のユーザーを作成。
                  */
+                setMessage("確認コードを発行しています...");
                 await withTimeout(
                     setDoc(userRef, {
                         userId,
@@ -230,20 +318,28 @@
                     userId
                 });
 
+                setMessage("確認コードをメール送信しています...");
                 await sendVerificationEmail({
                     email,
                     code,
                     name
                 });
 
-                location.href = "./verify.html";
+                setMessage("確認コードを送信しました", "success");
+
+                setTimeout(() => {
+                    location.href = "./verify.html";
+                }, 800);
 
             } catch (error) {
                 console.error(error);
 
-                alert(
-                    error?.message ||
-                    "登録処理に失敗しました"
+                setMessage(
+                    getFriendlyErrorMessage(
+                        error,
+                        "登録処理に失敗しました"
+                    ),
+                    "error"
                 );
 
             } finally {

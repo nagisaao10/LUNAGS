@@ -295,7 +295,8 @@ export function disableSignupSkip() {
 
 export async function prepareSignupSkip({
     email,
-    name
+    name,
+    userId
 }) {
     const token = getSignupSkipToken();
 
@@ -314,7 +315,8 @@ export async function prepareSignupSkip({
             action: "prepare",
             token,
             email,
-            name
+            name,
+            userId
         })
     });
 
