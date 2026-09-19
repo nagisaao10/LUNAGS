@@ -11,6 +11,8 @@ const SIGNUP_SKIP_PASSWORD = defineSecret("SIGNUP_SKIP_PASSWORD");
 
 const SIGNUP_SKIP_TOKEN_TTL_MS = 10 * 60 * 1000;
 
+const FUNCTIONS_ENDPOINT = "https://us-central1-lunags.cloudfunctions.net/api";
+
 admin.initializeApp();
 
 const app = express();
@@ -3054,4 +3056,16 @@ export const signupSkip = onRequest(
     async (req, res) => {
         return signupSkipApp(req, res);
     }
+);
+
+/**
+ * ============================
+ * Express API
+ * ============================
+ */
+export const api = onRequest(
+    {
+        invoker: "public"
+    },
+    app
 );

@@ -219,23 +219,55 @@
 
             try {
                 const token = await user.getIdToken();
-                const response = await fetch(`${FUNCTIONS_ENDPOINT}/admin-status`, {
-                    method: "GET",
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+
+                const response = await fetch(
+                    `${FUNCTIONS_ENDPOINT}/admin-status`,
+                    {
+                        method: "GET",
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    }
+                );
 
                 if (!response.ok) {
-                    console.error("管理者状態取得失敗:", response.status, await response.text());
+                    console.error(
+                        "管理者状態取得失敗:",
+                        response.status,
+                        await response.text()
+                    );
                     return;
                 }
 
                 const result = await response.json();
-                setAdminLinksVisible(Boolean(result.ok && (result.adminAccount || result.adminMode)));
-                setadminAccountLinksVisible(Boolean(result.ok && result.adminAccount));
+
+                console.log("=== LUNAGS ADMIN STATUS ===");
+                console.log(result);
+                console.log("adminAccount =", result.adminAccount);
+                console.log("adminMode =", result.adminMode);
+                console.log("===========================");
+
+                setAdminLinksVisible(
+                    Boolean(
+                        result.ok &&
+                        (result.adminAccount || result.adminMode)
+                    )
+                );
+
+                setadminAccountLinksVisible(
+                    Boolean(
+                        result.ok &&
+                        result.adminAccount
+                    )
+                );
             } catch (error) {
-                console.error("管理者状態を取得できませんでした:", error);
+                console.error(
+                    "管理者状態を取得できませんでした:",
+                    error
+                );
             }
         }
+
 
         hamburgerBtn.addEventListener("click", () => {
             const isOpen = sidebar.classList.toggle("open");
