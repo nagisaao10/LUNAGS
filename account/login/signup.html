@@ -12,15 +12,18 @@
 </head>
 
 <body>
+
     <div class="box">
+
         <h2>新規登録</h2>
 
         <p>
             名前とメールアドレスを入力すると、6桁の確認コードを送信します。
         </p>
 
-        <input id="name" type="text" placeholder="ユーザー名">
-        <input id="email" type="email" placeholder="メールアドレス">
+        <input id="name" type="text" placeholder="ユーザー名" autocomplete="name">
+
+        <input id="email" type="email" placeholder="メールアドレス" autocomplete="email">
 
         <div id="message" class="message"></div>
 
@@ -28,151 +31,63 @@
             確認コードを送信
         </button>
 
-        <button class="secondary" onclick="location.href='./login.html'">
+        <button class="secondary" type="button" onclick="location.href='./login.html'">
             ログインへ戻る
         </button>
+
     </div>
+
 
     <script type="module">
 
         import {
             auth,
-            db,
-            serverTimestamp,
-            CODE_TTL_MS,
-            MAX_ATTEMPTS,
             normalizeEmail,
-            generateCode,
-            sha256,
-            sendVerificationEmail,
-            savePendingSignup,
             withTimeout,
             isOfflineDocumentError,
             getFriendlyErrorMessage,
             isSignupSkipEnabled,
-            prepareSignupSkip
+            prepareSignupSkip,
+            savePendingSignup
         } from "../../shared/firebase-config.js";
-
-        import {
-            doc,
-            getDoc,
-            setDoc
-        } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
         import {
             fetchSignInMethodsForEmail
         } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
 
 
-        function setMessage(text, type = "") {
-            const message = document.getElementById("message");
-
-            message.className = `message ${type}`;
-            message.innerText = text;
-        }
-
-
         /*
          * ========================================
-         * ユーザーID生成
-         *
-         * U + 7文字
-         * 数字: 2～4個
-         * 英字: 3個以上
-         * 同じ文字の3連続は禁止
+         * 設定
          * ========================================
          */
 
-        function generateUserId() {
-
-            const letters =
-                "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-
-            const digits =
-                "0123456789";
-
-            const chars =
-                letters + digits;
-
-            while (true) {
-
-                let id = "U";
-
-                const bytes =
-                    crypto.getRandomValues(
-                        new Uint8Array(7)
-                    );
-
-                for (let i = 0; i < 7; i++) {
-
-                    id +=
-                        chars[
-                        bytes[i] % chars.length
-                        ];
-                }
-
-                const digitCount =
-                    [...id].filter(char =>
-                        digits.includes(char)
-                    ).length;
-
-                const letterCount =
-                    [...id].filter(char =>
-                        letters.includes(char)
-                    ).length;
+        const SIGNUP_START_ENDPOINT =
+            "https://us-central1-lunags.cloudfunctions.net/signupStart";
 
 
-                let hasTriple = false;
+        /*
+         * ========================================
+         * メッセージ
+         * ========================================
+         */
 
-                for (let i = 2; i < id.length; i++) {
+        function setMessage(text, type = "") {
 
-                    if (
-                        id[i] === id[i - 1] &&
-                        id[i] === id[i - 2]
-                    ) {
-                        hasTriple = true;
-                        break;
-                    }
-                }
+            const message =
+                document.getElementById("message");
 
+            message.className =
+                `message ${type}`;
 
-                if (
-                    digitCount >= 2 &&
-                    digitCount <= 4 &&
-                    letterCount >= 3 &&
-                    !hasTriple
-                ) {
-                    return id;
-                }
-            }
-        }
-
-
-        async function generateUniqueUserId() {
-
-            while (true) {
-
-                const userId =
-                    generateUserId();
-
-                const ref =
-                    doc(db, "users", userId);
-
-                const snap =
-                    await withTimeout(
-                        getDoc(ref)
-                    );
-
-                if (!snap.exists()) {
-                    return userId;
-                }
-            }
+            message.innerText =
+                text;
         }
 
 
         /*
          * ========================================
-         * 新規登録スキップ API
+         * 新規登録スキップ
          * ========================================
          */
 
@@ -213,6 +128,117 @@
 
         /*
          * ========================================
+         * メールアドレス重複確認
+         * ========================================
+         */
+
+        async function checkExistingAccount(email) {
+
+            try {
+
+                const methods =
+                    await withTimeout(
+                        fetchSignInMethodsForEmail(
+                            auth,
+                            email
+                        )
+                    );
+
+                return methods.length > 0;
+
+            } catch (error) {
+
+                if (
+                    isOfflineDocumentError(error) ||
+                    error?.code === "auth/invalid-email"
+                ) {
+                    return false;
+                }
+
+                throw error;
+            }
+        }
+
+
+        /*
+         * ========================================
+         * signupStart API
+         * ========================================
+         */
+
+        async function requestSignupStart({
+            name,
+            email
+        }) {
+
+            const response =
+                await fetch(
+                    SIGNUP_START_ENDPOINT,
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body: JSON.stringify({
+                            name,
+                            email
+                        })
+                    }
+                );
+
+
+            let data = null;
+
+            try {
+
+                data =
+                    await response.json();
+
+            } catch {
+
+                throw new Error(
+                    "サーバーから不正な応答が返されました"
+                );
+            }
+
+
+            if (!response.ok) {
+
+                const error =
+                    new Error(
+                        data?.message ||
+                        "新規登録の開始に失敗しました"
+                    );
+
+                error.code =
+                    data?.code ||
+                    `http-${response.status}`;
+
+                throw error;
+            }
+
+
+            if (
+                !data ||
+                data.success !== true
+            ) {
+
+                throw new Error(
+                    data?.message ||
+                    "新規登録の開始に失敗しました"
+                );
+            }
+
+
+            return data;
+        }
+
+
+        /*
+         * ========================================
          * 新規登録
          * ========================================
          */
@@ -222,15 +248,20 @@
 
                 event.preventDefault();
 
+
                 const button =
                     document.getElementById(
                         "submitButton"
                     );
 
+
                 const name =
                     document.getElementById(
                         "name"
-                    ).value.trim();
+                    )
+                        .value
+                        .trim();
+
 
                 const email =
                     normalizeEmail(
@@ -240,10 +271,27 @@
                     );
 
 
+                /*
+                 * --------------------------------
+                 * 入力チェック
+                 * --------------------------------
+                 */
+
                 if (!name) {
 
                     setMessage(
                         "ユーザー名を入力してください",
+                        "error"
+                    );
+
+                    return;
+                }
+
+
+                if (name.length > 50) {
+
+                    setMessage(
+                        "ユーザー名は50文字以内で入力してください",
                         "error"
                     );
 
@@ -273,65 +321,32 @@
                      * --------------------------------
                      */
 
-                    try {
+                    setMessage(
+                        "登録情報を確認しています..."
+                    );
 
-                        const methods =
-                            await withTimeout(
-                                fetchSignInMethodsForEmail(
-                                    auth,
-                                    email
-                                )
-                            );
 
-                        if (methods.length > 0) {
+                    const exists =
+                        await checkExistingAccount(
+                            email
+                        );
 
-                            throw new Error(
-                                "このメールアドレスはすでに登録されています"
-                            );
-                        }
 
-                    } catch (error) {
+                    if (exists) {
 
-                        if (
-                            !isOfflineDocumentError(error) &&
-                            error?.code !==
-                            "auth/invalid-email"
-                        ) {
-                            throw error;
-                        }
+                        throw new Error(
+                            "このメールアドレスはすでに登録されています"
+                        );
                     }
 
 
                     /*
                      * --------------------------------
-                     * 仮ユーザーID生成
-                     * --------------------------------
-                     */
-
-                    setMessage(
-                        "登録情報を準備しています..."
-                    );
-
-                    const userId =
-                        await generateUniqueUserId();
-
-
-                    /*
-                     * --------------------------------
-                     * pendingSignup保存
-                     * --------------------------------
-                     */
-
-                    savePendingSignup({
-                        name,
-                        email,
-                        userId
-                    });
-
-
-                    /*
-                     * --------------------------------
                      * 新規登録スキップ
+                     *
+                     * 注意:
+                     * userId生成やusers作成は
+                     * Function側で行う。
                      * --------------------------------
                      */
 
@@ -342,42 +357,36 @@
                         );
 
 
+                        /*
+                         * 既存のskip APIを実行
+                         */
                         await prepareSignupSkip({
                             email,
                             name
                         });
 
 
-                        const now =
-                            Date.now();
-
-                        await setDoc(
-                            doc(
-                                db,
-                                "users",
-                                userId
-                            ),
-                            {
+                        /*
+                         * signupStart Functionへ
+                         *
+                         * skipModeを明示的に渡す。
+                         */
+                        const result =
+                            await requestSignupStart({
                                 name,
-                                displayName: name,
-                                email,
+                                email
+                            });
 
-                                emailVerification: {
-                                    codeHash: "",
-                                    verified: true,
-                                    skipMode: true,
-                                    attemptCount: 0,
-                                    maxAttempts: MAX_ATTEMPTS,
-                                    expiresAt:
-                                        now + CODE_TTL_MS,
-                                    createdAt: now,
-                                    updatedAt: now
-                                },
 
-                                createdAt:
-                                    serverTimestamp()
-                            }
-                        );
+                        /*
+                         * pendingSignup
+                         */
+                        savePendingSignup({
+                            name,
+                            email,
+                            userId:
+                                result.userId
+                        });
 
 
                         setMessage(
@@ -400,77 +409,52 @@
 
                     /*
                      * --------------------------------
-                     * 確認コード生成
+                     * 通常登録
                      * --------------------------------
                      */
 
                     setMessage(
-                        "確認コードを発行しています..."
+                        "登録情報を準備しています..."
                     );
 
 
-                    const code =
-                        generateCode();
-
-                    const codeHash =
-                        await sha256(code);
-
-                    const now =
-                        Date.now();
-
-                    const expiresAt =
-                        now + CODE_TTL_MS;
-
-
                     /*
-                     * --------------------------------
-                     * users/{userId} 作成
-                     * --------------------------------
+                     * Function側で以下を実行する:
+                     *
+                     * ・userId生成
+                     * ・userId重複確認
+                     * ・確認コード生成
+                     * ・codeHash生成
+                     * ・users/{userId}作成
+                     * ・emailVerification保存
+                     * ・確認メール送信
                      */
-
-                    await setDoc(
-                        doc(
-                            db,
-                            "users",
-                            userId
-                        ),
-                        {
+                    const result =
+                        await requestSignupStart({
                             name,
-                            displayName: name,
-                            email,
-
-                            emailVerification: {
-                                codeHash,
-                                verified: false,
-                                skipMode: false,
-                                attemptCount: 0,
-                                maxAttempts:
-                                    MAX_ATTEMPTS,
-                                expiresAt,
-                                createdAt:
-                                    serverTimestamp(),
-                                updatedAt:
-                                    serverTimestamp()
-                            },
-
-                            createdAt:
-                                serverTimestamp()
-                        }
-                    );
+                            email
+                        });
 
 
                     /*
                      * --------------------------------
-                     * 確認メール送信
+                     * pendingSignup
                      * --------------------------------
                      */
 
-                    await sendVerificationEmail({
+                    savePendingSignup({
+                        name,
                         email,
-                        code,
-                        name
+                        userId:
+                            result.userId
                     });
 
+
+                    /*
+                     * --------------------------------
+                     * 完了
+                     * --------------------------------
+                     */
 
                     setMessage(
                         "確認コードを送信しました",
@@ -488,15 +472,20 @@
 
                 } catch (error) {
 
-                    console.error(error);
+                    console.error(
+                        "signup:",
+                        error
+                    );
+
 
                     setMessage(
                         getFriendlyErrorMessage(
                             error,
-                            "送信に失敗しました"
+                            "新規登録に失敗しました"
                         ),
                         "error"
                     );
+
 
                 } finally {
 
@@ -505,6 +494,7 @@
             };
 
     </script>
+
 </body>
 
 </html>

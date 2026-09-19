@@ -48,6 +48,130 @@ function normalizeEmail(email) {
     return String(email || "").trim().toLowerCase();
 }
 
+const SIGNUP_CODE_TTL_MS = 10 * 60 * 1000;
+const SIGNUP_MAX_ATTEMPTS = 5;
+
+const SIGNUP_ID_LETTERS =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+
+const SIGNUP_ID_DIGITS =
+    "0123456789";
+
+const SIGNUP_ID_CHARS =
+    SIGNUP_ID_LETTERS + SIGNUP_ID_DIGITS;
+
+
+function generateSignupUserId() {
+
+    while (true) {
+
+        let userId = "U";
+
+        const bytes =
+            crypto.getRandomValues(
+                new Uint8Array(7)
+            );
+
+        for (let i = 0; i < 7; i++) {
+
+            userId +=
+                SIGNUP_ID_CHARS[
+                bytes[i] % SIGNUP_ID_CHARS.length
+                ];
+        }
+
+        const body = userId.slice(1);
+
+        const digitCount =
+            [...body].filter((char) =>
+                SIGNUP_ID_DIGITS.includes(char)
+            ).length;
+
+        const letterCount =
+            [...body].filter((char) =>
+                SIGNUP_ID_LETTERS.includes(char)
+            ).length;
+
+        let hasTriple = false;
+
+        for (let i = 2; i < userId.length; i++) {
+
+            if (
+                userId[i] === userId[i - 1] &&
+                userId[i] === userId[i - 2]
+            ) {
+                hasTriple = true;
+                break;
+            }
+        }
+
+        if (
+            digitCount >= 2 &&
+            digitCount <= 4 &&
+            letterCount >= 3 &&
+            !hasTriple
+        ) {
+            return userId;
+        }
+    }
+}
+
+
+async function generateUniqueSignupUserId() {
+
+    for (let attempt = 0; attempt < 100; attempt++) {
+
+        const userId =
+            generateSignupUserId();
+
+        const snap =
+            await db
+                .collection("users")
+                .doc(userId)
+                .get();
+
+        if (!snap.exists) {
+            return userId;
+        }
+    }
+
+    const error = new Error(
+        "ユーザーIDの生成に失敗しました"
+    );
+
+    error.status = 500;
+
+    throw error;
+}
+
+
+function generateVerificationCode() {
+
+    return crypto
+        .randomInt(100000, 1000000)
+        .toString();
+}
+
+
+function hashVerificationCode(code) {
+
+    return crypto
+        .createHash("sha256")
+        .update(String(code))
+        .digest("hex");
+}
+
+
+function escapeHtml(value) {
+
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
 function timestampMillis(value) {
     if (!value) return null;
     if (typeof value === "number") return value;
@@ -2633,6 +2757,211 @@ function buildDailyTimeline(timestamps, days) {
    メール送信
    ============================ */
 
+async function sendSignupVerificationEmail({
+    email,
+    code,
+    name
+}) {
+
+    const apiKey =
+        process.env.RESEND_KEY;
+
+    const from =
+        process.env.RESEND_FROM;
+
+    if (!apiKey) {
+
+        const error = new Error(
+            "RESEND_KEYが設定されていません"
+        );
+
+        error.status = 500;
+
+        throw error;
+    }
+
+    if (!from) {
+
+        const error = new Error(
+            "RESEND_FROMが設定されていません"
+        );
+
+        error.status = 500;
+
+        throw error;
+    }
+
+    const displayName =
+        typeof name === "string" &&
+            name.trim()
+            ? name.trim()
+            : "ユーザー";
+
+    const safeName =
+        escapeHtml(displayName);
+
+    const safeCode =
+        escapeHtml(code);
+
+    const resend =
+        new Resend(apiKey);
+
+    const text = `${displayName} さん
+
+LUNAGSへの登録ありがとうございます。
+
+確認コードは以下です。
+
+${code}
+
+このコードを新規登録画面に入力してください。
+
+このメールに心当たりがない場合は、
+このメールを無視してください。
+
+LUNAGS
+`;
+
+    const html = `
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>LUNAGS 確認コード</title>
+</head>
+
+<body style="
+    margin: 0;
+    padding: 0;
+    background: #f5f7fa;
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        'Segoe UI',
+        sans-serif;
+">
+
+    <div style="
+        max-width: 600px;
+        margin: 40px auto;
+        padding: 30px;
+        background: #ffffff;
+        border-radius: 12px;
+        box-sizing: border-box;
+    ">
+
+        <h1 style="
+            margin: 0 0 24px;
+            font-size: 24px;
+        ">
+            LUNAGS 確認コード
+        </h1>
+
+        <p>
+            ${safeName} さん
+        </p>
+
+        <p>
+            LUNAGSへの登録ありがとうございます。
+        </p>
+
+        <p>
+            新規登録を続行するには、
+            以下の確認コードを入力してください。
+        </p>
+
+        <div style="
+            margin: 30px 0;
+            padding: 20px;
+            text-align: center;
+            background: #f1f3f5;
+            border-radius: 10px;
+        ">
+
+            <div style="
+                margin-bottom: 8px;
+                font-size: 13px;
+                color: #666666;
+            ">
+                確認コード
+            </div>
+
+            <div style="
+                font-size: 36px;
+                font-weight: bold;
+                letter-spacing: 8px;
+            ">
+                ${safeCode}
+            </div>
+
+        </div>
+
+        <p style="
+            color: #555555;
+            font-size: 14px;
+            line-height: 1.7;
+        ">
+            このコードを新規登録画面に入力してください。
+        </p>
+
+        <p style="
+            margin-top: 30px;
+            color: #777777;
+            font-size: 13px;
+            line-height: 1.7;
+        ">
+            このメールに心当たりがない場合は、
+            このメールを無視してください。
+        </p>
+
+        <hr style="
+            margin: 30px 0;
+            border: 0;
+            border-top: 1px solid #eeeeee;
+        ">
+
+        <p style="
+            margin: 0;
+            color: #999999;
+            font-size: 12px;
+        ">
+            LUNAGS
+        </p>
+
+    </div>
+
+</body>
+</html>
+`;
+
+    const result =
+        await resend.emails.send({
+            from,
+            to: email,
+            subject: "LUNAGS 確認コード",
+            text,
+            html
+        });
+
+    if (result?.error) {
+
+        const error = new Error(
+            result.error.message ||
+            "メール送信に失敗しました"
+        );
+
+        error.status =
+            result.error.statusCode === 400 ||
+                result.error.statusCode === 422
+                ? 400
+                : 500;
+
+        throw error;
+    }
+
+    return result;
+}
+
 app.post("/", async (req, res) => {
     try {
         console.log("========================================");
@@ -2802,140 +3131,6 @@ app.post("/", async (req, res) => {
          */
 
         const resend = new Resend(apiKey);
-
-        /*
-         * ========================================
-         * メール本文
-         * ========================================
-         */
-
-        const text = `${displayName} さん
-
-LUNAGSへの登録ありがとうございます。
-
-確認コードは以下です。
-
-${verificationCode}
-
-このコードを新規登録画面に入力してください。
-
-このメールに心当たりがない場合は、
-このメールを無視してください。
-
-LUNAGS
-`;
-
-        const html = `
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <title>LUNAGS 確認コード</title>
-</head>
-
-<body style="
-    margin: 0;
-    padding: 0;
-    background: #f5f7fa;
-    font-family:
-        -apple-system,
-        BlinkMacSystemFont,
-        'Segoe UI',
-        sans-serif;
-">
-
-    <div style="
-        max-width: 600px;
-        margin: 40px auto;
-        padding: 30px;
-        background: #ffffff;
-        border-radius: 12px;
-        box-sizing: border-box;
-    ">
-
-        <h1 style="
-            margin: 0 0 24px;
-            font-size: 24px;
-        ">
-            LUNAGS 確認コード
-        </h1>
-
-        <p>
-            ${safeName} さん
-        </p>
-
-        <p>
-            LUNAGSへの登録ありがとうございます。
-        </p>
-
-        <p>
-            新規登録を続行するには、
-            以下の確認コードを入力してください。
-        </p>
-
-        <div style="
-            margin: 30px 0;
-            padding: 20px;
-            text-align: center;
-            background: #f1f3f5;
-            border-radius: 10px;
-        ">
-
-            <div style="
-                margin-bottom: 8px;
-                font-size: 13px;
-                color: #666666;
-            ">
-                確認コード
-            </div>
-
-            <div style="
-                font-size: 36px;
-                font-weight: bold;
-                letter-spacing: 8px;
-            ">
-                ${safeCode}
-            </div>
-
-        </div>
-
-        <p style="
-            color: #555555;
-            font-size: 14px;
-            line-height: 1.7;
-        ">
-            このコードを新規登録画面に入力してください。
-        </p>
-
-        <p style="
-            margin-top: 30px;
-            color: #777777;
-            font-size: 13px;
-            line-height: 1.7;
-        ">
-            このメールに心当たりがない場合は、
-            このメールを無視してください。
-        </p>
-
-        <hr style="
-            margin: 30px 0;
-            border: 0;
-            border-top: 1px solid #eeeeee;
-        ">
-
-        <p style="
-            margin: 0;
-            color: #999999;
-            font-size: 12px;
-        ">
-            LUNAGS
-        </p>
-
-    </div>
-
-</body>
-</html>
-`;
 
         /*
          * ========================================
