@@ -2762,7 +2762,6 @@ async function sendSignupVerificationEmail({
     code,
     name
 }) {
-
     const apiKey =
         process.env.RESEND_KEY;
 
@@ -2770,30 +2769,29 @@ async function sendSignupVerificationEmail({
         process.env.RESEND_FROM;
 
     if (!apiKey) {
-
         const error = new Error(
             "RESEND_KEYが設定されていません"
         );
 
         error.status = 500;
+        error.errorCode = "RESEND_KEY_MISSING";
 
         throw error;
     }
 
     if (!from) {
-
         const error = new Error(
             "RESEND_FROMが設定されていません"
         );
 
         error.status = 500;
+        error.errorCode = "RESEND_FROM_MISSING";
 
         throw error;
     }
 
     const displayName =
-        typeof name === "string" &&
-            name.trim()
+        typeof name === "string" && name.trim()
             ? name.trim()
             : "ユーザー";
 
@@ -2803,16 +2801,14 @@ async function sendSignupVerificationEmail({
     const safeCode =
         escapeHtml(code);
 
-    const resend =
-        new Resend(apiKey);
-
     const text = `${displayName} さん
 
 LUNAGSへの登録ありがとうございます。
 
-確認コードは以下です。
+新規登録を続行するには、
+以下の確認コードを入力してください。
 
-${code}
+確認コード：${code}
 
 このコードを新規登録画面に入力してください。
 
@@ -2825,126 +2821,245 @@ LUNAGS
     const html = `
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
-    <title>LUNAGS 確認コード</title>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+    <title>LUNAGS メールアドレス確認</title>
 </head>
 
 <body style="
     margin: 0;
     padding: 0;
-    background: #f5f7fa;
+    background: #DFEFFD;
     font-family:
         -apple-system,
         BlinkMacSystemFont,
         'Segoe UI',
+        'Hiragino Kaku Gothic ProN',
+        'Yu Gothic',
+        Meiryo,
         sans-serif;
 ">
 
     <div style="
-        max-width: 600px;
-        margin: 40px auto;
-        padding: 30px;
-        background: #ffffff;
-        border-radius: 12px;
+        width: 100%;
+        padding: 40px 16px;
         box-sizing: border-box;
     ">
 
-        <h1 style="
-            margin: 0 0 24px;
-            font-size: 24px;
-        ">
-            LUNAGS 確認コード
-        </h1>
-
-        <p>
-            ${safeName} さん
-        </p>
-
-        <p>
-            LUNAGSへの登録ありがとうございます。
-        </p>
-
-        <p>
-            新規登録を続行するには、
-            以下の確認コードを入力してください。
-        </p>
-
         <div style="
-            margin: 30px 0;
-            padding: 20px;
-            text-align: center;
-            background: #f1f3f5;
-            border-radius: 10px;
+            max-width: 560px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow:
+                0 8px 30px rgba(40, 100, 160, 0.12);
         ">
+
+            <!-- Header -->
 
             <div style="
-                margin-bottom: 8px;
-                font-size: 13px;
-                color: #666666;
+                padding: 28px 32px;
+                background: #73B8FD;
+                text-align: center;
             ">
-                確認コード
+
+                <div style="
+                    color: #ffffff;
+                    font-size: 26px;
+                    font-weight: 700;
+                    letter-spacing: 1px;
+                ">
+                    LUNAGS
+                </div>
+
             </div>
 
+            <!-- Content -->
+
             <div style="
-                font-size: 36px;
-                font-weight: bold;
-                letter-spacing: 8px;
+                padding: 36px 32px 32px;
             ">
-                ${safeCode}
+
+                <h1 style="
+                    margin: 0 0 24px;
+                    color: #1f2937;
+                    font-size: 24px;
+                    line-height: 1.4;
+                    text-align: center;
+                ">
+                    メールアドレス確認
+                </h1>
+
+                <p style="
+                    margin: 0 0 18px;
+                    color: #333333;
+                    font-size: 15px;
+                    line-height: 1.8;
+                ">
+                    ${safeName} さん
+                </p>
+
+                <p style="
+                    margin: 0 0 18px;
+                    color: #555555;
+                    font-size: 14px;
+                    line-height: 1.8;
+                ">
+                    LUNAGSへの登録ありがとうございます。
+                    <br>
+                    新規登録を続行するには、
+                    以下の確認コードを入力してください。
+                </p>
+
+                <!-- Verification Code -->
+
+                <div style="
+                    margin: 28px 0;
+                    padding: 24px 16px;
+                    background: #DFEFFD;
+                    border: 1px solid #9ED4FC;
+                    border-radius: 14px;
+                    text-align: center;
+                ">
+
+                    <div style="
+                        margin-bottom: 10px;
+                        color: #4b5563;
+                        font-size: 12px;
+                        font-weight: 600;
+                        letter-spacing: 1px;
+                    ">
+                        確認コード
+                    </div>
+
+                    <div style="
+                        color: #2563a6;
+                        font-size: 34px;
+                        font-weight: 700;
+                        letter-spacing: 8px;
+                        line-height: 1.3;
+                    ">
+                        ${safeCode}
+                    </div>
+
+                </div>
+
+                <p style="
+                    margin: 0;
+                    color: #666666;
+                    font-size: 13px;
+                    line-height: 1.8;
+                    text-align: center;
+                ">
+                    このコードを新規登録画面に入力してください。
+                </p>
+
+                <!-- Notice -->
+
+                <div style="
+                    margin-top: 28px;
+                    padding: 16px;
+                    background: #f7f9fb;
+                    border-radius: 10px;
+                ">
+
+                    <p style="
+                        margin: 0;
+                        color: #777777;
+                        font-size: 12px;
+                        line-height: 1.8;
+                    ">
+                        このメールに心当たりがない場合は、
+                        このメールを無視してください。
+                    </p>
+
+                </div>
+
+            </div>
+
+            <!-- Footer -->
+
+            <div style="
+                padding: 20px 32px;
+                background: #f8fafc;
+                border-top: 1px solid #eef2f6;
+                text-align: center;
+            ">
+
+                <div style="
+                    color: #73B8FD;
+                    font-size: 14px;
+                    font-weight: 700;
+                    letter-spacing: 1px;
+                ">
+                    LUNAGS
+                </div>
+
+                <div style="
+                    margin-top: 6px;
+                    color: #9aa3ad;
+                    font-size: 11px;
+                ">
+                    This is an automated email.
+                </div>
+
             </div>
 
         </div>
 
-        <p style="
-            color: #555555;
-            font-size: 14px;
-            line-height: 1.7;
-        ">
-            このコードを新規登録画面に入力してください。
-        </p>
-
-        <p style="
-            margin-top: 30px;
-            color: #777777;
-            font-size: 13px;
-            line-height: 1.7;
-        ">
-            このメールに心当たりがない場合は、
-            このメールを無視してください。
-        </p>
-
-        <hr style="
-            margin: 30px 0;
-            border: 0;
-            border-top: 1px solid #eeeeee;
-        ">
-
-        <p style="
-            margin: 0;
-            color: #999999;
-            font-size: 12px;
-        ">
-            LUNAGS
-        </p>
-
     </div>
 
 </body>
+
 </html>
 `;
+
+    const resend =
+        new Resend(apiKey);
+
+    console.log(
+        "========================================"
+    );
+
+    console.log(
+        " RESEND EMAIL REQUEST"
+    );
+
+    console.log(
+        "========================================"
+    );
+
+    console.log(
+        "To:",
+        email
+    );
+
+    console.log(
+        "From:",
+        from
+    );
 
     const result =
         await resend.emails.send({
             from,
             to: email,
-            subject: "LUNAGS 確認コード",
+            subject: "LUNAGS メールアドレス確認",
             text,
             html
         });
 
-    if (result?.error) {
+    console.log(
+        "Resend result:",
+        JSON.stringify(result)
+    );
 
+    if (result?.error) {
         const error = new Error(
             result.error.message ||
             "メール送信に失敗しました"
@@ -2955,6 +3070,9 @@ LUNAGS
                 result.error.statusCode === 422
                 ? 400
                 : 500;
+
+        error.errorCode =
+            "RESEND_EMAIL_ERROR";
 
         throw error;
     }
@@ -3126,61 +3244,21 @@ app.post("/", async (req, res) => {
 
         /*
          * ========================================
-         * Resend初期化
+         * Resendに送信
          * ========================================
          */
 
-        const resend = new Resend(apiKey);
-
-        /*
-         * ========================================
-         * Resend送信
-         * ========================================
-         */
-
-        console.log("Sending email...");
-        console.log("To:", email);
-        console.log("From:", from);
-
-        const result = await resend.emails.send({
-            from: from,
-            to: email,
-            subject: "LUNAGS 確認コード",
-            text: text,
-            html: html
-        });
+        const result =
+            await sendSignupVerificationEmail({
+                email,
+                code: verificationCode,
+                name: displayName
+            });
 
         console.log(
             "Resend result:",
             JSON.stringify(result)
         );
-
-        /*
-         * ========================================
-         * Resendエラー
-         * ========================================
-         */
-
-        if (result?.error) {
-            const error = new Error(
-                result.error.message ||
-                "メール送信に失敗しました"
-            );
-
-            if (
-                result.error.statusCode === 400 ||
-                result.error.statusCode === 422
-            ) {
-                error.status = 400;
-            } else {
-                error.status = 500;
-            }
-
-            error.errorCode =
-                "RESEND_SEND_ERROR";
-
-            throw error;
-        }
 
         /*
          * ========================================
