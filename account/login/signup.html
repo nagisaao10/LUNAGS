@@ -21,9 +21,14 @@
             名前とメールアドレスを入力すると、6桁の確認コードを送信します。
         </p>
 
+<<<<<<< HEAD
         <input id="name" type="text" placeholder="ユーザー名" autocomplete="name">
 
         <input id="email" type="email" placeholder="メールアドレス" autocomplete="email">
+=======
+        <input id="name" type="text" placeholder="ユーザー名">
+        <input id="email" type="email" placeholder="メールアドレス">
+>>>>>>> 806a6156460096458bf5aa5b19a105b836bd891f
 
         <div id="message" class="message"></div>
 
@@ -42,16 +47,36 @@
 
         import {
             auth,
+<<<<<<< HEAD
+=======
+            db,
+            serverTimestamp,
+            CODE_TTL_MS,
+            MAX_ATTEMPTS,
+>>>>>>> 806a6156460096458bf5aa5b19a105b836bd891f
             normalizeEmail,
             withTimeout,
             isOfflineDocumentError,
             getFriendlyErrorMessage,
             isSignupSkipEnabled,
+<<<<<<< HEAD
             prepareSignupSkip,
             savePendingSignup
         } from "../../shared/firebase-config.js";
 
         import {
+=======
+            prepareSignupSkip
+        } from "../../shared/firebase-config.js";
+
+        import {
+            doc,
+            getDoc,
+            setDoc
+        } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+
+        import {
+>>>>>>> 806a6156460096458bf5aa5b19a105b836bd891f
             fetchSignInMethodsForEmail
         } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
 
@@ -87,6 +112,7 @@
 
         /*
          * ========================================
+<<<<<<< HEAD
          * 新規登録スキップ
          * ========================================
          */
@@ -333,12 +359,51 @@
 
 
                     if (exists) {
+=======
+         * ユーザーID生成
+         *
+         * U + 7文字
+         * 数字: 2～4個
+         * 英字: 3個以上
+         * 同じ文字の3連続は禁止
+         * ========================================
+         */
 
-                        throw new Error(
-                            "このメールアドレスはすでに登録されています"
-                        );
-                    }
+        function generateUserId() {
 
+            const letters =
+                "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+
+            const digits =
+                "0123456789";
+
+            const chars =
+                letters + digits;
+
+            while (true) {
+
+                let id = "U";
+
+                const bytes =
+                    crypto.getRandomValues(
+                        new Uint8Array(7)
+                    );
+
+                for (let i = 0; i < 7; i++) {
+
+                    id +=
+                        chars[
+                        bytes[i] % chars.length
+                        ];
+                }
+>>>>>>> 806a6156460096458bf5aa5b19a105b836bd891f
+
+                const digitCount =
+                    [...id].filter(char =>
+                        digits.includes(char)
+                    ).length;
+
+<<<<<<< HEAD
 
                     /*
                      * --------------------------------
@@ -404,9 +469,28 @@
 
 
                         return;
+=======
+                const letterCount =
+                    [...id].filter(char =>
+                        letters.includes(char)
+                    ).length;
+
+
+                let hasTriple = false;
+
+                for (let i = 2; i < id.length; i++) {
+
+                    if (
+                        id[i] === id[i - 1] &&
+                        id[i] === id[i - 2]
+                    ) {
+                        hasTriple = true;
+                        break;
+>>>>>>> 806a6156460096458bf5aa5b19a105b836bd891f
                     }
 
 
+<<<<<<< HEAD
                     /*
                      * --------------------------------
                      * 通常登録
@@ -449,6 +533,113 @@
                             result.userId
                     });
 
+=======
+                if (
+                    digitCount >= 2 &&
+                    digitCount <= 4 &&
+                    letterCount >= 3 &&
+                    !hasTriple
+                ) {
+                    return id;
+                }
+            }
+        }
+
+
+        async function generateUniqueUserId() {
+
+            while (true) {
+
+                const userId =
+                    generateUserId();
+
+                const ref =
+                    doc(db, "users", userId);
+
+                const snap =
+                    await withTimeout(
+                        getDoc(ref)
+                    );
+
+                if (!snap.exists()) {
+                    return userId;
+                }
+            }
+        }
+
+
+        /*
+         * ========================================
+         * 新規登録スキップ API
+         * ========================================
+         */
+
+        window.LUNAGS_signup =
+            window.LUNAGS_signup || {};
+
+        window.LUNAGS_signup.skip =
+            async (password) => {
+
+                try {
+
+                    const result =
+                        await import(
+                            "../../shared/firebase-config.js"
+                        );
+
+                    await result.enableSignupSkip(
+                        password
+                    );
+
+                    console.log(
+                        "LUNAGS_signup: 新規登録スキップモードを有効化しました"
+                    );
+
+                    return true;
+
+                } catch (error) {
+
+                    console.error(
+                        "LUNAGS_signup: 新規登録スキップモードの有効化に失敗しました",
+                        error
+                    );
+
+                    return false;
+                }
+            };
+
+
+        /*
+         * ========================================
+         * 新規登録
+         * ========================================
+         */
+
+        window.startSignup =
+            async (event) => {
+
+                event.preventDefault();
+
+                const button =
+                    document.getElementById(
+                        "submitButton"
+                    );
+
+                const name =
+                    document.getElementById(
+                        "name"
+                    ).value.trim();
+
+                const email =
+                    normalizeEmail(
+                        document.getElementById(
+                            "email"
+                        ).value
+                    );
+
+
+                if (!name) {
+>>>>>>> 806a6156460096458bf5aa5b19a105b836bd891f
 
                     /*
                      * --------------------------------
@@ -457,6 +648,7 @@
                      */
 
                     setMessage(
+<<<<<<< HEAD
                         "確認コードを送信しました",
                         "success"
                     );
@@ -490,9 +682,273 @@
                 } finally {
 
                     button.disabled = false;
+=======
+                        "ユーザー名を入力してください",
+                        "error"
+                    );
+
+                    return;
+                }
+
+
+                if (!email) {
+
+                    setMessage(
+                        "メールアドレスを入力してください",
+                        "error"
+                    );
+
+                    return;
+>>>>>>> 806a6156460096458bf5aa5b19a105b836bd891f
                 }
             };
 
+<<<<<<< HEAD
+=======
+
+                button.disabled = true;
+
+
+                try {
+
+                    /*
+                     * --------------------------------
+                     * 既存アカウント確認
+                     * --------------------------------
+                     */
+
+                    try {
+
+                        const methods =
+                            await withTimeout(
+                                fetchSignInMethodsForEmail(
+                                    auth,
+                                    email
+                                )
+                            );
+
+                        if (methods.length > 0) {
+
+                            throw new Error(
+                                "このメールアドレスはすでに登録されています"
+                            );
+                        }
+
+                    } catch (error) {
+
+                        if (
+                            !isOfflineDocumentError(error) &&
+                            error?.code !==
+                            "auth/invalid-email"
+                        ) {
+                            throw error;
+                        }
+                    }
+
+
+                    /*
+                     * --------------------------------
+                     * 仮ユーザーID生成
+                     * --------------------------------
+                     */
+
+                    setMessage(
+                        "登録情報を準備しています..."
+                    );
+
+                    const userId =
+                        await generateUniqueUserId();
+
+
+                    /*
+                     * --------------------------------
+                     * pendingSignup保存
+                     * --------------------------------
+                     */
+
+                    savePendingSignup({
+                        name,
+                        email,
+                        userId
+                    });
+
+
+                    /*
+                     * --------------------------------
+                     * 新規登録スキップ
+                     * --------------------------------
+                     */
+
+                    if (isSignupSkipEnabled()) {
+
+                        setMessage(
+                            "新規登録スキップモードで登録しています..."
+                        );
+
+
+                        await prepareSignupSkip({
+                            email,
+                            name
+                        });
+
+
+                        const now =
+                            Date.now();
+
+                        await setDoc(
+                            doc(
+                                db,
+                                "users",
+                                userId
+                            ),
+                            {
+                                name,
+                                displayName: name,
+                                email,
+
+                                emailVerification: {
+                                    codeHash: "",
+                                    verified: true,
+                                    skipMode: true,
+                                    attemptCount: 0,
+                                    maxAttempts: MAX_ATTEMPTS,
+                                    expiresAt:
+                                        now + CODE_TTL_MS,
+                                    createdAt: now,
+                                    updatedAt: now
+                                },
+
+                                createdAt:
+                                    serverTimestamp()
+                            }
+                        );
+
+
+                        setMessage(
+                            "確認をスキップしました",
+                            "success"
+                        );
+
+
+                        setTimeout(() => {
+
+                            window.location.href =
+                                "./set-password.html";
+
+                        }, 500);
+
+
+                        return;
+                    }
+
+
+                    /*
+                     * --------------------------------
+                     * 確認コード生成
+                     * --------------------------------
+                     */
+
+                    setMessage(
+                        "確認コードを発行しています..."
+                    );
+
+
+                    const code =
+                        generateCode();
+
+                    const codeHash =
+                        await sha256(code);
+
+                    const now =
+                        Date.now();
+
+                    const expiresAt =
+                        now + CODE_TTL_MS;
+
+
+                    /*
+                     * --------------------------------
+                     * users/{userId} 作成
+                     * --------------------------------
+                     */
+
+                    await setDoc(
+                        doc(
+                            db,
+                            "users",
+                            userId
+                        ),
+                        {
+                            name,
+                            displayName: name,
+                            email,
+
+                            emailVerification: {
+                                codeHash,
+                                verified: false,
+                                skipMode: false,
+                                attemptCount: 0,
+                                maxAttempts:
+                                    MAX_ATTEMPTS,
+                                expiresAt,
+                                createdAt:
+                                    serverTimestamp(),
+                                updatedAt:
+                                    serverTimestamp()
+                            },
+
+                            createdAt:
+                                serverTimestamp()
+                        }
+                    );
+
+
+                    /*
+                     * --------------------------------
+                     * 確認メール送信
+                     * --------------------------------
+                     */
+
+                    await sendVerificationEmail({
+                        email,
+                        code,
+                        name
+                    });
+
+
+                    setMessage(
+                        "確認コードを送信しました",
+                        "success"
+                    );
+
+
+                    setTimeout(() => {
+
+                        window.location.href =
+                            "./verify.html";
+
+                    }, 800);
+
+
+                } catch (error) {
+
+                    console.error(error);
+
+                    setMessage(
+                        getFriendlyErrorMessage(
+                            error,
+                            "送信に失敗しました"
+                        ),
+                        "error"
+                    );
+
+                } finally {
+
+                    button.disabled = false;
+                }
+            };
+
+>>>>>>> 806a6156460096458bf5aa5b19a105b836bd891f
     </script>
 
 </body>
