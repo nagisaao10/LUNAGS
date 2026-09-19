@@ -24,7 +24,7 @@ const allowedOrigins = [
     "https://lunags-development.web.app",
     "https://lunags-development.firebaseapp.com",
     "https://lunags.jp",
-    "https://dev-lunags.jp"
+    "https://dev.lunags.jp"
 ];
 
 const corsOptions = {
@@ -3049,7 +3049,7 @@ export const signupSkip = onRequest(
             "https://lunags-development.web.app",
             "https://lunags-development.firebaseapp.com",
             "https://lunags.jp",
-            "https://dev-lunags.jp"
+            "https://dev.lunags.jp"
         ],
         secrets: [SIGNUP_SKIP_PASSWORD]
     },
