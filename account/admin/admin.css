@@ -84,7 +84,6 @@ select:disabled {
 .sidebar {
   position: sticky;
   top: 0;
-  width: auto;
   height: 100vh;
   height: 100dvh;
   padding: 22px 16px;
@@ -94,7 +93,6 @@ select:disabled {
   display: flex;
   flex-direction: column;
   gap: 22px;
-  z-index: 10;
   overflow-y: auto;
 }
 
@@ -105,20 +103,16 @@ select:disabled {
   padding: 6px 8px 12px;
 }
 
-.logo-lunags,
-.sidebar__brand img {
+.logo-lunags {
   width: 178px;
   max-width: 100%;
   height: auto;
-  margin: 6px auto 4px;
 }
 
 .sidebar__brand-divider {
-  position: relative;
   width: 140px;
   height: 1px;
-  margin: 2px 0;
-  background: rgba(255, 255, 255, .18);
+  background: rgba(255, 255, 255, 0.18);
 }
 
 .sidebar__brand-divider::after {
@@ -136,14 +130,13 @@ select:disabled {
 .sidebar__brand-subtitle {
   font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.18em;
   color: rgba(238, 245, 255, 0.78);
 }
 
 .menu-list {
   display: grid;
   gap: 6px;
-  margin: 0;
 }
 
 .menu-list::before {
@@ -160,39 +153,27 @@ select:disabled {
   align-items: center;
   gap: 11px;
   min-height: 42px;
-  width: 100%;
   padding: 10px 12px;
   border-radius: var(--radius);
   color: rgba(238, 245, 255, 0.78);
   border: 1px solid transparent;
-  font-size: 14px;
-  font-weight: 600;
-  transition: background 0.14s ease, border-color 0.14s ease, color 0.14s ease;
+  font-weight: 700;
 }
 
 .menu i {
   width: 18px;
-  color: currentColor;
   text-align: center;
-  font-size: 16px;
-  flex: 0 0 auto;
 }
 
 .menu span {
   line-height: 1;
 }
 
-.menu:hover {
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.11);
-  box-shadow: none;
-}
-
+.menu:hover,
 .menu.active {
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.18);
-  border-color: rgba(255, 255, 255, 0.22);
-  box-shadow: none;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .sidebar__footer {
