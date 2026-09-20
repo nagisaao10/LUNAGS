@@ -11,4 +11,4 @@ Management-System/functions/client_secret_*.json
 firebase-migration-users.json
 
 # Google OAuth client secret
-functions/client_secret_*.json
+client_secret_*.json
