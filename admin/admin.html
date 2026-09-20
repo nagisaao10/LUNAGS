@@ -5,8 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>管理者 | LUNAGS Account</title>
-    <link rel="stylesheet" href="../../shared/normalize.css">
-    <link rel="stylesheet" href="../../shared/common.css">
+    <link rel="stylesheet" href="../shared/normalize.css">
+    <link rel="stylesheet" href="../shared/common.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <link rel="stylesheet" href="./admin.css">
 </head>
@@ -20,13 +20,13 @@
         <!-- 左サイドバー -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar__brand">
-                <img src="../../images/logo_LUNAGS.png" alt="LUNAGS" class="logo-lunags">
+                <img src="../images/logo_LUNAGS.png" alt="LUNAGS" class="logo-lunags">
                 <div class="sidebar__brand-divider"></div>
                 <span class="sidebar__brand-subtitle">ADMIN ACCOUNT</span>
             </div>
 
             <nav class="menu-list" aria-label="管理者メニュー">
-                <a href="../../system/launcher.html" class="menu">
+                <a href="../system/launcher.html" class="menu">
                     <i class="fa-solid fa-table-cells-large"></i>
                     <span>ランチャー</span>
                 </a>
@@ -44,17 +44,17 @@
                     <span>管理者</span>
                 </a>
 
-                <a href="../users/users.html" class="menu" id="usersMenuLink">
+                <a href="./users.html" class="menu" id="usersMenuLink">
                     <i class="fa-solid fa-users-gear"></i>
                     <span>ユーザー管理</span>
                 </a>
 
-                <a href="../../management/logs/logs.html" class="menu" id="logsMenuLink">
+                <a href="./logs.html" class="menu" id="logsMenuLink">
                     <i class="fa-solid fa-clipboard-list"></i>
                     <span>システムログ</span>
                 </a>
 
-                <a href="../../management/analytics/analytics.html" class="menu" id="analyticsMenuLink">
+                <a href="./analytics.html" class="menu" id="analyticsMenuLink">
                     <i class="fa-solid fa-chart-pie"></i>
                     <span>分析</span>
                 </a>
@@ -96,7 +96,7 @@
                     このページは管理者アカウント、または管理者モード中のアカウントだけが利用できます。
                 </p>
                 <div class="actions">
-                    <a class="btn btn-primary" href="../../system/launcher.html">ランチャーへ戻る</a>
+                    <a class="btn btn-primary" href="../system/launcher.html">ランチャーへ戻る</a>
                 </div>
             </section>
 
@@ -336,7 +336,7 @@
     </div>
 
     <script type="module">
-        import { auth, FUNCTIONS_ENDPOINT } from "../../shared/firebase-config.js";
+        import { auth, FUNCTIONS_ENDPOINT } from "../shared/firebase-config.js";
         import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
 
         const state = {
@@ -687,7 +687,7 @@
                 if (confirm("ログアウトしますか？")) {
                     try {
                         await signOut(auth);
-                        window.location.href = "../login/login.html";
+                        window.location.href = "../account/login/login.html";
                     } catch (error) {
                         console.error("ログアウトに失敗しました:", error);
                         alert("ログアウトに失敗しました: " + error.message);
@@ -792,7 +792,7 @@
 
         onAuthStateChanged(auth, async (user) => {
             if (!user) {
-                window.location.href = "../login/login.html";
+                window.location.href = "../account/login/login.html";
                 return;
             }
 
