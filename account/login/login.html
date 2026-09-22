@@ -19,17 +19,12 @@
         <button class="secondary" onclick="googleLogin()">
             Googleでログイン
         </button>
-
         <input id="email" type="email" placeholder="メールアドレス" autocomplete="email">
-
         <input id="password" type="password" placeholder="パスワード" autocomplete="current-password">
-
         <div id="message" class="message"></div>
-
         <button id="loginButton" onclick="login()">
             ログイン
         </button>
-
         <button class="secondary" onclick="location.href='./signup.html'">
             新規登録
         </button>
@@ -76,12 +71,8 @@
         window.login = async () => {
 
             const button = document.getElementById("loginButton");
-
-            const email =
-                document.getElementById("email").value.trim();
-
-            const enteredPassword =
-                document.getElementById("password").value;
+            const email = document.getElementById("email").value.trim();
+            const enteredPassword = document.getElementById("password").value;
 
             // ----------------------------------------
             // 入力チェック
@@ -119,27 +110,17 @@
                     enteredPassword
                 );
 
-                setMessage(
-                    "ログイン成功",
-                    "success"
-                );
+                setMessage("ログイン成功", "success");
 
                 setTimeout(() => {
-                    window.location.href =
-                        "../../system/launcher.html";
+                    window.location.href = "../../system/launcher.html";
                 }, 1000);
 
             } catch (err) {
 
-                console.error(
-                    "Login error:",
-                    err
-                );
+                console.error("Login error:", err);
 
-                setMessage(
-                    getLoginErrorMessage(err),
-                    "error"
-                );
+                setMessage(getLoginErrorMessage(err), "error");
 
             } finally {
 
@@ -160,13 +141,10 @@
                 case "auth/user-not-found":
                 case "auth/wrong-password":
                     return "メールアドレスまたはパスワードが正しくありません。";
-
                 case "auth/too-many-requests":
                     return "ログイン試行が多すぎます。しばらく待ってから再試行してください。";
-
                 case "auth/network-request-failed":
                     return "ネットワークエラーが発生しました。";
-
                 default:
                     return err.message ||
                         "ログインに失敗しました。";
@@ -231,29 +209,16 @@
                     // 登録済みユーザー
                     // ----------------------------------------
 
-                    setMessage(
-                        "Googleでログイン成功",
-                        "success"
-                    );
+                    setMessage("Googleでログイン成功", "success");
 
                     setTimeout(() => {
-
-                        window.location.href =
-                            "../../system/launcher.html";
-
+                        window.location.href = "../../system/launcher.html";
                     }, 1000);
                 })
                 .catch(err => {
 
-                    console.error(
-                        "Google login error:",
-                        err
-                    );
-
-                    setMessage(
-                        getLoginErrorMessage(err),
-                        "error"
-                    );
+                    console.error("Google login error:", err);
+                    setMessage(getLoginErrorMessage(err), "error");
 
                     isGoogleProcessing = false;
                 });
