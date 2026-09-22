@@ -19,7 +19,7 @@ import {
 // 本番環境
 const firebaseConfig = {
   apiKey: "AIzaSyBm7Wo-ZgF48F07IDDqazbOd4JDz9mEvOQ",
-  authDomain: "lunags.jp",
+  authDomain: "lunags-59cc1.firebaseapp.com",
   projectId: "lunags",
   storageBucket: "lunags.firebasestorage.app",
   messagingSenderId: "1046443805230",
@@ -29,8 +29,8 @@ const firebaseConfig = {
 
 // 検証環境
 const firebaseConfig = {
-  apiKey: "AIzaSyBm7Wo-ZgF48F07IDDqazbOd4JDz9mEvOQ",
-  authDomain: "dev.lunags.jp",
+  apiKey: "AIzaSyBm7Wo-ZgF48F07IDDqazbOd4JDz9mEvOQ",``
+  authDomain: "lunags-59cc1.firebaseapp.com",
   projectId: "lunags",
   storageBucket: "lunags.firebasestorage.app",
   messagingSenderId: "1046443805230",
