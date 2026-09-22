@@ -10,9 +10,9 @@
 ### 目的
 既存のシステムにおける「**管理者アカウント（恒久的な管理権限）**」と「**管理者モード（一時的な管理権限）**」の概念を厳密に分離し、セキュリティ境界を明確化した上で、以下の3領域を導入します。
 
-- `account/users/`：ユーザー管理機能
-- `management/logs/`：システム・操作ログ監視機能
-- `management/analytics/`：利用状況・統計分析機能
+- `admin/users/`：ユーザー管理機能
+- `admin/logs/`：システム・操作ログ監視機能
+- `admin/analytics/`：利用状況・統計分析機能
 
 ---
 
@@ -20,30 +20,26 @@
 
 | パス | 機能名 | アクセス権限 | 概要 |
 | :--- | :--- | :--- | :--- |
-| `account/users/` | ユーザー管理 | **管理者アカウントのみ** | 登録ユーザー一覧・詳細の閲覧および基本状態の確認 |
-| `management/logs/` | システム・操作ログ | **管理者アカウントのみ** | ログイン、権限変更、権限追加、Functionsエラーなどの監査ログ閲覧 |
-| `management/analytics/` | LUNAGS分析 | **管理者アカウントのみ** | 利用者数、アクティブ率、機能利用状況などの統計可視化 |
+| `admin/users/` | ユーザー管理 | **管理者アカウントのみ** | 登録ユーザー一覧・詳細の閲覧および基本状態の確認 |
+| `admin/logs/` | システム・操作ログ | **管理者アカウントのみ** | ログイン、権限変更、権限追加、Functionsエラーなどの監査ログ閲覧 |
+| `admin/analytics/` | LUNAGS分析 | **管理者アカウントのみ** | 利用者数、アクティブ率、機能利用状況などの統計可視化 |
 
 ---
 
 ## 3. 各機能の詳細設計
 
-### 3.1 ユーザー管理 (`account/users/`)
+### 3.1 ユーザー管理 (`admin/users/`)
 
 #### 目的
 LUNAGSに登録されている全ユーザー・アカウント情報を統括・確認する。
 
 #### ディレクトリ構成
 ```text
-account/
-├─ admin/
-│  ├─ admin.html
-│  └─ admin.css
-│
-└─ users/
-   ├─ users.html
-   ├─ user.html
-   └─ users.css
+admin/
+ ├─ admin.html
+ ├─ admin.css
+ ├─ users.html
+ └─ users.css
 ```
 
 #### 主な表示・確認要素
@@ -55,7 +51,6 @@ account/
   - アカウント作成日時 / 最終ログイン日時
   - アカウント状態（有効 / 一時停止 など）
   - 管理者アカウントフラグ（`adminAccount`）
-- **ユーザー詳細 (`user.html`)**
   - 基本プロフィール情報
   - アカウント状態および権限ステータス
   - 過去の登録・変更履歴
@@ -65,19 +60,16 @@ account/
 
 ---
 
-### 3.2 システム・操作ログ (`management/logs/`)
+### 3.2 システム・操作ログ (`admin/logs/`)
 
 #### 目的
 LUNAGSシステム内で発生した重要な監査・操作イベントを記録・追跡する。
 
 #### ディレクトリ構成
 ```text
-management/
-├─ dashboard/
-├─ logs/
-│  ├─ logs.html
-│  └─ logs.css
-└─ analytics/
+ admin/
+ ├─ logs.html
+ └─ logs.css
 ```
 
 #### 記録・監査対象イベント
@@ -100,19 +92,16 @@ management/
 
 ---
 
-### 3.3 LUNAGS分析 (`management/analytics/`)
+### 3.3 LUNAGS分析 (`admin/analytics/`)
 
 #### 目的
 LUNAGS全体の利用度合いや成長指標、システム状況の統計・トレンドを把握する。
 
 #### ディレクトリ構成
 ```text
-management/
-├─ dashboard/
-├─ logs/
-└─ analytics/
-   ├─ analytics.html
-   └─ analytics.css
+admin/
+├─ analytics.html
+└─ analytics.css
 ```
 
 #### 分析指標（KPI）
@@ -193,16 +182,16 @@ functions/
   └── 専用APIの保護設定
 
 【Phase 2: Users（ユーザー管理）】
-  └── account/users/ 画面実装
+  └── admin/users/ 画面実装
   └── ユーザー一覧・詳細API構築
   └── 制限付き管理操作の実装
 
 【Phase 3: Logs（システムログ）】
-  └── management/logs/ 画面実装
+  └── admin/logs/ 画面実装
   └── 既存の管理者モード履歴・イベントログの統合
 
 【Phase 4: Analytics（分析）】
-  └── management/analytics/ 画面実装
+  └── admin/analytics/ 画面実装
   └── Firestore集計ロジックおよび統計グラフ表示
 
 【Phase 5: 実機テスト & セキュリティ検証】
@@ -218,14 +207,9 @@ functions/
 ```text
 LUNAGS/
 │
-├─ account/
+├─ admin/
 │  ├─ admin/          # 管理者アカウント設定
 │  ├─ users/          # [新規] ユーザー管理
-│  ├─ login/          # ログイン
-│  └─ mypage/         # マイページ
-│
-├─ management/
-│  ├─ dashboard/      # 各種管理ダッシュボード（calendar, post, settings 等）
 │  ├─ logs/           # [新規] システム・操作ログ
 │  └─ analytics/      # [新規] LUNAGS利用分析
 │
@@ -236,12 +220,12 @@ LUNAGS/
 
 | パス / 機能 | 一般ユーザー | 管理者モード | 管理者アカウント |
 | :--- | :---: | :---: | :---: |
-| `account/mypage` | ○ | ○ | ○ |
-| `management/dashboard` | ○ | ○ | ○ |
-| `account/admin` | × | × | **○** |
-| `account/users` | × | × | **○** |
-| `management/logs` | × | × | **○** |
-| `management/analytics` | × | × | **○** |
+| `admin/mypage` | ○ | ○ | ○ |
+| `admin/dashboard` | ○ | ○ | ○ |
+| `admin/admin` | × | × | **○** |
+| `admin/users` | × | × | **○** |
+| `admin/logs` | × | × | **○** |
+| `admin/analytics` | × | × | **○** |
 
 ---
 *初版作成日: 2026年9月11日*

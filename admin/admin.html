@@ -44,17 +44,17 @@
                     <span>管理者</span>
                 </a>
 
-                <a href="./users.html" class="menu" id="usersMenuLink">
+                <a href="./users.html" class="menu" id="usersMenuLink" style="display: none;">
                     <i class="fa-solid fa-users-gear"></i>
                     <span>ユーザー管理</span>
                 </a>
 
-                <a href="./logs.html" class="menu" id="logsMenuLink">
+                <a href="./logs.html" class="menu" id="logsMenuLink" style="display: none;">
                     <i class="fa-solid fa-clipboard-list"></i>
                     <span>システムログ</span>
                 </a>
 
-                <a href="./analytics.html" class="menu" id="analyticsMenuLink">
+                <a href="./analytics.html" class="menu" id="analyticsMenuLink" style="display: none;">
                     <i class="fa-solid fa-chart-pie"></i>
                     <span>分析</span>
                 </a>
@@ -173,10 +173,8 @@
                     </div>
                 </section>
 
-
-
                 <!-- 3. 管理者アカウントの管理（管理者アカウントのみ） -->
-                <section class="card hidden" id="adminAccountection">
+                <section class="card hidden" id="adminAccountSection">
                     <div class="card__head">
                         <h2><i class="fa-solid fa-user-gear"></i> 管理者アカウント管理</h2>
                     </div>
@@ -415,7 +413,7 @@
         function setAdminSectionsVisible(isVisible) {
             [
                 "selfDurationSection",
-                "adminAccountection",
+                "adminAccountSection",
                 "adminSessionsSection",
                 "historySection"
             ].forEach((id) => {
@@ -435,14 +433,18 @@
             $("adminPill").classList.toggle("hidden", !status?.adminAccount);
             $("modePill").classList.toggle("hidden", !status?.adminMode);
 
-            // 管理者アカウントのみ専用メニューを表示
+            const usersLink = $("usersMenuLink");
+            const logsLink = $("logsMenuLink");
+            const analyticsLink = $("analyticsMenuLink");
+
             if (status?.adminAccount) {
-                const usersLink = $("usersMenuLink");
-                const logsLink = $("logsMenuLink");
-                const analyticsLink = $("analyticsMenuLink");
                 if (usersLink) usersLink.style.display = "";
                 if (logsLink) logsLink.style.display = "";
                 if (analyticsLink) analyticsLink.style.display = "";
+            } else {
+                if (usersLink) usersLink.style.display = "none";
+                if (logsLink) logsLink.style.display = "none";
+                if (analyticsLink) analyticsLink.style.display = "none";
             }
 
             if (!isAllowed) return;
@@ -710,7 +712,6 @@
                 });
                 await loadAll();
             }));
-
 
             $("grantModeForm").addEventListener("submit", (event) => {
                 event.preventDefault();
