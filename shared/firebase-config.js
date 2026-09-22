@@ -1,41 +1,31 @@
-import {
-    initializeApp
-} from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
-
-import {
-    getAuth
-} from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
-
-import {
-    getFirestore,
-    serverTimestamp
-} from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
-
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+import { getFirestore, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
 // ========================================
 // Firebase 設定
 // ========================================
 
 // 本番環境
-const firebaseConfig = {
-  apiKey: "AIzaSyBm7Wo-ZgF48F07IDDqazbOd4JDz9mEvOQ",
-  authDomain: "lunags-59cc1.firebaseapp.com",
-  projectId: "lunags",
-  storageBucket: "lunags.firebasestorage.app",
-  messagingSenderId: "1046443805230",
-  appId: "1:1046443805230:web:2bf48b5b3c46e3a1aa2dbf",
-  measurementId: "G-J0V3ENKZ69"
+const firebaseConfigProduction = {
+    apiKey: "AIzaSyBm7Wo-ZgF48F07IDDqazbOd4JDz9mEvOQ",
+    authDomain: "lunags-59cc1.firebaseapp.com",
+    projectId: "lunags",
+    storageBucket: "lunags.firebasestorage.app",
+    messagingSenderId: "1046443805230",
+    appId: "1:1046443805230:web:2bf48b5b3c46e3a1aa2dbf",
+    measurementId: "G-J0V3ENKZ69"
 };
 
 // 検証環境
-const firebaseConfig = {
-  apiKey: "AIzaSyBm7Wo-ZgF48F07IDDqazbOd4JDz9mEvOQ",``
-  authDomain: "lunags-59cc1.firebaseapp.com",
-  projectId: "lunags",
-  storageBucket: "lunags.firebasestorage.app",
-  messagingSenderId: "1046443805230",
-  appId: "1:1046443805230:web:8f5c7631aedbbdd4aa2dbf",
-  measurementId: "G-0W20KY4V22"
+const firebaseConfigDevelopment = {
+    apiKey: "AIzaSyBm7Wo-ZgF48F07IDDqazbOd4JDz9mEvOQ",
+    authDomain: "lunags-59cc1.firebaseapp.com",
+    projectId: "lunags",
+    storageBucket: "lunags.firebasestorage.app",
+    messagingSenderId: "1046443805230",
+    appId: "1:1046443805230:web:8f5c7631aedbbdd4aa2dbf",
+    measurementId: "G-0W20KY4V22"
 };
 
 
@@ -49,7 +39,6 @@ const isDevelopment =
     hostname === "localhost" ||
     hostname === "127.0.0.1" ||
     hostname === "dev.lunags.jp";
-
 
 // ========================================
 // Firebase 初期化
@@ -72,12 +61,7 @@ export const FIREBASE_PROJECT_ID =
 // Cloud Functions
 // ========================================
 
-const isLocalhost =
-    hostname === "localhost" ||
-    hostname === "127.0.0.1" ||
-    hostname === "dev.lunags.jp"
-
-const FUNCTIONS_BASE_URL = isLocalhost
+const FUNCTIONS_BASE_URL = isDevelopment
     ? `http://127.0.0.1:5001/${FIREBASE_PROJECT_ID}/us-central1`
     : `https://us-central1-${FIREBASE_PROJECT_ID}.cloudfunctions.net`;
 
@@ -94,21 +78,19 @@ export const SIGNUP_SKIP_ENDPOINT =
 
 export { serverTimestamp };
 
-export const VERIFICATION_COLLECTION =  "emailVerifications";
-
 export const CODE_TTL_MS = 5 * 60 * 1000;
 
-export const MAX_ATTEMPTS =  5;
+export const MAX_ATTEMPTS = 5;
 
-export const RESEND_COOLDOWN_MS =  60 * 1000;
+export const RESEND_COOLDOWN_MS = 60 * 1000;
 
 export const FIREBASE_TIMEOUT_MS = 30000;
 
-export const LOCAL_VERIFICATION_KEY_PREFIX =  "verify_";
+export const LOCAL_VERIFICATION_KEY_PREFIX = "verify_";
 
-export function normalizeEmail(email) { return email.trim().toLowerCase();}
+export function normalizeEmail(email) { return email.trim().toLowerCase(); }
 
-export function generateCode() {return Math.floor(100000 + Math.random() * 900000).toString();}
+export function generateCode() { return Math.floor(100000 + Math.random() * 900000).toString(); }
 
 export async function sha256(value) {
     if (!globalThis.crypto?.subtle) {
@@ -338,7 +320,7 @@ export async function sendVerificationEmail({
         name: name
     };
 
-    console.log( "SEND PAYLOAD =", payload );
+    console.log("SEND PAYLOAD =", payload);
 
     const response = await fetch(
         FUNCTIONS_ENDPOINT,
@@ -353,11 +335,11 @@ export async function sendVerificationEmail({
         }
     );
 
-    console.log(   "status =",  response.status  );
+    console.log("status =", response.status);
 
     const text = await response.text();
 
-    console.log(  "response =",  text );
+    console.log("response =", text);
 
     let data = null;
 
