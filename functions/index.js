@@ -173,9 +173,44 @@ function escapeHtml(value) {
 }
 
 function timestampMillis(value) {
-    if (!value) return null;
-    if (typeof value === "number") return value;
-    if (typeof value.toMillis === "function") return value.toMillis();
+    if (value === null || value === undefined) return null;
+    if (typeof value === "number") {
+        return Number.isFinite(value) ? value : null;
+    }
+    if (typeof value.toMillis === "function") {
+        try {
+            return value.toMillis();
+        } catch {
+            return null;
+        }
+    }
+    if (typeof value.toDate === "function") {
+        try {
+            return value.toDate().getTime();
+        } catch {
+            return null;
+        }
+    }
+    if (typeof value === "object" && value._seconds !== undefined) {
+        return (
+            value._seconds * 1000 +
+            Math.floor((value._nanoseconds || 0) / 1e6)
+        );
+    }
+    if (value instanceof Date) {
+        const time = value.getTime();
+        return Number.isFinite(time) ? time : null;
+    }
+    if (typeof value === "string") {
+        const trimmed = value.trim();
+        if (!trimmed) return null;
+        const num = Number(trimmed);
+        if (Number.isFinite(num) && /^\d+$/.test(trimmed)) {
+            return num;
+        }
+        const parsed = Date.parse(trimmed);
+        return Number.isFinite(parsed) ? parsed : null;
+    }
     return null;
 }
 
@@ -264,9 +299,16 @@ function getErrorStatus(error) {
         case "auth/id-token-expired":
         case "auth/id-token-revoked":
         case "auth/invalid-id-token":
+        case "auth/missing-token":
+        case "auth/empty-token":
+        case "auth/invalid-token":
+        case "auth/argument-error":
+        case "auth/email-missing":
             return 401;
 
         case "auth/user-disabled":
+        case "FORBIDDEN_NOT_ADMIN":
+        case "FORBIDDEN_NOT_ADMIN_ACCOUNT":
             return 403;
 
         case "auth/user-not-found":
@@ -548,22 +590,36 @@ signupSkipApp.post("/", async (req, res) => {
    ============================ */
 
 async function verifyFirebaseUser(req) {
-    const authHeader = req.headers.authorization;
+    const authHeader = req.headers?.authorization;
 
     if (
         !authHeader ||
+        typeof authHeader !== "string" ||
         !authHeader.startsWith("Bearer ")
     ) {
-        const error = new Error(
-            "認証トークンがありません"
-        );
+        const error = new Error("認証トークンがありません");
         error.status = 401;
+        error.code = "auth/missing-token";
         throw error;
     }
 
-    return await admin
-        .auth()
-        .verifyIdToken(authHeader.substring(7));
+    const token = authHeader.substring(7).trim();
+    if (!token) {
+        const error = new Error("認証トークンが空です");
+        error.status = 401;
+        error.code = "auth/empty-token";
+        throw error;
+    }
+
+    try {
+        return await admin.auth().verifyIdToken(token);
+    } catch (authError) {
+        console.warn("verifyIdToken failed:", authError?.code, authError?.message);
+        const error = new Error("認証トークンが無効または期限切れです");
+        error.status = 401;
+        error.code = authError?.code || "auth/invalid-token";
+        throw error;
+    }
 }
 
 async function getUserProfileByUid(uid) {
@@ -573,44 +629,66 @@ async function getUserProfileByUid(uid) {
 
     try {
         authUser = await admin.auth().getUser(uid);
-    } catch {
-        authUser = null;
+    } catch (err) {
+        if (err?.code === "auth/user-not-found") {
+            const error = new Error("対象の認証ユーザーが見つかりません");
+            error.status = 404;
+            error.code = "auth/user-not-found";
+            throw error;
+        }
+        console.warn("admin.auth().getUser warning:", err?.message);
     }
 
-    const uidMapSnap = await db
-        .collection("uidMap")
-        .doc(uid)
-        .get();
+    if (authUser && authUser.disabled === true) {
+        const error = new Error("このユーザーアカウントは無効化されています");
+        error.status = 403;
+        error.code = "auth/user-disabled";
+        throw error;
+    }
 
-    if (uidMapSnap.exists) {
-        userId = uidMapSnap.data().userId || "";
+    try {
+        const uidMapSnap = await db
+            .collection("uidMap")
+            .doc(uid)
+            .get();
 
-        if (userId) {
-            const userSnap = await db
-                .collection("users")
-                .doc(userId)
-                .get();
+        if (uidMapSnap.exists) {
+            userId = uidMapSnap.data()?.userId || "";
 
-            if (userSnap.exists) {
-                userDoc = userSnap.data();
+            if (userId) {
+                const userSnap = await db
+                    .collection("users")
+                    .doc(userId)
+                    .get();
+
+                if (userSnap.exists) {
+                    userDoc = userSnap.data();
+                }
             }
         }
+    } catch (dbErr) {
+        console.warn("getUserProfileByUid Firestore read warning:", dbErr?.message);
     }
+
+    const email = normalizeEmail(
+        userDoc?.email ||
+        authUser?.email ||
+        ""
+    );
 
     return {
         uid,
         userId,
-        email: normalizeEmail(
-            userDoc?.email ||
-            authUser?.email ||
-            ""
-        ),
+        email,
         name:
             userDoc?.displayName ||
             userDoc?.name ||
             authUser?.displayName ||
             authUser?.email ||
-            ""
+            email ||
+            "",
+        authUser,
+        userDoc
     };
 }
 
@@ -635,15 +713,20 @@ async function findUserByEmail(email) {
         authUser = null;
     }
 
-    const usersSnap = await db
-        .collection("users")
-        .where("email", "==", normalized)
-        .limit(1)
-        .get();
+    let userDoc = null;
+    try {
+        const usersSnap = await db
+            .collection("users")
+            .where("email", "==", normalized)
+            .limit(1)
+            .get();
 
-    const userDoc = usersSnap.empty
-        ? null
-        : usersSnap.docs[0].data();
+        userDoc = usersSnap.empty
+            ? null
+            : usersSnap.docs[0].data();
+    } catch (err) {
+        console.warn("findUserByEmail Firestore read warning:", err?.message);
+    }
 
     if (!authUser && !userDoc?.uid) {
         const error = new Error(
@@ -669,16 +752,20 @@ async function getadminAccountByEmail(email) {
 
     if (!normalized) return null;
 
-    const accountSnap = await db
-        .collection("adminAccount")
-        .doc(normalized)
-        .get();
+    try {
+        const accountSnap = await db
+            .collection("adminAccount")
+            .doc(normalized)
+            .get();
 
-    if (
-        accountSnap.exists &&
-        accountSnap.data().active === true
-    ) {
-        return publicAccount(accountSnap.data());
+        if (
+            accountSnap.exists &&
+            accountSnap.data()?.active === true
+        ) {
+            return publicAccount(accountSnap.data());
+        }
+    } catch (err) {
+        console.warn("getadminAccountByEmail warning:", err?.message);
     }
 
     return null;
@@ -689,139 +776,171 @@ async function finishAdminSession(
     endReason,
     actor = {}
 ) {
-    const sessionRef = db
-        .collection("adminSessions")
-        .doc(uid);
+    try {
+        const sessionRef = db
+            .collection("adminSessions")
+            .doc(uid);
 
-    const sessionSnap = await sessionRef.get();
+        const sessionSnap = await sessionRef.get();
 
-    if (
-        !sessionSnap.exists ||
-        sessionSnap.data().active !== true
-    ) {
-        return false;
-    }
+        if (
+            !sessionSnap.exists ||
+            sessionSnap.data()?.active !== true
+        ) {
+            return false;
+        }
 
-    const session = {
-        uid,
-        ...sessionSnap.data()
-    };
+        const session = {
+            uid,
+            ...sessionSnap.data()
+        };
 
-    const endedAt = Date.now();
+        const endedAt = Date.now();
 
-    await db.collection("adminModeHistory").add({
-        userUid: uid,
-        userEmail: session.email || "",
-        userName: session.userName || "",
-        approvedByUid:
-            session.approvedByUid || "",
-        approvedByEmail:
-            session.approvedByEmail || "",
-        approvedByName:
-            session.approvedByName || "",
-        startedAt: session.createdAt || null,
-        expiresAt: session.expiresAt || null,
-        endedAt,
-        endReason,
-        endedByUid: actor.uid || "",
-        endedByEmail: actor.email || "",
-        endedByName: actor.name || "",
-        createdAt:
-            admin.firestore.FieldValue.serverTimestamp()
-    });
-
-    await sessionRef.set(
-        {
-            active: false,
+        await db.collection("adminModeHistory").add({
+            userUid: uid,
+            userEmail: session.email || "",
+            userName: session.userName || "",
+            approvedByUid:
+                session.approvedByUid || "",
+            approvedByEmail:
+                session.approvedByEmail || "",
+            approvedByName:
+                session.approvedByName || "",
+            startedAt: session.createdAt || null,
+            expiresAt: session.expiresAt || null,
             endedAt,
             endReason,
             endedByUid: actor.uid || "",
             endedByEmail: actor.email || "",
             endedByName: actor.name || "",
-            updatedAt:
+            createdAt:
                 admin.firestore.FieldValue.serverTimestamp()
-        },
-        { merge: true }
-    );
+        });
 
-    return true;
+        await sessionRef.set(
+            {
+                active: false,
+                endedAt,
+                endReason,
+                endedByUid: actor.uid || "",
+                endedByEmail: actor.email || "",
+                endedByName: actor.name || "",
+                updatedAt:
+                    admin.firestore.FieldValue.serverTimestamp()
+            },
+            { merge: true }
+        );
+
+        return true;
+    } catch (err) {
+        console.warn("finishAdminSession warning:", err?.message);
+        return false;
+    }
 }
 
 async function getActiveSession(uid) {
-    const sessionSnap = await db
-        .collection("adminSessions")
-        .doc(uid)
-        .get();
+    if (!uid) return null;
 
-    if (
-        !sessionSnap.exists ||
-        sessionSnap.data().active !== true
-    ) {
-        return null;
-    }
+    try {
+        const sessionSnap = await db
+            .collection("adminSessions")
+            .doc(uid)
+            .get();
 
-    const session = {
-        uid,
-        ...sessionSnap.data()
-    };
+        if (
+            !sessionSnap.exists ||
+            sessionSnap.data()?.active !== true
+        ) {
+            return null;
+        }
 
-    const expiresAt =
-        timestampMillis(session.expiresAt) ||
-        Number(session.expiresAt);
-
-    if (
-        !expiresAt ||
-        expiresAt <= Date.now()
-    ) {
-        await finishAdminSession(
+        const session = {
             uid,
-            "期限切れ"
-        );
+            ...sessionSnap.data()
+        };
+
+        const expiresAt =
+            timestampMillis(session.expiresAt) ||
+            Number(session.expiresAt);
+
+        if (
+            !expiresAt ||
+            expiresAt <= Date.now()
+        ) {
+            await finishAdminSession(
+                uid,
+                "期限切れ"
+            );
+            return null;
+        }
+
+        return session;
+    } catch (err) {
+        console.warn("getActiveSession warning:", err?.message);
         return null;
     }
-
-    return session;
 }
 
 async function getCurrentContext(req) {
+    // 1. Firebase ID Token の検証 (欠損/無効/期限切れ時は 401)
     const decoded = await verifyFirebaseUser(req);
-    const profile =
-        await getUserProfileByUid(decoded.uid);
+
+    // 2. Firebase Auth ユーザーおよびプロファイルの取得 (未存在時は 404, 無効時は 403)
+    const profile = await getUserProfileByUid(decoded.uid);
 
     const email = normalizeEmail(
         decoded.email || profile.email
     );
 
-    const adminAccount =
-        await getadminAccountByEmail(email);
+    // メールアドレスが取得できない場合は認証コンテキストを確立できない (401)
+    if (!email) {
+        const error = new Error("アカウントのメールアドレスが確認できません");
+        error.status = 401;
+        error.code = "auth/email-missing";
+        throw error;
+    }
 
-    const session =
-        await getActiveSession(decoded.uid);
+    // 3. adminAccount の確認 (未登録または active!=true の場合は null)
+    const adminAccount = await getadminAccountByEmail(email);
+
+    // 4. adminSessions の確認 (未存在または期限切れの場合は null)
+    const session = await getActiveSession(decoded.uid);
 
     return {
         decoded,
         uid: decoded.uid,
+        userId: profile.userId || "",
         email,
         name:
             profile.name ||
             decoded.name ||
             email,
         adminAccount: !!adminAccount,
-        adminAccount,
+        adminAccountDetail: adminAccount,
         adminMode: !!session,
-        session
+        session,
+        // データチェーン診断情報 (Step 4 で活用)
+        diagnostics: {
+            hasAuthUser: !!profile.authUser,
+            hasUidMap: !!profile.userId,
+            hasUserDoc: !!profile.userDoc,
+            hasAdminAccountDoc: !!adminAccount,
+            isAdminAccountActive: adminAccount?.active === true,
+            chainComplete: !!(profile.authUser && profile.userId && profile.userDoc && adminAccount?.active === true)
+        }
     };
 }
 
 async function requireadminAccount(req) {
-    const context =
-        await getCurrentContext(req);
+    const context = await getCurrentContext(req);
 
     if (!context.adminAccount) {
         const error = new Error(
             "管理者アカウント権限がありません"
         );
         error.status = 403;
+        error.code = "FORBIDDEN_NOT_ADMIN_ACCOUNT";
         throw error;
     }
 
@@ -829,8 +948,7 @@ async function requireadminAccount(req) {
 }
 
 async function requireadminAccountOrMode(req) {
-    const context =
-        await getCurrentContext(req);
+    const context = await getCurrentContext(req);
 
     if (
         !context.adminAccount &&
@@ -840,6 +958,7 @@ async function requireadminAccountOrMode(req) {
             "管理者権限がありません"
         );
         error.status = 403;
+        error.code = "FORBIDDEN_NOT_ADMIN";
         throw error;
     }
 
@@ -847,14 +966,52 @@ async function requireadminAccountOrMode(req) {
 }
 
 async function getActiveadminAccount() {
-    const snap = await db
-        .collection("adminAccount")
-        .where("active", "==", true)
-        .get();
+    try {
+        const snap = await db
+            .collection("adminAccount")
+            .where("active", "==", true)
+            .get();
 
-    return snap.docs.map((doc) =>
-        publicAccount(doc.data())
-    );
+        return snap.docs.map((doc) =>
+            publicAccount(doc.data())
+        );
+    } catch (err) {
+        console.warn("getActiveadminAccount warning:", err?.message);
+        return [];
+    }
+}
+
+async function getAdminAccountsMaps() {
+    const byUid = new Map();
+    const byEmail = new Map();
+
+    try {
+        const snap = await db
+            .collection("adminAccount")
+            .where("active", "==", true)
+            .get();
+
+        snap.docs.forEach((doc) => {
+            try {
+                const data = doc.data() || {};
+                const account = publicAccount(data);
+                const email = normalizeEmail(doc.id || data.email || "");
+
+                if (email) {
+                    byEmail.set(email, account);
+                }
+                if (account.uid) {
+                    byUid.set(account.uid, account);
+                }
+            } catch (docErr) {
+                console.warn("adminAccount doc parse warning:", docErr?.message);
+            }
+        });
+    } catch (err) {
+        console.warn("getAdminAccountsMaps query warning:", err?.message);
+    }
+
+    return { byUid, byEmail };
 }
 
 async function assertMinimumAdminCountAfterOneRemoval() {
@@ -871,68 +1028,92 @@ async function assertMinimumAdminCountAfterOneRemoval() {
 }
 
 function publicUserRecord(user, profile = {}, adminAccount = null) {
-    const providerIds = (user.providerData || [])
-        .map((provider) => provider.providerId)
+    const providerIds = (user?.providerData || [])
+        .map((provider) => provider?.providerId)
         .filter(Boolean);
 
+    const email = normalizeEmail(
+        user?.email ||
+        profile?.email ||
+        ""
+    );
+
+    const name =
+        profile?.displayName ||
+        profile?.name ||
+        user?.displayName ||
+        email ||
+        "";
+
+    const createdAt =
+        timestampMillis(profile?.createdAt) ||
+        timestampMillis(user?.metadata?.creationTime) ||
+        null;
+
+    const lastLoginAt =
+        timestampMillis(profile?.lastLoginAt) ||
+        timestampMillis(user?.metadata?.lastSignInTime) ||
+        null;
+
     return {
-        uid: user.uid,
-        userId: profile.userId || "",
-        email: normalizeEmail(user.email || profile.email || ""),
-        name:
-            profile.displayName ||
-            profile.name ||
-            user.displayName ||
-            "",
-        disabled: user.disabled === true,
-        emailVerified: user.emailVerified === true,
-        createdAt:
-            timestampMillis(profile.createdAt) ||
-            profile.createdAt ||
-            user.metadata?.creationTime ||
-            null,
-        lastLoginAt:
-            timestampMillis(profile.lastLoginAt) ||
-            profile.lastLoginAt ||
-            user.metadata?.lastSignInTime ||
-            null,
+        uid: user?.uid || "",
+        userId: profile?.userId || "",
+        email,
+        name,
+        disabled: user?.disabled === true,
+        emailVerified: user?.emailVerified === true,
+        createdAt,
+        lastLoginAt,
         adminAccount: !!adminAccount,
-        adminAccount,
+        adminAccountDetail: adminAccount,
         providers: providerIds,
-        phoneNumber: user.phoneNumber || profile.phoneNumber || "",
-        photoURL: user.photoURL || profile.photoURL || ""
+        phoneNumber: user?.phoneNumber || profile?.phoneNumber || "",
+        photoURL: user?.photoURL || profile?.photoURL || ""
     };
 }
 
 async function getUserProfilesByUid() {
-    const [usersSnap, uidMapSnap] = await Promise.all([
-        db.collection("users").get(),
-        db.collection("uidMap").get()
-    ]);
+    let usersDocs = [];
+    let uidMapDocs = [];
+
+    try {
+        const [usersSnap, uidMapSnap] = await Promise.all([
+            db.collection("users").get().catch(() => ({ docs: [] })),
+            db.collection("uidMap").get().catch(() => ({ docs: [] }))
+        ]);
+        usersDocs = usersSnap.docs || [];
+        uidMapDocs = uidMapSnap.docs || [];
+    } catch (dbErr) {
+        console.warn("getUserProfilesByUid collections read warning:", dbErr?.message);
+    }
 
     const userIdsByUid = new Map();
-    uidMapSnap.docs.forEach((doc) => {
-        const data = doc.data();
-        if (data.userId) {
-            userIdsByUid.set(doc.id, data.userId);
-        }
+    uidMapDocs.forEach((doc) => {
+        try {
+            const data = doc.data() || {};
+            if (data.userId) {
+                userIdsByUid.set(doc.id, data.userId);
+            }
+        } catch {}
     });
 
     const profiles = new Map();
 
-    usersSnap.docs.forEach((doc) => {
-        const data = doc.data();
-        const uid = data.uid || data.authUid || "";
-        const uidFromMap = [...userIdsByUid.entries()]
-            .find(([, userId]) => userId === doc.id)?.[0] || "";
-        const resolvedUid = uid || uidFromMap;
+    usersDocs.forEach((doc) => {
+        try {
+            const data = doc.data() || {};
+            const uid = data.uid || data.authUid || "";
+            const uidFromMap = [...userIdsByUid.entries()]
+                .find(([, userId]) => userId === doc.id)?.[0] || "";
+            const resolvedUid = uid || uidFromMap;
 
-        if (!resolvedUid) return;
+            if (!resolvedUid) return;
 
-        profiles.set(resolvedUid, {
-            ...data,
-            userId: doc.id
-        });
+            profiles.set(resolvedUid, {
+                ...data,
+                userId: doc.id
+            });
+        } catch {}
     });
 
     return profiles;
@@ -942,46 +1123,40 @@ async function listAllAuthUsers() {
     const users = [];
     let pageToken = undefined;
 
-    do {
-        const result = await admin.auth().listUsers(1000, pageToken);
-        users.push(...result.users);
-        pageToken = result.pageToken;
-    } while (pageToken);
+    try {
+        do {
+            const result = await admin.auth().listUsers(1000, pageToken);
+            users.push(...result.users);
+            pageToken = result.pageToken;
+        } while (pageToken);
+    } catch (err) {
+        console.error("listAllAuthUsers error:", err?.message);
+        throw err;
+    }
 
     return users;
 }
 
 async function getadminAccountByUid() {
-    const accounts = await getActiveadminAccount();
-    const map = new Map();
-
-    accounts.forEach((account) => {
-        if (account.uid) {
-            map.set(account.uid, account);
-        }
-    });
-
-    return map;
+    const maps = await getAdminAccountsMaps();
+    return maps.byUid;
 }
 
 function eventTime(data) {
+    if (!data) return null;
     return (
         timestampMillis(data.createdAt) ||
         timestampMillis(data.endedAt) ||
         timestampMillis(data.updatedAt) ||
         timestampMillis(data.adminStartedAt) ||
         timestampMillis(data.adminEndedAt) ||
-        data.createdAt ||
-        data.endedAt ||
-        data.updatedAt ||
-        data.adminStartedAt ||
-        data.adminEndedAt ||
+        timestampMillis(data.timestamp) ||
         null
     );
 }
 
 function publicLogEvent(doc, source, type, actorFields = {}) {
-    const data = doc.data();
+    const data = doc?.data() || {};
 
     return {
         id: doc.id,
@@ -1006,9 +1181,154 @@ function sortByOccurredAtDesc(a, b) {
     return Number(b.occurredAt || 0) - Number(a.occurredAt || 0);
 }
 
+async function safeCountCollection(collectionName) {
+    try {
+        const snap = await db.collection(collectionName).count().get();
+        return snap.data().count || 0;
+    } catch (err) {
+        console.warn(`safeCountCollection failed for ${collectionName}:`, err?.message);
+        return 0;
+    }
+}
+
 async function countCollection(collectionName) {
-    const snap = await db.collection(collectionName).count().get();
-    return snap.data().count || 0;
+    return await safeCountCollection(collectionName);
+}
+
+/**
+ * Analytics集計処理（独立）
+ * 各種Firestoreクエリの失敗や欠損フィールド、データ型混在に対しても
+ * API全体を500にせず安全に0やデフォルト値を返す
+ */
+async function aggregateAdminAnalytics(requestedDays = 30) {
+    const days = Math.max(1, parseInt(requestedDays || "30", 10) || 30);
+    const now = Date.now();
+    const dayMs = 24 * 60 * 60 * 1000;
+
+    // 1. 各集計データを安全に取得（個別エラーでも全体を落とさない）
+    const [
+        authUsers,
+        activeAdmins,
+        activeSessionsDocs,
+        modeHistoryCount,
+        accountHistoryCount,
+        demotionRequestCount
+    ] = await Promise.all([
+        listAllAuthUsers().catch((err) => {
+            console.warn("Analytics listAllAuthUsers warning:", err?.message);
+            return [];
+        }),
+        getActiveadminAccount().catch((err) => {
+            console.warn("Analytics getActiveadminAccount warning:", err?.message);
+            return [];
+        }),
+        db
+            .collection("adminSessions")
+            .where("active", "==", true)
+            .get()
+            .then((s) => s.docs)
+            .catch((err) => {
+                console.warn("Analytics adminSessions query warning:", err?.message);
+                return [];
+            }),
+        safeCountCollection("adminModeHistory"),
+        safeCountCollection("adminAccountHistory"),
+        safeCountCollection("adminDemotionRequests")
+    ]);
+
+    // 2. 日別新規登録バケットの初期化
+    const createdBuckets = Array.from(
+        { length: days },
+        (_, index) => {
+            const date = new Date(
+                now - (days - 1 - index) * dayMs
+            );
+            return {
+                key: date.toISOString().slice(0, 10),
+                count: 0
+            };
+        }
+    );
+    const bucketByKey = new Map(
+        createdBuckets.map((bucket) => [
+            bucket.key,
+            bucket
+        ])
+    );
+
+    let disabledUsers = 0;
+    let verifiedUsers = 0;
+    let activeLast30Days = 0;
+
+    // 3. ユーザー情報の安全な走査（データ型の混在に対応）
+    for (const user of authUsers) {
+        if (!user) continue;
+
+        if (user.disabled === true) disabledUsers += 1;
+        if (user.emailVerified === true) verifiedUsers += 1;
+
+        const createdAt = timestampMillis(user.metadata?.creationTime);
+        const lastLoginAt = timestampMillis(user.metadata?.lastSignInTime);
+
+        if (
+            lastLoginAt &&
+            now - lastLoginAt <= 30 * dayMs
+        ) {
+            activeLast30Days += 1;
+        }
+
+        if (
+            createdAt &&
+            now - createdAt <= days * dayMs
+        ) {
+            try {
+                const key = new Date(createdAt)
+                    .toISOString()
+                    .slice(0, 10);
+                const bucket = bucketByKey.get(key);
+                if (bucket) bucket.count += 1;
+            } catch {}
+        }
+    }
+
+    // 4. 有効セッションの確認・期限切れの整理
+    const activeSessions = [];
+    for (const doc of activeSessionsDocs) {
+        try {
+            const data = doc.data() || {};
+            const session = {
+                uid: doc.id,
+                ...data
+            };
+            const expiresAt = timestampMillis(session.expiresAt);
+
+            if (expiresAt && expiresAt <= now) {
+                finishAdminSession(
+                    doc.id,
+                    "期限切れ"
+                ).catch(() => {});
+            } else {
+                activeSessions.push(session);
+            }
+        } catch {}
+    }
+
+    return {
+        summary: {
+            totalUsers: authUsers.length,
+            disabledUsers,
+            enabledUsers: Math.max(0, authUsers.length - disabledUsers),
+            verifiedUsers,
+            activeLast30Days,
+            activeadminAccount: activeAdmins.length,
+            activeAdminSessions: activeSessions.length,
+            adminModeHistory: modeHistoryCount,
+            adminAccountHistory: accountHistoryCount,
+            demotionRequests: demotionRequestCount
+        },
+        userGrowth: createdBuckets,
+        generatedAt: now
+    };
 }
 
 /* ============================
@@ -1024,17 +1344,20 @@ app.get("/admin-status", async (req, res) => {
             ok: true,
             user: {
                 uid: context.uid,
+                userId: context.userId || "",
                 email: context.email,
                 name: context.name
             },
             adminAccount:
                 context.adminAccount,
-            adminAccount:
-                context.adminAccount,
+            adminAccountDetail:
+                context.adminAccountDetail,
             adminMode:
                 context.adminMode,
             session:
-                publicSession(context.session)
+                publicSession(context.session),
+            diagnostics:
+                context.diagnostics
         });
     } catch (err) {
         return sendError(
@@ -1923,30 +2246,74 @@ app.get("/admin-users", async (req, res) => {
     try {
         await requireadminAccount(req);
 
-        const [
-            authUsers,
-            profilesByUid,
-            adminAccountByUid
-        ] = await Promise.all([
-            listAllAuthUsers(),
-            getUserProfilesByUid(),
-            getadminAccountByUid()
+        // 1. Firebase Auth ユーザー一覧取得
+        let authUsers = [];
+        try {
+            authUsers = await listAllAuthUsers();
+        } catch (authErr) {
+            console.error("listAllAuthUsers error:", authErr?.message);
+            throw authErr;
+        }
+
+        // 2. プロファイルおよび管理者アカウントマップを並行取得（片方が失敗しても一覧を落とさない）
+        const [profilesByUid, adminAccounts] = await Promise.all([
+            getUserProfilesByUid().catch((e) => {
+                console.warn("getUserProfilesByUid warning in /admin-users:", e?.message);
+                return new Map();
+            }),
+            getAdminAccountsMaps().catch((e) => {
+                console.warn("getAdminAccountsMaps warning in /admin-users:", e?.message);
+                return { byUid: new Map(), byEmail: new Map() };
+            })
         ]);
 
-        const users = authUsers
-            .map((user) =>
-                publicUserRecord(
-                    user,
-                    profilesByUid.get(user.uid) || {},
-                    adminAccountByUid.get(user.uid) || null
-                )
-            )
-            .sort((a, b) =>
-                a.email.localeCompare(b.email)
-            );
+        // 3. 各ユーザーを個別に安全に統合（1ユーザーのデータ欠損で全体を500にしない）
+        const users = [];
+        for (const user of authUsers) {
+            try {
+                const uid = user?.uid || "";
+                const email = normalizeEmail(user?.email || "");
+                const profile = profilesByUid.get(uid) || {};
+                const adminAccount =
+                    adminAccounts.byUid.get(uid) ||
+                    adminAccounts.byEmail.get(email) ||
+                    null;
+
+                users.push(publicUserRecord(user, profile, adminAccount));
+            } catch (userErr) {
+                console.warn(`User conversion skipped for uid=${user?.uid}:`, userErr?.message);
+                // 個別ユーザーのデータ破損があっても安全なフォールバックで一覧に含める
+                try {
+                    users.push({
+                        uid: user?.uid || "",
+                        userId: "",
+                        email: normalizeEmail(user?.email || ""),
+                        name: user?.displayName || user?.email || "",
+                        disabled: Boolean(user?.disabled),
+                        emailVerified: Boolean(user?.emailVerified),
+                        createdAt: timestampMillis(user?.metadata?.creationTime) || null,
+                        lastLoginAt: timestampMillis(user?.metadata?.lastSignInTime) || null,
+                        adminAccount: false,
+                        adminAccountDetail: null,
+                        providers: []
+                    });
+                } catch {
+                    // 最悪でもスキップして一覧全体をクラッシュさせない
+                }
+            }
+        }
+
+        // 管理者アカウントを優先、次にメールアドレス順にソート
+        users.sort((a, b) => {
+            if (a.adminAccount !== b.adminAccount) {
+                return a.adminAccount ? -1 : 1;
+            }
+            return (a.email || "").localeCompare(b.email || "");
+        });
 
         return res.json({
             ok: true,
+            total: users.length,
             users
         });
     } catch (err) {
@@ -1972,54 +2339,86 @@ app.get("/admin-users/:uid", async (req, res) => {
             throw error;
         }
 
+        let authUser = null;
+        try {
+            authUser = await admin.auth().getUser(uid);
+        } catch {
+            const error = new Error("対象のユーザーが見つかりません");
+            error.status = 404;
+            throw error;
+        }
+
         const [
-            authUser,
             profile,
-            adminAccountByUid
+            adminAccounts
         ] = await Promise.all([
-            admin.auth().getUser(uid),
-            getUserProfileByUid(uid),
-            getadminAccountByUid()
+            getUserProfileByUid(uid).catch(() => ({})),
+            getAdminAccountsMaps().catch(() => ({ byUid: new Map(), byEmail: new Map() }))
         ]);
 
-        const [modeSnap, accountHistorySnap] =
-            await Promise.all([
+        const userEmail = normalizeEmail(authUser.email || profile.email || "");
+        const adminAccount =
+            adminAccounts.byUid.get(uid) ||
+            adminAccounts.byEmail.get(userEmail) ||
+            null;
+
+        const session = await getActiveSession(uid).catch(() => null);
+
+        let modeHistory = [];
+        let accountHistory = [];
+
+        try {
+            const [modeSnap, accountHistorySnap] = await Promise.all([
                 db
                     .collection("adminModeHistory")
                     .where("userUid", "==", uid)
                     .limit(30)
-                    .get(),
+                    .get()
+                    .catch(() => ({ docs: [] })),
                 db
                     .collection("adminAccountHistory")
                     .where("userUid", "==", uid)
                     .limit(30)
                     .get()
+                    .catch(() => ({ docs: [] }))
             ]);
 
-        const history = [
-            ...modeSnap.docs.map((doc) =>
+            modeHistory = modeSnap.docs.map((doc) =>
                 publicLogEvent(
                     doc,
                     "adminModeHistory",
                     "管理者モード履歴"
                 )
-            ),
-            ...accountHistorySnap.docs.map((doc) =>
+            );
+            accountHistory = accountHistorySnap.docs.map((doc) =>
                 publicLogEvent(
                     doc,
                     "adminAccountHistory",
                     "管理者アカウント履歴"
                 )
-            )
+            );
+        } catch (histErr) {
+            console.warn("User history query warning:", histErr?.message);
+        }
+
+        const history = [
+            ...modeHistory,
+            ...accountHistory
         ].sort(sortByOccurredAtDesc);
+
+        const userRecord = publicUserRecord(
+            authUser,
+            profile,
+            adminAccount
+        );
 
         return res.json({
             ok: true,
-            user: publicUserRecord(
-                authUser,
-                profile,
-                adminAccountByUid.get(uid) || null
-            ),
+            user: {
+                ...userRecord,
+                adminMode: !!session,
+                session
+            },
             history
         });
     } catch (err) {
@@ -2038,20 +2437,29 @@ app.get("/admin-logs", async (req, res) => {
         const [
             modeSnap,
             accountSnap,
-            demotionSnap
+            demotionSnap,
+            auditSnap
         ] = await Promise.all([
             db
                 .collection("adminModeHistory")
                 .limit(100)
-                .get(),
+                .get()
+                .catch(() => ({ docs: [] })),
             db
                 .collection("adminAccountHistory")
                 .limit(100)
-                .get(),
+                .get()
+                .catch(() => ({ docs: [] })),
             db
                 .collection("adminDemotionRequests")
                 .limit(100)
                 .get()
+                .catch(() => ({ docs: [] })),
+            db
+                .collection("auditLogs")
+                .limit(100)
+                .get()
+                .catch(() => ({ docs: [] }))
         ]);
 
         const logs = [
@@ -2080,6 +2488,18 @@ app.get("/admin-logs", async (req, res) => {
                         name: "requestedByName"
                     }
                 )
+            ),
+            ...auditSnap.docs.map((doc) =>
+                publicLogEvent(
+                    doc,
+                    "auditLogs",
+                    "監査ログ",
+                    {
+                        uid: "actorUid",
+                        email: "userEmail",
+                        name: "userName"
+                    }
+                )
             )
         ]
             .sort(sortByOccurredAtDesc)
@@ -2102,123 +2522,12 @@ app.get("/admin-analytics", async (req, res) => {
     try {
         await requireadminAccount(req);
 
-        const [
-            authUsers,
-            activeAdmins,
-            activeSessionsSnap,
-            modeHistoryCount,
-            accountHistoryCount,
-            demotionRequestCount
-        ] = await Promise.all([
-            listAllAuthUsers(),
-            getActiveadminAccount(),
-            db
-                .collection("adminSessions")
-                .where("active", "==", true)
-                .get(),
-            countCollection("adminModeHistory"),
-            countCollection("adminAccountHistory"),
-            countCollection("adminDemotionRequests")
-        ]);
-
-        const now = Date.now();
-        const dayMs = 24 * 60 * 60 * 1000;
-        const createdBuckets = Array.from(
-            { length: 30 },
-            (_, index) => {
-                const date = new Date(
-                    now - (29 - index) * dayMs
-                );
-                return {
-                    key: date.toISOString().slice(0, 10),
-                    count: 0
-                };
-            }
-        );
-        const bucketByKey = new Map(
-            createdBuckets.map((bucket) => [
-                bucket.key,
-                bucket
-            ])
-        );
-
-        let disabledUsers = 0;
-        let verifiedUsers = 0;
-        let activeLast30Days = 0;
-
-        authUsers.forEach((user) => {
-            if (user.disabled) disabledUsers += 1;
-            if (user.emailVerified) verifiedUsers += 1;
-
-            const createdAt = Date.parse(
-                user.metadata?.creationTime || ""
-            );
-            const lastLoginAt = Date.parse(
-                user.metadata?.lastSignInTime || ""
-            );
-
-            if (
-                Number.isFinite(lastLoginAt) &&
-                now - lastLoginAt <= 30 * dayMs
-            ) {
-                activeLast30Days += 1;
-            }
-
-            if (
-                Number.isFinite(createdAt) &&
-                now - createdAt <= 30 * dayMs
-            ) {
-                const key = new Date(createdAt)
-                    .toISOString()
-                    .slice(0, 10);
-                const bucket = bucketByKey.get(key);
-                if (bucket) bucket.count += 1;
-            }
-        });
-
-        const activeSessions = [];
-
-        for (const doc of activeSessionsSnap.docs) {
-            const session = {
-                uid: doc.id,
-                ...doc.data()
-            };
-            const expiresAt =
-                timestampMillis(session.expiresAt) ||
-                Number(session.expiresAt);
-
-            if (expiresAt && expiresAt <= now) {
-                await finishAdminSession(
-                    doc.id,
-                    "期限切れ"
-                );
-            } else {
-                activeSessions.push(session);
-            }
-        }
+        // 独立した集計処理を呼び出し
+        const data = await aggregateAdminAnalytics(req.query.days);
 
         return res.json({
             ok: true,
-            summary: {
-                totalUsers: authUsers.length,
-                disabledUsers,
-                enabledUsers:
-                    authUsers.length - disabledUsers,
-                verifiedUsers,
-                activeLast30Days,
-                activeadminAccount:
-                    activeAdmins.length,
-                activeAdminSessions:
-                    activeSessions.length,
-                adminModeHistory:
-                    modeHistoryCount,
-                adminAccountHistory:
-                    accountHistoryCount,
-                demotionRequests:
-                    demotionRequestCount
-            },
-            userGrowth: createdBuckets,
-            generatedAt: now
+            ...data
         });
     } catch (err) {
         return sendError(
@@ -2292,466 +2601,7 @@ export const cleanupAdminHistory =
         }
     );
 
-/* ============================
-   管理者専用: ユーザー管理 API
-   ============================ */
 
-/**
- * GET /admin-users
- * 全ユーザー一覧（管理者アカウント専用）
- */
-app.get("/admin-users", async (req, res) => {
-    try {
-        await requireadminAccount(req);
-
-        // Firebase Auth からユーザー一覧取得
-        let authUsers = [];
-        let pageToken;
-        do {
-            const result = await admin.auth().listUsers(1000, pageToken);
-            authUsers = authUsers.concat(result.users);
-            pageToken = result.pageToken;
-        } while (pageToken);
-
-        // adminAccount コレクションで管理者フラグを確認
-        const adminAccountnap = await db
-            .collection("adminAccount")
-            .where("active", "==", true)
-            .get();
-        const adminEmails = new Set(
-            adminAccountnap.docs.map((doc) => normalizeEmail(doc.id))
-        );
-        const adminAccountMap = {};
-        adminAccountnap.docs.forEach((doc) => {
-            adminAccountMap[normalizeEmail(doc.id)] = doc.data();
-        });
-
-        // adminSessions で管理者モード中のユーザーを確認
-        const adminSessionsSnap = await db
-            .collection("adminSessions")
-            .where("active", "==", true)
-            .get();
-        const adminModeUids = new Set(
-            adminSessionsSnap.docs.map((doc) => doc.id)
-        );
-
-        const users = authUsers.map((u) => {
-            const email = normalizeEmail(u.email || "");
-            const adminAccount = adminEmails.has(email);
-            return {
-                uid: u.uid,
-                email,
-                name: u.displayName || "",
-                emailVerified: u.emailVerified || false,
-                adminAccount,
-                adminMode: adminModeUids.has(u.uid),
-                createdAt: u.metadata?.creationTime
-                    ? new Date(u.metadata.creationTime).getTime()
-                    : null,
-                lastLoginAt: u.metadata?.lastSignInTime
-                    ? new Date(u.metadata.lastSignInTime).getTime()
-                    : null
-            };
-        });
-
-        // 管理者アカウントを先頭に、次にメールアドレス順
-        users.sort((a, b) => {
-            if (a.adminAccount !== b.adminAccount) {
-                return a.adminAccount ? -1 : 1;
-            }
-            return a.email.localeCompare(b.email);
-        });
-
-        return res.json({
-            ok: true,
-            total: users.length,
-            users
-        });
-    } catch (err) {
-        return sendError(res, err, "ユーザー一覧の取得に失敗しました");
-    }
-});
-
-/**
- * GET /admin-users/:uid
- * 個別ユーザー詳細（管理者アカウント専用）
- */
-app.get("/admin-users/:uid", async (req, res) => {
-    try {
-        await requireadminAccount(req);
-
-        const { uid } = req.params;
-
-        let authUser = null;
-        try {
-            authUser = await admin.auth().getUser(uid);
-        } catch {
-            const err = new Error("ユーザーが見つかりません");
-            err.status = 404;
-            throw err;
-        }
-
-        const email = normalizeEmail(authUser.email || "");
-
-        // uidMap 経由でユーザーIDを取得
-        const uidMapSnap = await db.collection("uidMap").doc(uid).get();
-        const userId = uidMapSnap.exists ? (uidMapSnap.data().userId || "") : "";
-
-        // adminAccount から管理者情報を取得
-        const adminAccountnap = await db
-            .collection("adminAccount")
-            .doc(email)
-            .get();
-        const adminAccount =
-            adminAccountnap.exists && adminAccountnap.data().active === true;
-        const adminAccountDetail = adminAccount
-            ? publicAccount(adminAccountnap.data())
-            : null;
-
-        // adminSessions から管理者モード確認
-        const sessionSnap = await db
-            .collection("adminSessions")
-            .doc(uid)
-            .get();
-        const adminMode =
-            sessionSnap.exists && sessionSnap.data().active === true;
-
-        return res.json({
-            ok: true,
-            user: {
-                uid,
-                userId,
-                email,
-                name: authUser.displayName || "",
-                emailVerified: authUser.emailVerified || false,
-                adminAccount,
-                adminMode,
-                adminAccountDetail,
-                createdAt: authUser.metadata?.creationTime
-                    ? new Date(authUser.metadata.creationTime).getTime()
-                    : null,
-                lastLoginAt: authUser.metadata?.lastSignInTime
-                    ? new Date(authUser.metadata.lastSignInTime).getTime()
-                    : null
-            }
-        });
-    } catch (err) {
-        return sendError(res, err, "ユーザー詳細の取得に失敗しました");
-    }
-});
-
-/* ============================
-   管理者専用: システムログ API
-   ============================ */
-
-/**
- * GET /admin-logs
- * 監査ログ一覧（管理者アカウント専用）
- * 既存の adminModeHistory / adminAccountHistory に加え、auditLogs コレクションも取得
- */
-app.get("/admin-logs", async (req, res) => {
-    try {
-        await requireadminAccount(req);
-
-        const logs = [];
-
-        // adminModeHistory から認証系・管理者権限ログを生成
-        const modeHistorySnap = await db
-            .collection("adminModeHistory")
-            .orderBy("createdAt", "desc")
-            .limit(200)
-            .get();
-
-        modeHistorySnap.docs.forEach((doc) => {
-            const d = doc.data();
-            const ts = timestampMillis(d.createdAt) || timestampMillis(d.startedAt) || null;
-
-            // 管理者モード付与
-            logs.push({
-                id: `mode_start_${doc.id}`,
-                timestamp: timestampMillis(d.startedAt) || ts,
-                category: "admin",
-                event: "管理者モード付与",
-                userEmail: d.approvedByEmail || "",
-                userName: d.approvedByName || "",
-                target: d.userEmail || "",
-                result: "success",
-                detail: `対象: ${d.userEmail || "-"}`
-            });
-
-            // 管理者モード終了
-            if (d.endedAt) {
-                logs.push({
-                    id: `mode_end_${doc.id}`,
-                    timestamp: timestampMillis(d.endedAt),
-                    category: "admin",
-                    event: "管理者モード終了",
-                    userEmail: d.endedByEmail || d.approvedByEmail || "",
-                    userName: d.endedByName || d.approvedByName || "",
-                    target: d.userEmail || "",
-                    result: "success",
-                    detail: d.endReason || ""
-                });
-            }
-        });
-
-        // adminAccountHistory から管理者昇格・降格ログを生成
-        const accountHistorySnap = await db
-            .collection("adminAccountHistory")
-            .orderBy("createdAt", "desc")
-            .limit(200)
-            .get();
-
-        accountHistorySnap.docs.forEach((doc) => {
-            const d = doc.data();
-
-            // 管理者昇格
-            logs.push({
-                id: `acc_promote_${doc.id}`,
-                timestamp: timestampMillis(d.adminStartedAt) || timestampMillis(d.createdAt),
-                category: "account",
-                event: "管理者アカウント昇格",
-                userEmail: d.approvedByEmail || "",
-                userName: d.approvedByName || "",
-                target: d.userEmail || "",
-                result: "success",
-                detail: `対象: ${d.userEmail || "-"}`
-            });
-
-            // 管理者降格（履歴あり）
-            if (d.adminEndedAt) {
-                logs.push({
-                    id: `acc_demote_${doc.id}`,
-                    timestamp: timestampMillis(d.adminEndedAt),
-                    category: "account",
-                    event: "管理者アカウント降格",
-                    userEmail: d.endedApprovedByEmail || "",
-                    userName: d.endedApprovedByName || "",
-                    target: d.userEmail || "",
-                    result: "success",
-                    detail: `対象: ${d.userEmail || "-"}`
-                });
-            }
-        });
-
-        // auditLogs コレクション（存在する場合）から追加
-        try {
-            const auditSnap = await db
-                .collection("auditLogs")
-                .orderBy("timestamp", "desc")
-                .limit(500)
-                .get();
-
-            auditSnap.docs.forEach((doc) => {
-                const d = doc.data();
-                logs.push({
-                    id: doc.id,
-                    timestamp: timestampMillis(d.timestamp) || timestampMillis(d.createdAt),
-                    category: d.category || "system",
-                    event: d.event || "",
-                    userEmail: d.userEmail || "",
-                    userName: d.userName || "",
-                    target: d.target || "",
-                    result: d.result || "success",
-                    detail: d.detail || ""
-                });
-            });
-        } catch {
-            // auditLogs コレクションが存在しない場合はスキップ
-        }
-
-        // タイムスタンプ降順でソート
-        logs.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-
-        return res.json({
-            ok: true,
-            total: logs.length,
-            logs
-        });
-    } catch (err) {
-        return sendError(res, err, "ログの取得に失敗しました");
-    }
-});
-
-/* ============================
-   管理者専用: 分析 API
-   ============================ */
-
-/**
- * GET /admin-analytics?days=30
- * 利用統計・分析データ（管理者アカウント専用）
- */
-app.get("/admin-analytics", async (req, res) => {
-    try {
-        await requireadminAccount(req);
-
-        const days = Math.max(0, parseInt(req.query.days || "30", 10));
-        const cutoff = days > 0 ? Date.now() - days * 24 * 60 * 60 * 1000 : 0;
-
-        // --- 総ユーザー数・新規登録数 ---
-        let allAuthUsers = [];
-        let pageToken;
-        do {
-            const result = await admin.auth().listUsers(1000, pageToken);
-            allAuthUsers = allAuthUsers.concat(result.users);
-            pageToken = result.pageToken;
-        } while (pageToken);
-
-        const totalUsers = allAuthUsers.length;
-        const newUsers = cutoff > 0
-            ? allAuthUsers.filter((u) => {
-                const createdAt = u.metadata?.creationTime
-                    ? new Date(u.metadata.creationTime).getTime()
-                    : 0;
-                return createdAt >= cutoff;
-            }).length
-            : totalUsers;
-
-        // DAU: 直近24時間以内にサインインしたユーザー
-        const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
-        const dau = allAuthUsers.filter((u) => {
-            const lastLogin = u.metadata?.lastSignInTime
-                ? new Date(u.metadata.lastSignInTime).getTime()
-                : 0;
-            return lastLogin >= oneDayAgo;
-        }).length;
-
-        // 有効な管理者アカウント数
-        const adminAccountnap = await db
-            .collection("adminAccount")
-            .where("active", "==", true)
-            .get();
-        const activeAdmins = adminAccountnap.size;
-
-        // --- adminModeHistory からログイン系・管理者モード統計 ---
-        const modeHistoryQuery = cutoff > 0
-            ? db.collection("adminModeHistory").where("startedAt", ">=", cutoff).orderBy("startedAt", "desc").limit(1000)
-            : db.collection("adminModeHistory").orderBy("startedAt", "desc").limit(1000);
-
-        const modeHistorySnap = await modeHistoryQuery.get();
-        const adminModeCount = modeHistorySnap.size;
-
-        // --- 日別新規登録推移 ---
-        const dailyRegistrations = buildDailyTimeline(
-            allAuthUsers
-                .filter((u) => {
-                    if (!cutoff) return true;
-                    const t = u.metadata?.creationTime ? new Date(u.metadata.creationTime).getTime() : 0;
-                    return t >= cutoff;
-                })
-                .map((u) => u.metadata?.creationTime ? new Date(u.metadata.creationTime).getTime() : null)
-                .filter(Boolean),
-            days || 30
-        );
-
-        // --- 日別管理者モード付与数をログイン推移として使用 ---
-        const modeTimestamps = modeHistorySnap.docs
-            .map((doc) => timestampMillis(doc.data().startedAt))
-            .filter(Boolean);
-
-        const dailyLogins = buildDailyTimeline(modeTimestamps, days || 30);
-
-        // --- 管理者アクション内訳 ---
-        const adminActions = {};
-
-        // adminModeHistory を集計
-        modeHistorySnap.docs.forEach((doc) => {
-            const reason = doc.data().endReason || "管理者モード付与";
-            adminActions[reason] = (adminActions[reason] || 0) + 1;
-        });
-
-        // adminAccountHistory を集計
-        const accountHistoryQuery = cutoff > 0
-            ? db.collection("adminAccountHistory").where("adminStartedAt", ">=", cutoff).limit(500)
-            : db.collection("adminAccountHistory").limit(500);
-
-        const accountHistorySnap = await accountHistoryQuery.get();
-        accountHistorySnap.docs.forEach((doc) => {
-            const key = doc.data().adminEndedAt ? "管理者降格" : "管理者昇格";
-            adminActions[key] = (adminActions[key] || 0) + 1;
-        });
-
-        // --- 機能利用状況（auditLogs のカテゴリー集計）---
-        const featureUsageMap = {};
-
-        try {
-            const auditQuery = cutoff > 0
-                ? db.collection("auditLogs").where("timestamp", ">=", cutoff).limit(2000)
-                : db.collection("auditLogs").limit(2000);
-
-            const auditSnap = await auditQuery.get();
-            auditSnap.docs.forEach((doc) => {
-                const feature = doc.data().feature || doc.data().category || "その他";
-                featureUsageMap[feature] = (featureUsageMap[feature] || 0) + 1;
-            });
-        } catch {
-            // auditLogs がない場合はデフォルト値
-        }
-
-        // auditLogs がない場合は adminModeHistory / accountHistory を機能利用として表示
-        if (!Object.keys(featureUsageMap).length) {
-            featureUsageMap["管理者モード"] = adminModeCount;
-            featureUsageMap["管理者昇格・降格"] = accountHistorySnap.size;
-            featureUsageMap["ユーザー登録"] = newUsers;
-        }
-
-        const featureUsage = Object.entries(featureUsageMap).map(([feature, count]) => ({
-            feature,
-            count
-        }));
-
-        // ログイン数（adminModeHistory をプロキシとして使用、実際のauth logsがある場合は置き換え）
-        const loginCount = adminModeCount;
-
-        return res.json({
-            ok: true,
-            period: {
-                days,
-                from: cutoff > 0 ? cutoff : null,
-                to: Date.now()
-            },
-            totalUsers,
-            newUsers,
-            dau,
-            activeAdmins,
-            loginCount,
-            adminModeCount,
-            dailyRegistrations,
-            dailyLogins,
-            adminActions,
-            featureUsage
-        });
-    } catch (err) {
-        return sendError(res, err, "分析データの取得に失敗しました");
-    }
-});
-
-/**
- * 日別タイムラインを生成するヘルパー
- * timestamps: Unix ms の配列
- * days: 表示日数
- */
-function buildDailyTimeline(timestamps, days) {
-    const result = [];
-    const now = new Date();
-
-    for (let i = days - 1; i >= 0; i--) {
-        const date = new Date(now);
-        date.setDate(date.getDate() - i);
-        const y = date.getFullYear();
-        const m = String(date.getMonth() + 1).padStart(2, "0");
-        const d = String(date.getDate()).padStart(2, "0");
-        const label = `${m}/${d}`;
-
-        const dayStart = new Date(y, date.getMonth(), date.getDate()).getTime();
-        const dayEnd = dayStart + 24 * 60 * 60 * 1000;
-        const count = timestamps.filter((t) => t >= dayStart && t < dayEnd).length;
-
-        result.push({ label, value: count });
-    }
-
-    return result;
-}
 
 /* ============================
    メール送信
