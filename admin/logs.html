@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>システムログ | LUNAGS Management</title>
+    <title>システムログ | LUNAGS Admin</title>
     <link rel="stylesheet" href="../shared/normalize.css">
     <link rel="stylesheet" href="../shared/common.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
@@ -12,8 +12,8 @@
 </head>
 
 <body>
-    <button class="hamburger" id="hamburgerBtn" type="button" aria-label="メニュー">
-        <i class="fa-solid fa-bars"></i>
+    <button class="hamburger" id="hamburgerBtn" aria-label="メニュー">
+        <i class="fas fa-bars"></i>
     </button>
 
     <div class="page">
@@ -30,25 +30,29 @@
                     <span>ランチャー</span>
                 </a>
 
-                <div class="sidebar__divider" style="height:1px; margin:4px 8px; background:rgba(255,255,255,0.1);">
-                </div>
+                <div class="sidebar__divider" style="height:1px; margin:4px 8px; background:rgba(255,255,255,0.1);"></div>
+
                 <div class="sidebar__section-label"
                     style="padding:14px 8px 4px; color:rgba(238,245,255,0.48); font-size:10px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase;">
-                    管理者専用</div>
+                    管理者専用
+                </div>
 
                 <a href="./admin.html" class="menu">
                     <i class="fa-solid fa-user-shield"></i>
                     <span>管理者</span>
                 </a>
-                <a href="./users.html" class="menu" id="usersMenuLink">
+
+                <a href="./users.html" class="menu">
                     <i class="fa-solid fa-users-gear"></i>
                     <span>ユーザー管理</span>
                 </a>
-                <a href="./logs.html" class="menu active" id="logsMenuLink">
+
+                <a href="./logs.html" class="menu active">
                     <i class="fa-solid fa-clipboard-list"></i>
                     <span>システムログ</span>
                 </a>
-                <a href="./analytics.html" class="menu" id="analyticsMenuLink">
+
+                <a href="./analytics.html" class="menu">
                     <i class="fa-solid fa-chart-pie"></i>
                     <span>分析</span>
                 </a>
@@ -72,7 +76,9 @@
                     <h1 class="topbar__title">LOGS</h1>
                     <div class="topbar__sub">管理者操作と権限関連イベント</div>
                 </div>
-                <span class="pill" id="statusPill">確認中</span>
+                <div class="status-strip">
+                    <span class="pill pill--muted" id="statusPill">確認中</span>
+                </div>
             </header>
 
             <section class="card hidden" id="accessDenied">
@@ -87,7 +93,7 @@
                 <section class="toolbar">
                     <label class="search-box">
                         <i class="fa-solid fa-magnifying-glass"></i>
-                        <input id="searchInput" type="search" placeholder="ユーザー・イベント・対象・結果で検索" autocomplete="off">
+                        <input id="searchInput" type="search" placeholder="メールアドレス・イベント・対象・結果で検索" autocomplete="off">
                     </label>
                     <span class="pill pill--muted" id="countPill">0件</span>
                 </section>
@@ -97,12 +103,12 @@
                         <h2><i class="fa-solid fa-clipboard-list"></i> 監査ログ</h2>
                     </div>
                     <div class="table-wrap">
-                        <table class="data-table">
+                        <table class="data-table log-table">
                             <thead>
                                 <tr>
                                     <th>日時</th>
                                     <th>イベント</th>
-                                    <th>ユーザー</th>
+                                    <th>メールアドレス</th>
                                     <th>対象</th>
                                     <th>結果</th>
                                     <th>ソース</th>
@@ -156,11 +162,36 @@
             return data;
         }
 
+        function setAccessDenied() {
+            const pill = $("statusPill");
+            pill.textContent = "拒否";
+            pill.className = "pill pill--danger";
+            $("accessDenied").classList.remove("hidden");
+            $("content").classList.add("hidden");
+        }
+
+        function resolveActorEmail(log) {
+            if (log.type === "管理者アカウント") {
+                const isInitial = log.actorEmail === "初期設定" ||
+                    log.actorName === "初期設定" ||
+                    log.actorUid === "initial_setup" ||
+                    log.details?.isInitialSetup ||
+                    log.details?.approvedByEmail === "初期設定";
+                return isInitial ? "初期設定" : "admin";
+            }
+            if (log.type === "降格申請") {
+                return log.actorEmail || "admin";
+            }
+            return log.actorEmail || log.actorName || "-";
+        }
+
         function renderLogs() {
             const keyword = $("searchInput").value.trim().toLowerCase();
             const logs = state.logs.filter((log) => {
+                const displayActor = resolveActorEmail(log);
                 const haystack = [
                     log.type,
+                    displayActor,
                     log.actorEmail,
                     log.actorName,
                     log.target,
@@ -172,25 +203,34 @@
 
             $("countPill").textContent = `${logs.length}件`;
             $("logsBody").innerHTML = logs.length
-                ? logs.map((log) => `
+                ? logs.map((log) => {
+                    const actorDisplay = resolveActorEmail(log);
+                    const resultText = log.result || "completed";
+                    return `
                     <tr>
-                        <td>${formatDate(log.occurredAt)}</td>
+                        <td style="white-space:nowrap;">${formatDate(log.occurredAt)}</td>
                         <td><span class="log-type"><i class="fa-solid fa-circle-dot"></i>${escapeHtml(log.type)}</span></td>
-                        <td>${escapeHtml(log.actorEmail || log.actorName || "-")}</td>
-                        <td>${escapeHtml(log.target || "-")}</td>
-                        <td>${escapeHtml(log.result || "-")}</td>
-                        <td><span class="pill pill--muted">${escapeHtml(log.source)}</span></td>
+                        <td><span class="cell-email" title="${escapeHtml(actorDisplay)}">${escapeHtml(actorDisplay)}</span></td>
+                        <td><span class="cell-email" title="${escapeHtml(log.target || "-")}">${escapeHtml(log.target || "-")}</span></td>
+                        <td><span class="pill ${resultText === "completed" ? "pill--mode" : "pill--muted"}" style="font-size:11px;">${escapeHtml(resultText)}</span></td>
+                        <td><span class="pill pill--muted" style="font-size:11px;">${escapeHtml(log.source)}</span></td>
                     </tr>
-                `).join("")
+                    `;
+                }).join("")
                 : `<tr><td colspan="6"><div class="empty-state">ログはありません。</div></td></tr>`;
         }
 
         async function loadLogs() {
-            $("statusPill").textContent = "読み込み中";
+            const pill = $("statusPill");
+            pill.textContent = "読み込み中";
+            pill.className = "pill pill--muted";
+
             const data = await request("/admin-logs");
             state.logs = data.logs || [];
             renderLogs();
-            $("statusPill").textContent = "管理者アカウント";
+
+            pill.textContent = "管理者アカウント";
+            pill.className = "pill pill--admin";
             $("accessDenied").classList.add("hidden");
             $("content").classList.remove("hidden");
         }
@@ -198,12 +238,12 @@
         function handleError(error) {
             console.error(error);
             if (error.status === 401 || error.status === 403) {
-                $("statusPill").textContent = "拒否";
-                $("accessDenied").classList.remove("hidden");
-                $("content").classList.add("hidden");
+                setAccessDenied();
                 return;
             }
-            $("statusPill").textContent = "エラー";
+            const pill = $("statusPill");
+            pill.textContent = "エラー";
+            pill.className = "pill pill--danger";
             alert(error.message);
         }
 

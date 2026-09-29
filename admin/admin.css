@@ -543,16 +543,19 @@ h1 {
 
 /* テーブル */
 .table-wrap {
+  width: 100%;
+  max-width: 100%;
   overflow-x: auto;
   border: 1px solid var(--line);
   border-radius: var(--radius);
+  background: #ffffff;
 }
 
 .data-table {
   width: 100%;
-  min-width: 680px;
   border-collapse: collapse;
   font-size: 13px;
+  table-layout: auto;
 }
 
 .data-table th,
@@ -561,6 +564,7 @@ h1 {
   border-bottom: 1px solid var(--line);
   text-align: left;
   vertical-align: middle;
+  white-space: nowrap; /* 表はすべて横書きで1文字ずつの縦折り返しを防止 */
 }
 
 .data-table th {
@@ -568,6 +572,7 @@ h1 {
   font-size: 12px;
   font-weight: 800;
   background: var(--surface-blue);
+  letter-spacing: 0.02em;
 }
 
 .data-table tr:last-child td {
@@ -576,6 +581,45 @@ h1 {
 
 .data-table tr:hover td {
   background: #f4f8fe;
+}
+
+/* ユーザー一覧用セル装飾 */
+.user-cell-name {
+  display: inline-block;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+  font-weight: 700;
+  color: var(--blue-950);
+}
+
+.user-cell-email,
+.cell-email {
+  display: inline-block;
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+  color: var(--blue-900);
+}
+
+.user-cell-id {
+  font-family: monospace;
+  font-weight: 700;
+  color: var(--blue-700);
+}
+
+.btn-detail {
+  min-width: 68px;
+  height: 32px;
+  padding: 4px 10px;
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .small-note {

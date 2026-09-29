@@ -1064,6 +1064,7 @@ function publicUserRecord(user, profile = {}, adminAccount = null) {
         emailVerified: user?.emailVerified === true,
         createdAt,
         lastLoginAt,
+        role: profile?.role || "-",
         adminAccount: !!adminAccount,
         adminAccountDetail: adminAccount,
         providers: providerIds,
@@ -1324,7 +1325,8 @@ async function aggregateAdminAnalytics(requestedDays = 30) {
             activeAdminSessions: activeSessions.length,
             adminModeHistory: modeHistoryCount,
             adminAccountHistory: accountHistoryCount,
-            demotionRequests: demotionRequestCount
+            demotionRequests: demotionRequestCount,
+            totalUsersCumulative: authUsers.length
         },
         userGrowth: createdBuckets,
         generatedAt: now
@@ -2255,8 +2257,8 @@ app.get("/admin-users", async (req, res) => {
             throw authErr;
         }
 
-        // 2. プロファイルおよび管理者アカウントマップを並行取得（片方が失敗しても一覧を落とさない）
-        const [profilesByUid, adminAccounts] = await Promise.all([
+        // 2. プロファイル、管理者アカウントマップ、有効な管理者セッションを並行取得
+        const [profilesByUid, adminAccounts, activeSessionsSnap] = await Promise.all([
             getUserProfilesByUid().catch((e) => {
                 console.warn("getUserProfilesByUid warning in /admin-users:", e?.message);
                 return new Map();
@@ -2264,8 +2266,19 @@ app.get("/admin-users", async (req, res) => {
             getAdminAccountsMaps().catch((e) => {
                 console.warn("getAdminAccountsMaps warning in /admin-users:", e?.message);
                 return { byUid: new Map(), byEmail: new Map() };
-            })
+            }),
+            db.collection("adminSessions").where("active", "==", true).get().catch(() => ({ docs: [] }))
         ]);
+
+        const now = Date.now();
+        const activeAdminUids = new Set();
+        (activeSessionsSnap.docs || []).forEach((doc) => {
+            const data = doc.data() || {};
+            const exp = timestampMillis(data.expiresAt);
+            if (!exp || exp > now) {
+                activeAdminUids.add(doc.id);
+            }
+        });
 
         // 3. 各ユーザーを個別に安全に統合（1ユーザーのデータ欠損で全体を500にしない）
         const users = [];
@@ -2279,7 +2292,11 @@ app.get("/admin-users", async (req, res) => {
                     adminAccounts.byEmail.get(email) ||
                     null;
 
-                users.push(publicUserRecord(user, profile, adminAccount));
+                const baseRecord = publicUserRecord(user, profile, adminAccount);
+                users.push({
+                    ...baseRecord,
+                    adminMode: activeAdminUids.has(uid)
+                });
             } catch (userErr) {
                 console.warn(`User conversion skipped for uid=${user?.uid}:`, userErr?.message);
                 // 個別ユーザーのデータ破損があっても安全なフォールバックで一覧に含める
@@ -2293,8 +2310,10 @@ app.get("/admin-users", async (req, res) => {
                         emailVerified: Boolean(user?.emailVerified),
                         createdAt: timestampMillis(user?.metadata?.creationTime) || null,
                         lastLoginAt: timestampMillis(user?.metadata?.lastSignInTime) || null,
+                        role: "-",
                         adminAccount: false,
                         adminAccountDetail: null,
+                        adminMode: false,
                         providers: []
                     });
                 } catch {
@@ -2463,32 +2482,62 @@ app.get("/admin-logs", async (req, res) => {
         ]);
 
         const logs = [
-            ...modeSnap.docs.map((doc) =>
-                publicLogEvent(
-                    doc,
-                    "adminModeHistory",
-                    "管理者モード"
-                )
-            ),
-            ...accountSnap.docs.map((doc) =>
-                publicLogEvent(
-                    doc,
-                    "adminAccountHistory",
-                    "管理者アカウント"
-                )
-            ),
-            ...demotionSnap.docs.map((doc) =>
-                publicLogEvent(
-                    doc,
-                    "adminDemotionRequests",
-                    "降格申請",
-                    {
-                        uid: "requestedBy",
-                        email: "requestedByEmail",
-                        name: "requestedByName"
-                    }
-                )
-            ),
+            ...modeSnap.docs.map((doc) => {
+                const data = doc.data() || {};
+                return {
+                    id: doc.id,
+                    source: "adminModeHistory",
+                    type: "管理者モード",
+                    actorUid: data.approvedByUid || data.userUid || "",
+                    actorEmail: data.approvedByEmail || data.userEmail || "",
+                    actorName: data.approvedByName || data.userName || "",
+                    target: data.targetEmail || data.userEmail || "",
+                    result: data.status || (data.active ? "in_progress" : "completed"),
+                    occurredAt: eventTime(data),
+                    details: data
+                };
+            }),
+            ...accountSnap.docs.map((doc) => {
+                const data = doc.data() || {};
+                const isInitial =
+                    data.isInitialSetup === true ||
+                    data.approvedByEmail === "初期設定" ||
+                    data.approvedByName === "初期設定" ||
+                    data.createdByEmail === "初期設定" ||
+                    data.createdBy === "initial_setup" ||
+                    (!data.approvedByEmail && data.userEmail === data.createdByEmail);
+
+                const actorEmail = isInitial ? "初期設定" : "admin";
+                const target = data.userEmail || data.targetEmail || data.email || "";
+
+                return {
+                    id: doc.id,
+                    source: "adminAccountHistory",
+                    type: "管理者アカウント",
+                    actorUid: isInitial ? "initial_setup" : (data.approvedByUid || "admin"),
+                    actorEmail,
+                    actorName: isInitial ? "初期設定" : "admin",
+                    target,
+                    result: data.status || (data.adminEndedAt ? "terminated" : "completed"),
+                    occurredAt: eventTime(data),
+                    details: data
+                };
+            }),
+            ...demotionSnap.docs.map((doc) => {
+                const data = doc.data() || {};
+                return {
+                    id: doc.id,
+                    source: "adminDemotionRequests",
+                    type: "降格申請",
+                    actorUid: data.approvedByUid || data.requestedByUid || "admin",
+                    actorEmail: "admin",
+                    actorName: "admin",
+                    target: data.targetEmail || data.userEmail || "",
+                    result: data.status || "completed",
+                    occurredAt: eventTime(data),
+                    details: data
+                };
+            }),
             ...auditSnap.docs.map((doc) =>
                 publicLogEvent(
                     doc,

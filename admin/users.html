@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ユーザー管理 | LUNAGS Account</title>
+    <title>ユーザー管理 | LUNAGS Admin</title>
     <link rel="stylesheet" href="../shared/normalize.css">
     <link rel="stylesheet" href="../shared/common.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
@@ -12,8 +12,8 @@
 </head>
 
 <body>
-    <button class="hamburger" id="hamburgerBtn" type="button" aria-label="メニュー">
-        <i class="fa-solid fa-bars"></i>
+    <button class="hamburger" id="hamburgerBtn" aria-label="メニュー">
+        <i class="fas fa-bars"></i>
     </button>
 
     <div class="page">
@@ -30,25 +30,29 @@
                     <span>ランチャー</span>
                 </a>
 
-                <div class="sidebar__divider" style="height:1px; margin:4px 8px; background:rgba(255,255,255,0.1);">
-                </div>
+                <div class="sidebar__divider" style="height:1px; margin:4px 8px; background:rgba(255,255,255,0.1);"></div>
+
                 <div class="sidebar__section-label"
                     style="padding:14px 8px 4px; color:rgba(238,245,255,0.48); font-size:10px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase;">
-                    管理者専用</div>
+                    管理者専用
+                </div>
 
                 <a href="./admin.html" class="menu">
                     <i class="fa-solid fa-user-shield"></i>
                     <span>管理者</span>
                 </a>
-                <a href="./users.html" class="menu active" id="usersMenuLink">
+
+                <a href="./users.html" class="menu active">
                     <i class="fa-solid fa-users-gear"></i>
                     <span>ユーザー管理</span>
                 </a>
-                <a href="./logs.html" class="menu" id="logsMenuLink">
+
+                <a href="./logs.html" class="menu">
                     <i class="fa-solid fa-clipboard-list"></i>
                     <span>システムログ</span>
                 </a>
-                <a href="./analytics.html" class="menu" id="analyticsMenuLink">
+
+                <a href="./analytics.html" class="menu">
                     <i class="fa-solid fa-chart-pie"></i>
                     <span>分析</span>
                 </a>
@@ -72,7 +76,9 @@
                     <h1 class="topbar__title">USERS</h1>
                     <div class="topbar__sub">登録ユーザーと管理者アカウント状態</div>
                 </div>
-                <span class="pill" id="statusPill">確認中</span>
+                <div class="status-strip">
+                    <span class="pill pill--muted" id="statusPill">確認中</span>
+                </div>
             </header>
 
             <section class="card hidden" id="accessDenied">
@@ -101,12 +107,16 @@
                         <div class="metric__label">管理者アカウント</div>
                         <div class="metric__value" id="metricAdmins">0</div>
                     </div>
+                    <div class="metric">
+                        <div class="metric__label">管理者モード中</div>
+                        <div class="metric__value" id="metricAdminMode">0</div>
+                    </div>
                 </section>
 
                 <section class="toolbar">
                     <label class="search-box">
                         <i class="fa-solid fa-magnifying-glass"></i>
-                        <input id="searchInput" type="search" placeholder="名前・メール・UID・ユーザーIDで検索" autocomplete="off">
+                        <input id="searchInput" type="search" placeholder="ユーザー名・メールアドレス・ユーザーIDで検索" autocomplete="off">
                     </label>
                     <span class="pill pill--muted" id="countPill">0件</span>
                 </section>
@@ -116,18 +126,16 @@
                         <h2><i class="fa-solid fa-users"></i> ユーザー一覧</h2>
                     </div>
                     <div class="table-wrap">
-                        <table class="data-table">
+                        <table class="data-table user-table">
                             <thead>
                                 <tr>
                                     <th>ユーザー名</th>
-                                    <th>メール</th>
-                                    <th>UID</th>
+                                    <th>メールアドレス</th>
                                     <th>ユーザーID</th>
-                                    <th>作成日時</th>
-                                    <th>最終ログイン</th>
-                                    <th>状態</th>
+                                    <th>最終ログイン日時</th>
                                     <th>管理者</th>
-                                    <th></th>
+                                    <th>状態</th>
+                                    <th>詳細</th>
                                 </tr>
                             </thead>
                             <tbody id="usersBody"></tbody>
@@ -138,12 +146,70 @@
         </main>
     </div>
 
+    <!-- ユーザー詳細モーダル -->
+    <div class="modal-overlay hidden" id="detailModal">
+        <div class="modal-card" role="dialog" aria-labelledby="modalTitle" aria-modal="true">
+            <div class="card__head" style="justify-content: space-between;">
+                <h2 id="modalTitle"><i class="fa-solid fa-id-card"></i> ユーザー詳細</h2>
+                <button class="modal-close-btn" id="modalCloseBtn" aria-label="閉じる" type="button">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="row-list" style="margin-top: 16px;">
+                <div class="row">
+                    <div class="label">ユーザー名</div>
+                    <div class="value" id="detailName">-</div>
+                </div>
+                <div class="row">
+                    <div class="label">メールアドレス</div>
+                    <div class="value" id="detailEmail">-</div>
+                </div>
+                <div class="row">
+                    <div class="label">ユーザーID</div>
+                    <div class="value" id="detailUserId">-</div>
+                </div>
+                <div class="row">
+                    <div class="label">ロール</div>
+                    <div class="value" id="detailRole">-</div>
+                </div>
+                <div class="row">
+                    <div class="label">アカウント作成日時</div>
+                    <div class="value" id="detailCreatedAt">-</div>
+                </div>
+                <div class="row">
+                    <div class="label">最終ログイン日時</div>
+                    <div class="value" id="detailLastLoginAt">-</div>
+                </div>
+                <div class="row">
+                    <div class="label">管理者</div>
+                    <div class="value" id="detailAdminAccount">-</div>
+                </div>
+                <div class="row">
+                    <div class="label">状態</div>
+                    <div class="value" id="detailStatus">-</div>
+                </div>
+                <div class="row">
+                    <div class="label">UID</div>
+                    <div class="value" style="display:flex; align-items:center; gap:8px;">
+                        <span id="detailUid" style="font-family:monospace; word-break:break-all;">-</span>
+                        <button class="btn btn-secondary btn-copy" id="copyUidBtn" type="button" title="UIDをコピー" style="min-width:auto; padding:4px 8px; height:28px; font-size:11px;">
+                            <i class="fa-regular fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions" style="margin-top: 20px; display:flex; justify-content:flex-end;">
+                <button class="btn btn-secondary" id="modalCloseActionBtn" type="button">閉じる</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { auth, FUNCTIONS_ENDPOINT } from "../shared/firebase-config.js";
         import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
 
         const $ = (id) => document.getElementById(id);
-        const state = { users: [] };
+        const state = { users: [], selectedUser: null };
 
         function formatDate(value) {
             if (!value) return "-";
@@ -179,7 +245,9 @@
         }
 
         function setAccessDenied() {
-            $("statusPill").textContent = "拒否";
+            const pill = $("statusPill");
+            pill.textContent = "拒否";
+            pill.className = "pill pill--danger";
             $("accessDenied").classList.remove("hidden");
             $("content").classList.add("hidden");
         }
@@ -189,6 +257,37 @@
             $("metricEnabled").textContent = users.filter((user) => !user.disabled).length;
             $("metricDisabled").textContent = users.filter((user) => user.disabled).length;
             $("metricAdmins").textContent = users.filter((user) => user.adminAccount).length;
+            $("metricAdminMode").textContent = users.filter((user) => user.adminMode).length;
+        }
+
+        function openUserDetail(uid) {
+            const user = state.users.find((u) => u.uid === uid);
+            if (!user) return;
+            state.selectedUser = user;
+
+            $("detailName").textContent = user.name || "-";
+            $("detailEmail").textContent = user.email || "-";
+            $("detailUserId").textContent = user.userId || "-";
+            $("detailRole").textContent = user.role || "-";
+            $("detailCreatedAt").textContent = formatDate(user.createdAt);
+            $("detailLastLoginAt").textContent = formatDate(user.lastLoginAt);
+
+            $("detailAdminAccount").innerHTML = user.adminAccount
+                ? `<span class="pill pill--admin">管理者アカウント</span>`
+                : `<span class="pill pill--muted">一般ユーザー</span>`;
+
+            $("detailStatus").innerHTML = user.disabled
+                ? `<span class="pill pill--danger">停止中</span>`
+                : `<span class="pill" style="color:var(--mint-500); border:1px solid #a3e6cd; background:#e6f8f1;">有効</span>`;
+
+            $("detailUid").textContent = user.uid || "-";
+
+            $("detailModal").classList.remove("hidden");
+        }
+
+        function closeUserDetail() {
+            $("detailModal").classList.add("hidden");
+            state.selectedUser = null;
         }
 
         function renderUsers() {
@@ -197,7 +296,6 @@
                 const haystack = [
                     user.name,
                     user.email,
-                    user.uid,
                     user.userId
                 ].join(" ").toLowerCase();
                 return !keyword || haystack.includes(keyword);
@@ -207,30 +305,69 @@
             $("usersBody").innerHTML = users.length
                 ? users.map((user) => `
                     <tr>
-                        <td>${escapeHtml(user.name || "-")}</td>
-                        <td>${escapeHtml(user.email || "-")}</td>
-                        <td>${escapeHtml(user.uid)}</td>
-                        <td>${escapeHtml(user.userId || "-")}</td>
-                        <td>${formatDate(user.createdAt)}</td>
+                        <td><span class="user-cell-name" title="${escapeHtml(user.name || "-")}">${escapeHtml(user.name || "-")}</span></td>
+                        <td><span class="user-cell-email" title="${escapeHtml(user.email || "-")}">${escapeHtml(user.email || "-")}</span></td>
+                        <td><span class="user-cell-id">${escapeHtml(user.userId || "-")}</span></td>
                         <td>${formatDate(user.lastLoginAt)}</td>
+                        <td><span class="pill ${user.adminAccount ? "pill--admin" : "pill--muted"}">${user.adminAccount ? "管理者" : "一般"}</span></td>
                         <td><span class="pill ${user.disabled ? "pill--danger" : ""}">${user.disabled ? "停止中" : "有効"}</span></td>
-                        <td><span class="pill ${user.adminAccount ? "" : "pill--muted"}">${user.adminAccount ? "管理者" : "一般"}</span></td>
-                        <td><button class="btn" type="button" onclick="alert('ユーザーID: ${escapeHtml(user.uid)}')"><i class="fa-solid fa-circle-info"></i><span>詳細</span></button></td>
+                        <td>
+                            <button class="btn btn-detail" type="button" data-uid="${escapeHtml(user.uid)}">
+                                <i class="fa-solid fa-circle-info"></i>
+                                <span>詳細</span>
+                            </button>
+                        </td>
                     </tr>
                 `).join("")
-                : `<tr><td colspan="9"><div class="empty-state">該当するユーザーはありません。</div></td></tr>`;
+                : `<tr><td colspan="7"><div class="empty-state">該当するユーザーはありません。</div></td></tr>`;
         }
 
         async function loadUsers() {
-            $("statusPill").textContent = "読み込み中";
+            const pill = $("statusPill");
+            pill.textContent = "読み込み中";
+            pill.className = "pill pill--muted";
+
             const data = await request("/admin-users");
             state.users = data.users || [];
             renderMetrics(state.users);
             renderUsers();
-            $("statusPill").textContent = "管理者アカウント";
+
+            pill.textContent = "管理者アカウント";
+            pill.className = "pill pill--admin";
             $("accessDenied").classList.add("hidden");
             $("content").classList.remove("hidden");
         }
+
+        $("usersBody").addEventListener("click", (e) => {
+            const btn = e.target.closest(".btn-detail");
+            if (btn) {
+                const uid = btn.dataset.uid;
+                if (uid) openUserDetail(uid);
+            }
+        });
+
+        $("modalCloseBtn").addEventListener("click", closeUserDetail);
+        $("modalCloseActionBtn").addEventListener("click", closeUserDetail);
+        $("detailModal").addEventListener("click", (e) => {
+            if (e.target === $("detailModal")) {
+                closeUserDetail();
+            }
+        });
+
+        $("copyUidBtn").addEventListener("click", async () => {
+            const uid = $("detailUid").textContent;
+            if (!uid || uid === "-") return;
+            try {
+                await navigator.clipboard.writeText(uid);
+                const btn = $("copyUidBtn");
+                btn.innerHTML = `<i class="fa-solid fa-check"></i>`;
+                setTimeout(() => {
+                    btn.innerHTML = `<i class="fa-regular fa-copy"></i>`;
+                }, 1500);
+            } catch (err) {
+                console.error("コピー失敗:", err);
+            }
+        });
 
         $("hamburgerBtn").addEventListener("click", () => {
             $("sidebar").classList.toggle("open");
@@ -258,7 +395,9 @@
                 setAccessDenied();
                 return;
             }
-            $("statusPill").textContent = "エラー";
+            const pill = $("statusPill");
+            pill.textContent = "エラー";
+            pill.className = "pill pill--danger";
             alert(error.message);
         }
 

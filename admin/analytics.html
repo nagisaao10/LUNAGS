@@ -12,8 +12,8 @@
 </head>
 
 <body>
-    <button class="hamburger" id="hamburgerBtn" type="button" aria-label="メニュー">
-        <i class="fa-solid fa-bars"></i>
+    <button class="hamburger" id="hamburgerBtn" aria-label="メニュー">
+        <i class="fas fa-bars"></i>
     </button>
 
     <div class="page">
@@ -30,25 +30,29 @@
                     <span>ランチャー</span>
                 </a>
 
-                <div class="sidebar__divider" style="height:1px; margin:4px 8px; background:rgba(255,255,255,0.1);">
-                </div>
+                <div class="sidebar__divider" style="height:1px; margin:4px 8px; background:rgba(255,255,255,0.1);"></div>
+
                 <div class="sidebar__section-label"
                     style="padding:14px 8px 4px; color:rgba(238,245,255,0.48); font-size:10px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase;">
-                    管理者専用</div>
+                    管理者専用
+                </div>
 
                 <a href="./admin.html" class="menu">
                     <i class="fa-solid fa-user-shield"></i>
                     <span>管理者</span>
                 </a>
-                <a href="./users.html" class="menu" id="usersMenuLink">
+
+                <a href="./users.html" class="menu">
                     <i class="fa-solid fa-users-gear"></i>
                     <span>ユーザー管理</span>
                 </a>
-                <a href="./logs.html" class="menu" id="logsMenuLink">
+
+                <a href="./logs.html" class="menu">
                     <i class="fa-solid fa-clipboard-list"></i>
                     <span>システムログ</span>
                 </a>
-                <a href="./analytics.html" class="menu active" id="analyticsMenuLink">
+
+                <a href="./analytics.html" class="menu active">
                     <i class="fa-solid fa-chart-pie"></i>
                     <span>分析</span>
                 </a>
@@ -72,7 +76,9 @@
                     <h1 class="topbar__title">ANALYTICS</h1>
                     <div class="topbar__sub" id="generatedAt">読み込み中</div>
                 </div>
-                <span class="pill" id="statusPill">確認中</span>
+                <div class="status-strip">
+                    <span class="pill pill--muted" id="statusPill">確認中</span>
+                </div>
             </header>
 
             <section class="card hidden" id="accessDenied">
@@ -84,14 +90,11 @@
             </section>
 
             <div id="content" class="hidden">
-                <section class="metrics-grid">
+                <!-- 上部統計カード：総ユーザー、管理者アカウント、管理者モード中 の3項目 -->
+                <section class="metrics-grid metrics-grid--three">
                     <div class="metric">
                         <div class="metric__label">総ユーザー</div>
                         <div class="metric__value" id="totalUsers">0</div>
-                    </div>
-                    <div class="metric">
-                        <div class="metric__label">30日アクティブ</div>
-                        <div class="metric__value" id="activeLast30Days">0</div>
                     </div>
                     <div class="metric">
                         <div class="metric__label">管理者アカウント</div>
@@ -103,7 +106,8 @@
                     </div>
                 </section>
 
-                <section class="analytics-grid">
+                <!-- 新規登録推移（状態比率は削除） -->
+                <section class="analytics-section" style="margin-top: 20px;">
                     <div class="card">
                         <div class="card__head">
                             <h2><i class="fa-solid fa-chart-column"></i> 新規登録推移</h2>
@@ -115,35 +119,29 @@
                             <span id="growthEnd">-</span>
                         </div>
                     </div>
-
-                    <div class="card">
-                        <div class="card__head">
-                            <h2><i class="fa-solid fa-gauge-high"></i> 状態比率</h2>
-                        </div>
-                        <div class="ratio-list" id="ratioList"></div>
-                    </div>
                 </section>
 
-                <section class="card" style="margin-top: 16px;">
+                <!-- 管理イベント集計：4項目（管理者アカウント、管理者モード、降格申請、ユーザー数の累積） -->
+                <section class="card" style="margin-top: 20px;">
                     <div class="card__head">
                         <h2><i class="fa-solid fa-shield-halved"></i> 管理イベント集計</h2>
                     </div>
                     <div class="metrics-grid">
                         <div class="metric">
-                            <div class="metric__label">管理者モード履歴</div>
-                            <div class="metric__value" id="adminModeHistory">0</div>
+                            <div class="metric__label">管理者アカウント</div>
+                            <div class="metric__value" id="adminAccountHistory">0</div>
                         </div>
                         <div class="metric">
-                            <div class="metric__label">管理者アカウント履歴</div>
-                            <div class="metric__value" id="adminAccountHistory">0</div>
+                            <div class="metric__label">管理者モード</div>
+                            <div class="metric__value" id="adminModeHistory">0</div>
                         </div>
                         <div class="metric">
                             <div class="metric__label">降格申請</div>
                             <div class="metric__value" id="demotionRequests">0</div>
                         </div>
                         <div class="metric">
-                            <div class="metric__label">停止中ユーザー</div>
-                            <div class="metric__value" id="disabledUsers">0</div>
+                            <div class="metric__label">ユーザー数の累積</div>
+                            <div class="metric__value" id="totalUsersCumulative">0</div>
                         </div>
                     </div>
                 </section>
@@ -181,22 +179,21 @@
             return data;
         }
 
-        function renderRatio(label, value, total) {
-            const percent = total ? Math.round((value / total) * 100) : 0;
-            return `
-                <div class="ratio-row">
-                    <div class="ratio-head">
-                        <span>${label}</span>
-                        <span>${value} / ${total}</span>
-                    </div>
-                    <div class="ratio-track">
-                        <div class="ratio-fill" style="width:${percent}%"></div>
-                    </div>
-                </div>
-            `;
+        function setAccessDenied() {
+            const pill = $("statusPill");
+            pill.textContent = "拒否";
+            pill.className = "pill pill--danger";
+            $("accessDenied").classList.remove("hidden");
+            $("content").classList.add("hidden");
         }
 
         function renderGrowth(buckets) {
+            if (!buckets || buckets.length === 0) {
+                $("growthChart").innerHTML = `<div class="empty-state" style="padding:20px;">データがありません</div>`;
+                $("growthStart").textContent = "-";
+                $("growthEnd").textContent = "-";
+                return;
+            }
             const max = Math.max(1, ...buckets.map((bucket) => bucket.count));
             $("growthChart").innerHTML = buckets.map((bucket) => {
                 const height = Math.max(4, Math.round((bucket.count / max) * 100));
@@ -210,32 +207,36 @@
             const summary = data.summary || {};
             [
                 "totalUsers",
-                "activeLast30Days",
                 "activeadminAccount",
                 "activeAdminSessions",
-                "adminModeHistory",
                 "adminAccountHistory",
-                "demotionRequests",
-                "disabledUsers"
+                "adminModeHistory",
+                "demotionRequests"
             ].forEach((id) => {
-                $(id).textContent = summary[id] || 0;
+                const el = $(id);
+                if (el) el.textContent = summary[id] || 0;
             });
 
-            $("ratioList").innerHTML = [
-                renderRatio("有効ユーザー", summary.enabledUsers || 0, summary.totalUsers || 0),
-                renderRatio("メール確認済み", summary.verifiedUsers || 0, summary.totalUsers || 0),
-                renderRatio("30日アクティブ", summary.activeLast30Days || 0, summary.totalUsers || 0),
-                renderRatio("管理者アカウント", summary.activeadminAccount || 0, summary.totalUsers || 0)
-            ].join("");
+            // ユーザー数の累積（累積値・推移を示す系列値）
+            const cumulativeEl = $("totalUsersCumulative");
+            if (cumulativeEl) {
+                cumulativeEl.textContent = summary.totalUsersCumulative || summary.totalUsers || 0;
+            }
+
             renderGrowth(data.userGrowth || []);
             $("generatedAt").textContent = `最終更新: ${formatDate(data.generatedAt)}`;
         }
 
         async function loadAnalytics() {
-            $("statusPill").textContent = "読み込み中";
+            const pill = $("statusPill");
+            pill.textContent = "読み込み中";
+            pill.className = "pill pill--muted";
+
             const data = await request("/admin-analytics");
             renderAnalytics(data);
-            $("statusPill").textContent = "管理者アカウント";
+
+            pill.textContent = "管理者アカウント";
+            pill.className = "pill pill--admin";
             $("accessDenied").classList.add("hidden");
             $("content").classList.remove("hidden");
         }
@@ -243,12 +244,12 @@
         function handleError(error) {
             console.error(error);
             if (error.status === 401 || error.status === 403) {
-                $("statusPill").textContent = "拒否";
-                $("accessDenied").classList.remove("hidden");
-                $("content").classList.add("hidden");
+                setAccessDenied();
                 return;
             }
-            $("statusPill").textContent = "エラー";
+            const pill = $("statusPill");
+            pill.textContent = "エラー";
+            pill.className = "pill pill--danger";
             alert(error.message);
         }
 

@@ -617,6 +617,25 @@ async function createInitialAdmin() {
                         .adminModeDurationMinutes
                     : DEFAULT_ADMIN_MODE_MINUTES;
 
+            let historyId = existingAdminData.historyId || null;
+            if (!historyId) {
+                const historyRef = db.collection("adminAccountHistory").doc();
+                await historyRef.set({
+                    userUid: user.uid,
+                    userEmail: email,
+                    userName: userData.name || user.displayName || email,
+                    approvedByUid: "initial_setup",
+                    approvedByEmail: "初期設定",
+                    approvedByName: "初期設定",
+                    adminStartedAt: Date.now(),
+                    adminEndedAt: null,
+                    isInitialSetup: true,
+                    status: "completed",
+                    createdAt: now
+                });
+                historyId = historyRef.id;
+            }
+
             await accountRef.set(
                 {
                     email,
@@ -637,16 +656,15 @@ async function createInitialAdmin() {
 
                     createdBy:
                         existingAdminData.createdBy ||
-                        user.uid,
+                        "initial_setup",
 
                     createdByEmail:
                         existingAdminData.createdByEmail ||
-                        email,
+                        "初期設定",
 
                     createdByName:
                         existingAdminData.createdByName ||
-                        user.displayName ||
-                        email,
+                        "初期設定",
 
                     createdAt:
                         existingAdminData.createdAt ||
@@ -657,9 +675,7 @@ async function createInitialAdmin() {
                     adminModeDurationMinutes:
                         duration,
 
-                    historyId:
-                        existingAdminData.historyId ||
-                        null
+                    historyId
                 },
                 {
                     merge: true
@@ -1025,6 +1041,27 @@ async function createInitialAdmin() {
         );
 
         /*
+         * adminAccountHistory
+         */
+
+        const historyRef =
+            db.collection("adminAccountHistory").doc();
+
+        batch.set(historyRef, {
+            userUid: user.uid,
+            userEmail: email,
+            userName: name || displayName,
+            approvedByUid: "initial_setup",
+            approvedByEmail: "初期設定",
+            approvedByName: "初期設定",
+            adminStartedAt: Date.now(),
+            adminEndedAt: null,
+            isInitialSetup: true,
+            status: "completed",
+            createdAt: now
+        });
+
+        /*
          * adminAccount
          */
 
@@ -1040,9 +1077,9 @@ async function createInitialAdmin() {
 
                 active: true,
 
-                createdBy: user.uid,
-                createdByEmail: email,
-                createdByName: displayName,
+                createdBy: "initial_setup",
+                createdByEmail: "初期設定",
+                createdByName: "初期設定",
 
                 createdAt: now,
                 updatedAt: now,
@@ -1050,7 +1087,7 @@ async function createInitialAdmin() {
                 adminModeDurationMinutes:
                     DEFAULT_ADMIN_MODE_MINUTES,
 
-                historyId: null
+                historyId: historyRef.id
             },
             {
                 merge: true
