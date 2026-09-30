@@ -583,10 +583,36 @@ h1 {
   background: #f4f8fe;
 }
 
+/* ユーザー一覧テーブル：横書き固定・画面内収容 */
+.user-table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.user-table th:nth-child(1),
+.user-table td:nth-child(1) { width: 14%; } /* ユーザー名 */
+.user-table th:nth-child(2),
+.user-table td:nth-child(2) { width: 22%; } /* メールアドレス */
+.user-table th:nth-child(3),
+.user-table td:nth-child(3) { width: 11%; } /* ユーザーID */
+.user-table th:nth-child(4),
+.user-table td:nth-child(4) { width: 17%; } /* 最終ログイン日時 */
+.user-table th:nth-child(5),
+.user-table td:nth-child(5) { width: 10%; } /* 管理者 */
+.user-table th:nth-child(6),
+.user-table td:nth-child(6) { width: 10%; } /* 状態 */
+.user-table th:nth-child(7),
+.user-table td:nth-child(7) { width: 10%; } /* 詳細 */
+
+.user-table td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* ユーザー一覧用セル装飾 */
 .user-cell-name {
   display: inline-block;
-  max-width: 180px;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -598,7 +624,7 @@ h1 {
 .user-cell-email,
 .cell-email {
   display: inline-block;
-  max-width: 240px;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -607,6 +633,11 @@ h1 {
 }
 
 .user-cell-id {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-family: monospace;
   font-weight: 700;
   color: var(--blue-700);
@@ -786,9 +817,13 @@ textarea:focus-visible {
 
 .metrics-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 14px;
   margin-bottom: 16px;
+}
+
+.metrics-grid--three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .metric {
@@ -909,8 +944,22 @@ textarea:focus-visible {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .metrics-grid--three {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .analytics-grid {
     grid-template-columns: 1fr;
+  }
+
+  /* ユーザー一覧：狭い画面ではautoに戻してスクロール許可 */
+  .user-table {
+    table-layout: auto;
+  }
+
+  .user-table th,
+  .user-table td {
+    width: auto !important;
   }
 }
 
