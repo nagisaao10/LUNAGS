@@ -286,16 +286,27 @@ h1 {
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .status-strip .pill--admin {
   min-height: 36px;
-  padding: 7px 16px;
+  padding: 7px 18px;
   border-radius: var(--radius);
   color: var(--blue-900);
-  background: rgba(255, 255, 255, 0.86);
+  background: #ffffff;
   border: 1px solid var(--blue-300);
-  box-shadow: 0 8px 18px rgba(52, 120, 246, 0.12);
+  box-shadow: none;
+}
+
+.status-strip .pill--identity {
+  min-height: 36px;
+  padding: 7px 16px;
+  border-radius: 999px;
+  color: #64748b;
+  background: var(--surface-blue);
+  border: 1px solid transparent;
+  box-shadow: none;
 }
 
 .pill {

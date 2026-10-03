@@ -77,6 +77,7 @@
                     <div class="topbar__sub" id="generatedAt">読み込み中</div>
                 </div>
                 <div class="status-strip">
+                    <span class="pill pill--identity hidden" id="emailPill"></span>
                     <span class="pill pill--muted" id="statusPill">確認中</span>
                 </div>
             </header>
@@ -180,6 +181,7 @@
         }
 
         function setAccessDenied() {
+            $("emailPill").classList.add("hidden");
             const pill = $("statusPill");
             pill.textContent = "拒否";
             pill.className = "pill pill--danger";
@@ -235,6 +237,8 @@
             const data = await request("/admin-analytics");
             renderAnalytics(data);
 
+            $("emailPill").textContent = auth.currentUser?.email || "未ログイン";
+            $("emailPill").classList.remove("hidden");
             pill.textContent = "管理者アカウント";
             pill.className = "pill pill--admin";
             $("accessDenied").classList.add("hidden");
@@ -248,6 +252,7 @@
                 return;
             }
             const pill = $("statusPill");
+            $("emailPill").classList.add("hidden");
             pill.textContent = "エラー";
             pill.className = "pill pill--danger";
             alert(error.message);
