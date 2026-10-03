@@ -1178,6 +1178,30 @@ function publicLogEvent(doc, source, type, actorFields = {}) {
     };
 }
 
+function isInitialAdminAccountEvent(data = {}) {
+    return (
+        data.isInitialSetup === true ||
+        data.approvedByUid === "initial_setup" ||
+        data.approvedByEmail === "初期設定" ||
+        data.approvedByName === "初期設定" ||
+        data.createdBy === "initial_setup" ||
+        data.createdByEmail === "初期設定" ||
+        data.createdByName === "初期設定"
+    );
+}
+
+function adminAccountLogActor(data = {}) {
+    const isInitial = isInitialAdminAccountEvent(data);
+
+    return {
+        actorUid: isInitial
+            ? "initial_setup"
+            : (data.approvedByUid || data.createdBy || "admin"),
+        actorEmail: isInitial ? "初期設定" : "admin",
+        actorName: isInitial ? "初期設定" : "admin"
+    };
+}
+
 function sortByOccurredAtDesc(a, b) {
     return Number(b.occurredAt || 0) - Number(a.occurredAt || 0);
 }
@@ -1556,6 +1580,7 @@ app.post("/admin-accounts", async (req, res) => {
                         adminStartedAt:
                             Date.now(),
                         adminEndedAt: null,
+                        status: "completed",
                         endedApprovedByUid:
                             "",
                         endedApprovedByEmail:
@@ -2225,6 +2250,7 @@ app.post(
                             timestampMillis(
                                 removedAccount.createdAt
                             ) || null,
+                        status: "completed",
                         ...historyPatch,
                         createdAt:
                             admin.firestore.FieldValue.serverTimestamp()
@@ -2499,24 +2525,14 @@ app.get("/admin-logs", async (req, res) => {
             }),
             ...accountSnap.docs.map((doc) => {
                 const data = doc.data() || {};
-                const isInitial =
-                    data.isInitialSetup === true ||
-                    data.approvedByEmail === "初期設定" ||
-                    data.approvedByName === "初期設定" ||
-                    data.createdByEmail === "初期設定" ||
-                    data.createdBy === "initial_setup" ||
-                    (!data.approvedByEmail && data.userEmail === data.createdByEmail);
-
-                const actorEmail = isInitial ? "初期設定" : "admin";
+                const actor = adminAccountLogActor(data);
                 const target = data.userEmail || data.targetEmail || data.email || "";
 
                 return {
                     id: doc.id,
                     source: "adminAccountHistory",
                     type: "管理者アカウント",
-                    actorUid: isInitial ? "initial_setup" : (data.approvedByUid || "admin"),
-                    actorEmail,
-                    actorName: isInitial ? "初期設定" : "admin",
+                    ...actor,
                     target,
                     result: data.status || (data.adminEndedAt ? "terminated" : "completed"),
                     occurredAt: eventTime(data),

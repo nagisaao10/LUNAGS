@@ -288,6 +288,16 @@ h1 {
   flex-wrap: wrap;
 }
 
+.status-strip .pill--admin {
+  min-height: 36px;
+  padding: 7px 16px;
+  border-radius: var(--radius);
+  color: var(--blue-900);
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid var(--blue-300);
+  box-shadow: 0 8px 18px rgba(52, 120, 246, 0.12);
+}
+
 .pill {
   display: inline-flex;
   align-items: center;
