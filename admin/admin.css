@@ -290,13 +290,9 @@ h1 {
 }
 
 .status-strip .pill--admin {
-  min-height: 36px;
-  padding: 7px 18px;
-  border-radius: var(--radius);
-  color: var(--blue-900);
-  background: #ffffff;
-  border: 1px solid var(--blue-300);
-  box-shadow: none;
+  min-height: 28px;
+  padding: 4px 12px;
+  border-radius: 999px;
 }
 
 .status-strip .pill--identity {
