@@ -9,7 +9,7 @@ import { getFirestore, serverTimestamp } from "https://www.gstatic.com/firebasej
 // 本番環境
 const firebaseConfigProduction = {
     apiKey: "AIzaSyBm7Wo-ZgF48F07IDDqazbOd4JDz9mEvOQ",
-    authDomain: "lunags-59cc1.firebaseapp.com",
+    authDomain: "lunags.jp",
     projectId: "lunags",
     storageBucket: "lunags.firebasestorage.app",
     messagingSenderId: "1046443805230",
@@ -20,7 +20,7 @@ const firebaseConfigProduction = {
 // 検証環境
 const firebaseConfigDevelopment = {
     apiKey: "AIzaSyBm7Wo-ZgF48F07IDDqazbOd4JDz9mEvOQ",
-    authDomain: "lunags-59cc1.firebaseapp.com",
+    authDomain: "dev.lunags.jp",
     projectId: "lunags",
     storageBucket: "lunags.firebasestorage.app",
     messagingSenderId: "1046443805230",
