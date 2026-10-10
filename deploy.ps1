@@ -1,316 +1,330 @@
-# ========================================
-# LUNAGS Deploy Script
+﻿# ========================================
+# LUNAGS Deploy System
 # Git add / commit / push -> Firebase deploy
-#
-# 実行:
-# .\deploy.ps1
 # ========================================
 
 $ErrorActionPreference = "Stop"
 
-# ========================================
-# LUNAGS Deploy System
-# ========================================
+$script:DeploySucceeded = $false
+$script:GitCompleted = $false
+$script:DeployCompleted = $false
+$script:FailureMessage = $null
+$script:Cancelled = $false
 
-Write-Host "========================================" -ForegroundColor Cyan
-Write-Host " LUNAGS Deploy System" -ForegroundColor Cyan
-Write-Host "========================================" -ForegroundColor Cyan
-
-# LUNAGSルートから実行することを保証
-$repoRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
-Set-Location $repoRoot
-
-Write-Host ""
-Write-Host "Repository: $repoRoot"
-
-# Gitリポジトリ確認
-if (-not (Test-Path ".git")) {
-    throw "Gitリポジトリではありません。"
-}
-
-# Firebase設定確認
-if (-not (Test-Path "firebase.json")) {
-    throw "firebase.json が見つかりません。"
-}
-
-if (-not (Test-Path ".firebaserc")) {
-    throw ".firebaserc が見つかりません。"
-}
-
-# Firebase CLI確認
-if (-not (Get-Command firebase -ErrorAction SilentlyContinue)) {
-    throw "Firebase CLIが見つかりません。"
-}
-
-# Firebase Deploy実行関数
-function Invoke-FirebaseDeploy {
-    param (
-        [string]$Target,
-        [string]$Project
-    )
+function Write-Section {
+    param([Parameter(Mandatory = $true)][string]$Title)
 
     Write-Host ""
-    Write-Host "Firebase Deploy: $Target" -ForegroundColor Cyan
+    Write-Host "========================================" -ForegroundColor Cyan
+    Write-Host " $Title" -ForegroundColor Cyan
+    Write-Host "========================================" -ForegroundColor Cyan
+}
+
+function Invoke-GitCommand {
+    param(
+        [Parameter(Mandatory = $true)][string]$Name,
+        [Parameter(Mandatory = $true)][scriptblock]$Command
+    )
+
+    Write-Host "$Name..." -ForegroundColor Cyan
+    & $Command
+
+    if ($LASTEXITCODE -ne 0) {
+        throw "$Name に失敗しました。終了コード: $LASTEXITCODE"
+    }
+
+    Write-Host "$Name : OK" -ForegroundColor Green
+}
+
+function Invoke-FirebaseDeploy {
+    param(
+        [Parameter(Mandatory = $true)][string]$Target,
+        [Parameter(Mandatory = $true)][string]$Project
+    )
+
+    Write-Host "Firebase Deploy..." -ForegroundColor Cyan
+    Write-Host "Target : $Target" -ForegroundColor DarkGray
     Write-Host "Project: $Project" -ForegroundColor DarkGray
 
-    & firebase deploy `
-        --only $Target `
-        --project $Project 2>&1 |
-        Tee-Object -Variable deployOutput
-
+    $deployOutput = @(& firebase deploy --only $Target --project $Project 2>&1)
     $exitCode = $LASTEXITCODE
+    $deployOutput | ForEach-Object { Write-Host $_ }
+
     $deployText = $deployOutput -join "`n"
-    $deployCompleted = $deployText -match "Deploy complete!"
 
-    if ($deployCompleted) {
-        Write-Host ""
-        Write-Host "Firebase $Target Deploy 完了" -ForegroundColor Green
-
-        if ($exitCode -ne 0) {
-            Write-Host "Firebase CLI終了コード: $exitCode" -ForegroundColor Yellow
-            Write-Host "Deploy complete! を確認したため、Deploy成功として扱います。" -ForegroundColor Yellow
-        }
+    if ($exitCode -eq 0 -and $deployText -match "Deploy complete!") {
+        Write-Host "Firebase Deploy : OK" -ForegroundColor Green
+        $script:DeployCompleted = $true
         return
     }
 
-    throw "Firebase $Target Deployに失敗しました。終了コード: $exitCode"
+    throw "Firebase Deploy に失敗しました。終了コード: $exitCode"
 }
 
-# ========================================
-# Gitの変更確認
-# ========================================
-
-Write-Host ""
-Write-Host "[1/5] Git変更を確認" -ForegroundColor Cyan
-
-git status --short
-$status = git status --porcelain
-$gitCompleted = $false
-
-if (-not $status) {
-    Write-Host ""
-    Write-Host "Gitにコミットする変更がありません。" -ForegroundColor Yellow
-    Write-Host "Firebase Deployだけ実行することもできます。"
-
-    $deployOnly = Read-Host "Deployだけ実行しますか？ (Y/N)"
-
-    if ($deployOnly -notmatch "^[Yy]$") {
-        Write-Host "処理を中止しました。" -ForegroundColor Yellow
-        exit 0
+try {
+    # LUNAGSルートから実行することを保証
+    $scriptPath = $MyInvocation.MyCommand.Path
+    if ([string]::IsNullOrWhiteSpace($scriptPath)) {
+        throw "deploy.ps1 のファイルパスを取得できません。ファイルから実行してください。"
     }
 
-}
-else {
-    Write-Host ""
+    $repoRoot = Split-Path -Parent $scriptPath
+    Set-Location $repoRoot
 
-    $commitMessage = Read-Host "Commit message"
+    Write-Section "LUNAGS Deploy System"
+    Write-Host "Repository: $repoRoot"
 
-    if ([string]::IsNullOrWhiteSpace($commitMessage)) {
-        throw "Commit messageが空です。"
+    # 必須ファイル・コマンド確認
+    if (-not (Test-Path ".git")) {
+        throw "Gitリポジトリではありません。"
+    }
+    if (-not (Test-Path "firebase.json")) {
+        throw "firebase.json が見つかりません。"
+    }
+    if (-not (Test-Path ".firebaserc")) {
+        throw ".firebaserc が見つかりません。"
+    }
+    if (-not (Get-Command firebase -ErrorAction SilentlyContinue)) {
+        throw "Firebase CLIが見つかりません。"
+    }
+    if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
+        throw "Gitが見つかりません。"
     }
 
-    # Git add
-    Write-Host ""
-    Write-Host "[2/5] Git add" -ForegroundColor Cyan
+    # ========================================
+    # 最初に実行設定をまとめて選択
+    # ========================================
+    Write-Section "Deploy Configuration"
 
-    git add .
+    # Git設定
+    Write-Host "[Git Settings]" -ForegroundColor Cyan
+    Write-Host "[1] Git add / commit / push"
+    Write-Host "[0] なし（Gitをスキップ）"
+    $gitChoice = Read-Host "Git"
 
-    if ($LASTEXITCODE -ne 0) {
-        throw "Git addに失敗しました。"
-    }
+    $commitMessage = ""
+    switch ($gitChoice) {
+        "1" {
+            $gitStatusBefore = @(git status --porcelain)
+            if ($LASTEXITCODE -ne 0) {
+                throw "Git status に失敗しました。"
+            }
 
-    # Git commit
-    Write-Host ""
-    Write-Host "[3/5] Git commit" -ForegroundColor Cyan
+            if ($gitStatusBefore.Count -eq 0) {
+                Write-Host "Gitにコミットする変更はありません。" -ForegroundColor Yellow
+                $gitChoice = "0"
+            }
+            else {
+                Write-Host ""
+                git status --short
+                if ($LASTEXITCODE -ne 0) {
+                    throw "Git status --short に失敗しました。"
+                }
 
-    git commit -m $commitMessage
-
-    if ($LASTEXITCODE -ne 0) {
-        throw "Git commitに失敗しました。"
-    }
-
-    # Git push
-    Write-Host ""
-    Write-Host "[4/5] Git push" -ForegroundColor Cyan
-
-    git push
-
-    if ($LASTEXITCODE -ne 0) {
-        throw "Git pushに失敗しました。"
-    }
-
-    $gitCompleted = $true
-}
-
-
-# ========================================
-# Firebaseプロジェクト選択
-# ========================================
-
-Write-Host ""
-Write-Host "========================================" -ForegroundColor Cyan
-Write-Host " Firebase Deploy Target" -ForegroundColor Cyan
-Write-Host "========================================" -ForegroundColor Cyan
-
-Write-Host "[1] Development  (lunags / lunags-42343)" -ForegroundColor Yellow
-Write-Host "[2] Production   (lunags / lunags-59cc1)" -ForegroundColor Red
-Write-Host "[0] Cancel"
-
-$target = Read-Host "Deploy target"
-
-switch ($target) {
-
-    # Development
-    "1" {
-
-        $project = "lunags"
-        $hostingTarget = "development"
-        $hostingSite = "lunags-42343"
-        $environmentName = "Development"
-        $environmentUrl = "https://dev.lunags.jp"
-    }
-
-    # Production
-    "2" {
-
-        $project = "lunags"
-        $hostingTarget = "production"
-        $hostingSite = "lunags-59cc1"
-        $environmentName = "Production"
-        $environmentUrl = "https://lunags.jp"
-
-        Write-Host ""
-        Write-Host "WARNING: ProductionへDeployします。" -ForegroundColor Red
-        Write-Host "Hosting: $hostingSite" -ForegroundColor Yellow
-        Write-Host "URL:     $environmentUrl" -ForegroundColor Yellow
-
-        $confirm = Read-Host "本当にProductionへDeployしますか？ (YES)"
-
-        if ($confirm -cne "YES") {
-            Write-Host "Production Deployを中止しました。" -ForegroundColor Yellow
-            exit 0
+                $commitMessage = Read-Host "Commit message"
+                if ([string]::IsNullOrWhiteSpace($commitMessage)) {
+                    throw "Commit messageが空です。"
+                }
+            }
+        }
+        "0" {
+            Write-Host "Git処理をスキップします。" -ForegroundColor Yellow
+        }
+        default {
+            throw "Git設定の選択が無効です。1または0を選択してください。"
         }
     }
 
-    # Cancel
-    "0" {
-        Write-Host "Deployを中止しました。" -ForegroundColor Yellow
-        exit 0
-    }
-
-    default {
-        throw "無効な選択です。"
-    }
-}
-
-# ========================================
-# Firebase Deploy対象選択
-# ========================================
-
-Write-Host ""
-Write-Host "========================================" -ForegroundColor Cyan
-Write-Host " Firebase Deploy Type" -ForegroundColor Cyan
-Write-Host "========================================" -ForegroundColor Cyan
-
-Write-Host "[1] Hosting"
-Write-Host "[2] Functions"
-Write-Host "[3] Hosting + Functions"
-Write-Host "[4] All"
-Write-Host "[0] Cancel"
-
-$deployType = Read-Host "Deploy type"
-
-# Functions Discovery Timeout
-if ($deployType -in @("2", "3", "4")) {
-
-    $env:FUNCTIONS_DISCOVERY_TIMEOUT = "120"
-
+    # 環境設定
     Write-Host ""
-    Write-Host "Functions Discovery Timeout: 120 seconds" -ForegroundColor DarkGray
-}
+    Write-Host "[Environment]" -ForegroundColor Cyan
+    Write-Host "[1] Development (lunags / lunags-42343)"
+    Write-Host "[2] Production  (lunags / lunags-59cc1)"
+    Write-Host "[0] なし（Deployしない）"
+    $environmentChoice = Read-Host "Environment"
 
-# Firebase Deploy
-switch ($deployType) {
-
-    # Hostingのみ
-    "1" {
-        $firebaseTarget = "hosting:$hostingTarget"
-
-        Invoke-FirebaseDeploy `
-            -Target $firebaseTarget `
-            -Project $project
+    if ($environmentChoice -notin @("0", "1", "2")) {
+        throw "環境設定の選択が無効です。0、1、2のいずれかを選択してください。"
     }
 
-    # Functionsのみ
-    "2" {
-        Invoke-FirebaseDeploy `
-            -Target "functions" `
-            -Project $project
+    # Environmentで0を選んだ場合はDeployなしとして扱い、
+    # Deploy Typeの選択を飛ばしてConfiguration Summaryへ進む
+    $skipDeployTypeSelection = ($environmentChoice -eq "0")
+
+    $project = "lunags"
+    $hostingTarget = $null
+    $hostingSite = $null
+    $environmentName = $null
+    $environmentUrl = $null
+
+    switch ($environmentChoice) {
+        "0" {
+            $hostingTarget = $null
+            $hostingSite = "なし"
+            $environmentName = "なし（Deployしない）"
+            $environmentUrl = "なし"
+        }
+        "1" {
+            $hostingTarget = "development"
+            $hostingSite = "lunags-42343"
+            $environmentName = "Development"
+            $environmentUrl = "https://dev.lunags.jp"
+        }
+        "2" {
+            $hostingTarget = "production"
+            $hostingSite = "lunags-59cc1"
+            $environmentName = "Production"
+            $environmentUrl = "https://lunags.jp"
+        }
     }
 
-    # Hosting + Functions
-    "3" {
-        $firebaseTarget = "hosting:$hostingTarget,functions"
-
-        Invoke-FirebaseDeploy `
-            -Target $firebaseTarget `
-            -Project $project
-    }
-
-    # All
-    # 選択した環境のHosting + FunctionsのみDeploy
-    "4" {
-        $firebaseTarget = "hosting:$hostingTarget,functions"
-
+    # Environmentで0を選んだ場合はDeploy Typeを表示せずに進む
+    $firebaseTarget = $null
+    if (-not $skipDeployTypeSelection) {
         Write-Host ""
-        Write-Host "Firebase Deploy: All" -ForegroundColor Cyan
-        Write-Host "Environment: $environmentName" -ForegroundColor DarkGray
-        Write-Host "Project:     $project" -ForegroundColor DarkGray
-        Write-Host "Hosting:     $hostingSite" -ForegroundColor DarkGray
-        Write-Host "Target:      $firebaseTarget" -ForegroundColor DarkGray
+        Write-Host "[Deploy Type]" -ForegroundColor Cyan
+        Write-Host "[1] Hosting"
+        Write-Host "[2] Functions"
+        Write-Host "[3] Hosting + Functions"
+        Write-Host "[4] All（選択環境のHosting + Functions）"
+        $deployChoice = Read-Host "Deploy type"
 
-        Invoke-FirebaseDeploy `
-            -Target $firebaseTarget `
-            -Project $project
+        if ($deployChoice -notin @("1", "2", "3", "4")) {
+            throw "Deploy設定の選択が無効です。1～4を選択してください。"
+        }
+
+        switch ($deployChoice) {
+            "1" { $firebaseTarget = "hosting:$hostingTarget" }
+            "2" { $firebaseTarget = "functions" }
+            "3" { $firebaseTarget = "hosting:$hostingTarget,functions" }
+            "4" { $firebaseTarget = "hosting:$hostingTarget,functions" }
+        }
+    }
+    else {
+        $deployChoice = "0"
     }
 
-    # Cancel
-    "0" {
-        Write-Host "Deployを中止しました。" -ForegroundColor Yellow
-        exit 0
+    # ========================================
+    # 設定内容の最終確認
+    # ========================================
+    Write-Section "Configuration Summary"
+    Write-Host "Git         : $(if ($gitChoice -eq '1') { 'Commit / Push' } else { 'なし（スキップ）' })"
+    if ($gitChoice -eq "1") {
+        Write-Host "Commit msg  : $commitMessage"
+    }
+    Write-Host "Environment : $environmentName"
+    Write-Host "Project     : $project"
+    Write-Host "Hosting     : $hostingSite"
+    Write-Host "Deploy      : $(if ($null -eq $firebaseTarget) { 'なし（スキップ）' } else { $firebaseTarget })"
+    Write-Host "URL         : $environmentUrl"
+    Write-Host ""
+    Write-Host "[1] OK：この設定で開始" -ForegroundColor Green
+    Write-Host "[0] 終了：実行せずに終了" -ForegroundColor Yellow
+
+    $start = Read-Host "実行しますか？"
+    if ($start -eq "0") {
+        $script:Cancelled = $true
+        Write-Host "処理を開始せず終了します。" -ForegroundColor Yellow
+    }
+    elseif ($start -ne "1") {
+        throw "確認の入力が無効です。1で開始、0で終了してください。"
     }
 
-    default {
-        throw "無効な選択です。"
+    # Productionの追加確認
+    if (-not $script:Cancelled -and $environmentName -eq "Production" -and $null -ne $firebaseTarget) {
+        Write-Host ""
+        Write-Host "WARNING: ProductionへDeployします。" -ForegroundColor Red
+        Write-Host "Hosting: $hostingSite" -ForegroundColor Yellow
+        Write-Host "URL: $environmentUrl" -ForegroundColor Yellow
+
+        $confirm = Read-Host "本当にProductionへDeployしますか？ (YES)"
+        if ($confirm -cne "YES") {
+            $script:Cancelled = $true
+            Write-Host "Production Deployを中止しました。" -ForegroundColor Yellow
+        }
     }
+
+    # ========================================
+    # 選択確定後に処理を実行
+    # ========================================
+    if (-not $script:Cancelled) {
+        # Git処理
+        if ($gitChoice -eq "1") {
+            Write-Section "Git"
+
+            $gitStatus = @(git status --porcelain)
+            if ($LASTEXITCODE -ne 0) {
+                throw "Git status に失敗しました。"
+            }
+
+            if ($gitStatus.Count -eq 0) {
+                Write-Host "Gitにコミットする変更はありません。" -ForegroundColor Yellow
+            }
+            else {
+                git status --short
+                if ($LASTEXITCODE -ne 0) {
+                    throw "Git status --short に失敗しました。"
+                }
+
+                if ([string]::IsNullOrWhiteSpace($commitMessage)) {
+                    throw "Commit messageが設定されていません。"
+                }
+
+                Invoke-GitCommand -Name "Git add" -Command { git add . }
+                Invoke-GitCommand -Name "Git commit" -Command { git commit -m $commitMessage }
+                Invoke-GitCommand -Name "Git push" -Command { git push }
+
+                $script:GitCompleted = $true
+            }
+        }
+        else {
+            Write-Host "Git処理をスキップしました。" -ForegroundColor Yellow
+        }
+
+        # Firebase Deploy
+        if ($null -ne $firebaseTarget) {
+            if ($deployChoice -in @("2", "3", "4")) {
+                $env:FUNCTIONS_DISCOVERY_TIMEOUT = "120"
+                Write-Host "Functions Discovery Timeout: 120 seconds" -ForegroundColor DarkGray
+            }
+
+            Write-Section "Firebase Deploy"
+            Invoke-FirebaseDeploy -Target $firebaseTarget -Project $project
+        }
+        else {
+            Write-Host "Firebase Deployをスキップしました。" -ForegroundColor Yellow
+        }
+
+        $script:DeploySucceeded = $true
+    }
+}
+catch {
+    $script:FailureMessage = $_.Exception.Message
 }
 
 # ========================================
-# Deploy Complete
+# 最終結果
 # ========================================
-
 Write-Host ""
-Write-Host "========================================" -ForegroundColor Green
-Write-Host " Deploy Complete" -ForegroundColor Green
-Write-Host "========================================" -ForegroundColor Green
+Write-Host "========================================" -ForegroundColor Cyan
 
-Write-Host ""
-
-if ($gitCompleted) {
-    Write-Host "Git:         完了"
+if ($script:Cancelled) {
+    Write-Host " CANCELLED: 処理を実行せず終了しました " -ForegroundColor Yellow
+}
+elseif ($script:DeploySucceeded) {
+    Write-Host " SUCCESS: 処理が完了しました " -ForegroundColor Green
+    Write-Host "Git         : $(if ($gitChoice -eq '0') { 'SKIP' } elseif ($script:GitCompleted) { 'OK' } else { '変更なし' })"
+    Write-Host "Firebase    : $(if ($script:DeployCompleted) { 'OK' } else { 'SKIP' })"
+    Write-Host "Environment : $environmentName"
+    Write-Host "Project     : $project"
+    Write-Host "Hosting     : $hostingSite"
+    Write-Host "URL         : $environmentUrl" -ForegroundColor Yellow
 }
 else {
-    Write-Host "Git:         変更なし（Deployのみ）" -ForegroundColor Yellow
+    Write-Host " ERROR: 処理に失敗しました " -ForegroundColor Red
+    Write-Host "内容: $script:FailureMessage" -ForegroundColor Red
+    Write-Host "========================================" -ForegroundColor Cyan
+    exit 1
 }
 
-Write-Host "Firebase:     完了"
-Write-Host "Environment:  $environmentName"
-Write-Host "Project:      $project"
-Write-Host "Hosting:      $hostingSite"
-Write-Host "Target:       $deployType"
-
-Write-Host ""
-
-Write-Host "$environmentName URL: $environmentUrl" -ForegroundColor Yellow
-
-Write-Host ""
+Write-Host "========================================" -ForegroundColor Cyan
