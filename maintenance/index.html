@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#73B8FD">
+  <title>メンテナンス中 | LUNAGS</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --primary: #73B8FD;
+      --sub: #9ED4FC;
+      --pale: #DFEFFD;
+      --ink: #203047;
+      --muted: #617187;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(ellipse at 12% 8%, rgba(115,184,253,.22), transparent 38%),
+        radial-gradient(ellipse at 90% 92%, rgba(158,212,252,.28), transparent 36%),
+        #f7fbff;
+    }
+    main {
+      width: min(100%, 560px);
+      padding: clamp(28px, 6vw, 52px);
+      text-align: center;
+      background: rgba(255,255,255,.94);
+      border: 1px solid #e2edf8;
+      border-radius: 28px;
+      box-shadow: 0 24px 70px rgba(43, 92, 140, .12);
+    }
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 30px;
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: .08em;
+    }
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      color: #fff;
+      background: var(--primary);
+      font-size: 1.1rem;
+      letter-spacing: 0;
+    }
+    .symbol {
+      display: grid;
+      place-items: center;
+      width: 88px;
+      height: 88px;
+      margin: 0 auto 24px;
+      border-radius: 26px;
+      background: var(--pale);
+      color: #2879c5;
+    }
+    .symbol svg { width: 44px; height: 44px; }
+    .status {
+      display: inline-block;
+      margin-bottom: 16px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: #edf6ff;
+      color: #286eac;
+      font-size: .82rem;
+      font-weight: 700;
+    }
+    h1 { margin: 0; font-size: clamp(1.65rem, 5vw, 2.1rem); line-height: 1.4; }
+    .lead { margin: 18px 0 0; color: var(--muted); line-height: 1.9; }
+    .notice {
+      margin-top: 28px;
+      padding: 16px 18px;
+      border-radius: 16px;
+      background: #f5f9fd;
+      color: #52657a;
+      font-size: .9rem;
+      line-height: 1.8;
+      text-align: left;
+    }
+    button {
+      width: 100%;
+      margin-top: 26px;
+      padding: 14px 20px;
+      border: 0;
+      border-radius: 14px;
+      color: #153653;
+      background: var(--primary);
+      font: inherit;
+      font-weight: 750;
+      cursor: pointer;
+      transition: filter .15s ease, transform .15s ease;
+    }
+    button:hover { filter: brightness(.97); }
+    button:active { transform: translateY(1px); }
+    button:focus-visible { outline: 3px solid #286eac; outline-offset: 3px; }
+    footer { margin-top: 26px; color: #8391a2; font-size: .78rem; }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="brand"><span class="brand-mark" aria-hidden="true">L</span><span>LUNAGS</span></div>
+    <div class="symbol" aria-hidden="true">
+      <svg viewBox="0 0 48 48" fill="none">
+        <path d="M24 5 41 12v11c0 10-7 16-17 20C14 39 7 33 7 23V12L24 5Z" stroke="currentColor" stroke-width="2.8" stroke-linejoin="round"/>
+        <path d="m16 24 5 5 11-12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="status">SYSTEM MAINTENANCE</div>
+    <h1>メンテナンス中です</h1>
+    <p class="lead">現在、LUNAGSの安全性と安定性を確保するため、メンテナンスを実施しています。<br>ご不便をおかけしますが、復旧までしばらくお待ちください。</p>
+    <div class="notice">安全確認が完了するまで、一部またはすべてのサービスをご利用いただけません。復旧時刻は、確認が取れるまでお知らせしていません。</div>
+    <button type="button" onclick="window.location.reload()">ページを再読み込み</button>
+    <footer>© LUNAGS</footer>
+  </main>
+</body>
+</html>
