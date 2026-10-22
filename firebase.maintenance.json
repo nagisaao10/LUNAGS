@@ -2,35 +2,61 @@
   "hosting": [
     {
       "target": "development",
-      "public": "maintenance",
+      "public": ".",
       "ignore": [
         "firebase.json",
         "firebase.maintenance.json",
         "**/.*",
-        "**/node_modules/**"
+        "**/node_modules/**",
+        "index.html",
+        "404.html",
+        "account/**",
+        "admin/**",
+        "legal/**",
+        "management/**",
+        "shop/**",
+        "system/**",
+        "functions/**",
+        "plan/**",
+        "*.md",
+        "*.ps1",
+        "*.json"
       ],
       "cleanUrls": true,
       "rewrites": [
         {
           "source": "**",
-          "destination": "/index.html"
+          "destination": "/maintenance/index.html"
         }
       ]
     },
     {
       "target": "production",
-      "public": "maintenance",
+      "public": ".",
       "ignore": [
         "firebase.json",
         "firebase.maintenance.json",
         "**/.*",
-        "**/node_modules/**"
+        "**/node_modules/**",
+        "index.html",
+        "404.html",
+        "account/**",
+        "admin/**",
+        "legal/**",
+        "management/**",
+        "shop/**",
+        "system/**",
+        "functions/**",
+        "plan/**",
+        "*.md",
+        "*.ps1",
+        "*.json"
       ],
       "cleanUrls": true,
       "rewrites": [
         {
           "source": "**",
-          "destination": "/index.html"
+          "destination": "/maintenance/index.html"
         }
       ]
     }

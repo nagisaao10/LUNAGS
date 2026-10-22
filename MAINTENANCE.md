@@ -25,7 +25,7 @@ firebase deploy --config firebase.maintenance.json --only hosting:development
 firebase deploy --config firebase.maintenance.json --only hosting:production
 ```
 
-この設定では Hosting の公開ディレクトリが `maintenance/` になります。存在しないURLも rewrite により `maintenance/index.html` を表示します。
+この設定では Hosting の公開ルートが `.` になり、通常ページのファイルを除外した上で、すべてのURLを rewrite により `/maintenance/index.html` へ向けます。共通CSS（`/shared/`）やロゴ画像（`/images/`）もルート絶対パスで正しく配信されます。
 
 ## 通常公開へ復旧
 

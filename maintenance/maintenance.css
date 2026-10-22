@@ -28,6 +28,7 @@ a { color: inherit; text-decoration: none; }
 .error-layout { display: grid; grid-template-columns: var(--sidebar-w) minmax(0, 1fr); min-height: 100vh; min-height: 100dvh; }
 .error-rail { display: flex; flex-direction: column; padding: 22px 16px; color: #eef5ff; background: linear-gradient(180deg, var(--blue-900), var(--blue-950)); border-right: 1px solid rgba(255,255,255,.18); }
 .error-brand { display: grid; place-items: center; gap: 8px; padding: 6px 8px 12px; }
+.error-brand img { width: 178px; max-width: 100%; height: auto; margin: 6px auto 4px; }
 .error-brand__name { color: #fff; font-size: 28px; font-weight: 800; letter-spacing: .08em; }
 .error-brand__divider { position: relative; width: 140px; height: 1px; margin: 2px 0; background: rgba(255,255,255,.18); }
 .error-brand__divider::after { content: "✦"; position: absolute; top: 50%; left: 50%; padding: 0 10px; color: rgba(255,255,255,.75); background: var(--blue-900); font-size: 10px; transform: translate(-50%,-50%); }
@@ -52,6 +53,7 @@ a:focus-visible, button:focus-visible { outline: 3px solid var(--blue-300); outl
 @media (max-width: 760px) {
     .error-layout { grid-template-columns: 1fr; }
     .error-rail { align-items: center; min-height: 126px; padding: 22px; }
+    .error-brand img { width: 146px; }
     .error-brand__divider { display: none; }
     .error-nav { margin-top: 16px; }
     .error-main { width: 100%; padding: 32px 14px 42px; }
