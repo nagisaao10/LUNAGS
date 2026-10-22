@@ -1,0 +1,38 @@
+{
+  "hosting": [
+    {
+      "target": "development",
+      "public": "maintenance",
+      "ignore": [
+        "firebase.json",
+        "firebase.maintenance.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "cleanUrls": true,
+      "rewrites": [
+        {
+          "source": "**",
+          "destination": "/index.html"
+        }
+      ]
+    },
+    {
+      "target": "production",
+      "public": "maintenance",
+      "ignore": [
+        "firebase.json",
+        "firebase.maintenance.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "cleanUrls": true,
+      "rewrites": [
+        {
+          "source": "**",
+          "destination": "/index.html"
+        }
+      ]
+    }
+  ]
+}
