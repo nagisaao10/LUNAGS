@@ -186,10 +186,6 @@
                     <div class="value" id="detailAdminAccount">-</div>
                 </div>
                 <div class="row">
-                    <div class="label">状態</div>
-                    <div class="value" id="detailStatus">-</div>
-                </div>
-                <div class="row">
                     <div class="label">UID</div>
                     <div class="value" style="display:flex; align-items:center; gap:8px;">
                         <span id="detailUid" style="font-family:monospace; word-break:break-all;">-</span>
@@ -199,7 +195,23 @@
                     </div>
                 </div>
             </div>
-            <div class="modal-actions" style="margin-top: 20px; display:flex; justify-content:flex-end;">
+
+            <!-- アカウント状態トグル -->
+            <div style="margin-top: 16px; padding-top: 4px;">
+                <div class="toggle-row">
+                    <div class="toggle-row__info">
+                        <div class="toggle-row__label">アカウント状態</div>
+                        <div class="toggle-row__desc" id="statusDesc">このユーザーのアカウントは有効です</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="statusToggle">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div id="statusConfirmArea"></div>
+            </div>
+
+            <div class="modal-actions">
                 <button class="btn btn-secondary" id="modalCloseActionBtn" type="button">閉じる</button>
             </div>
         </div>
@@ -228,14 +240,21 @@
                 .replaceAll("'", "&#039;");
         }
 
-        async function request(path) {
+        async function request(path, options = {}) {
             const user = auth.currentUser;
             if (!user) throw new Error("ログインが必要です");
             const token = await user.getIdToken();
-            const response = await fetch(`${FUNCTIONS_ENDPOINT}${path}`, {
-                method: "GET",
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const fetchOptions = {
+                method: options.method || "GET",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    ...(options.body ? { "Content-Type": "application/json" } : {})
+                }
+            };
+            if (options.body) {
+                fetchOptions.body = JSON.stringify(options.body);
+            }
+            const response = await fetch(`${FUNCTIONS_ENDPOINT}${path}`, fetchOptions);
             const data = await response.json().catch(() => ({}));
             if (!response.ok || !data.ok) {
                 const error = new Error(data.error || "通信に失敗しました");
@@ -262,6 +281,32 @@
             $("metricAdminMode").textContent = users.filter((user) => user.adminMode).length;
         }
 
+        function updateStatusToggle(user) {
+            const toggle = $("statusToggle");
+            const desc = $("statusDesc");
+            const confirmArea = $("statusConfirmArea");
+
+            const isSelf = auth.currentUser && auth.currentUser.uid === user.uid;
+
+            // checked = 有効（disabled=false）
+            toggle.checked = !user.disabled;
+            confirmArea.innerHTML = "";
+
+            if (isSelf) {
+                toggle.disabled = true;
+                desc.textContent = "ログイン中のご自身のアカウントは無効化できません";
+                desc.style.color = "var(--muted)";
+            } else if (user.disabled) {
+                toggle.disabled = false;
+                desc.textContent = "このユーザーのアカウントは現在無効です";
+                desc.style.color = "#9f1239";
+            } else {
+                toggle.disabled = false;
+                desc.textContent = "このユーザーのアカウントは有効です";
+                desc.style.color = "";
+            }
+        }
+
         function openUserDetail(uid) {
             const user = state.users.find((u) => u.uid === uid);
             if (!user) return;
@@ -278,19 +323,109 @@
                 ? `<span class="pill pill--admin">管理者アカウント</span>`
                 : `<span class="pill pill--muted">一般ユーザー</span>`;
 
-            $("detailStatus").innerHTML = user.disabled
-                ? `<span class="pill pill--danger">停止中</span>`
-                : `<span class="pill" style="color:var(--mint-500); border:1px solid #a3e6cd; background:#e6f8f1;">有効</span>`;
-
             $("detailUid").textContent = user.uid || "-";
+
+            updateStatusToggle(user);
 
             $("detailModal").classList.remove("hidden");
         }
 
         function closeUserDetail() {
             $("detailModal").classList.add("hidden");
+            $("statusConfirmArea").innerHTML = "";
             state.selectedUser = null;
         }
+
+        // トグル切り替え時の確認ダイアログ
+        $("statusToggle").addEventListener("change", (e) => {
+            const user = state.selectedUser;
+            if (!user) return;
+
+            const willEnable = e.target.checked;
+            const confirmArea = $("statusConfirmArea");
+
+            if (willEnable && user.disabled) {
+                // 無効 → 有効にする確認
+                confirmArea.innerHTML = `
+                    <div class="confirm-inline confirm-inline--enable">
+                        <p class="confirm-inline__text">
+                            <i class="fa-solid fa-circle-check"></i>
+                            ${escapeHtml(user.name || user.email)} のアカウントを有効化しますか？<br>
+                            有効化するとこのユーザーはログインできるようになります。
+                        </p>
+                        <div class="confirm-inline__actions">
+                            <button class="btn btn-secondary" id="confirmCancel" type="button">キャンセル</button>
+                            <button class="btn" id="confirmExecute" type="button" style="background:linear-gradient(135deg, #22c55e, #16a34a); box-shadow:0 8px 16px rgba(34,197,94,0.2);">
+                                <i class="fa-solid fa-check"></i> 有効化する
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else if (!willEnable && !user.disabled) {
+                // 有効 → 無効にする確認
+                confirmArea.innerHTML = `
+                    <div class="confirm-inline">
+                        <p class="confirm-inline__text">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            ${escapeHtml(user.name || user.email)} のアカウントを無効化しますか？<br>
+                            無効化するとこのユーザーはログインできなくなります。
+                        </p>
+                        <div class="confirm-inline__actions">
+                            <button class="btn btn-secondary" id="confirmCancel" type="button">キャンセル</button>
+                            <button class="btn btn-danger" id="confirmExecute" type="button">
+                                <i class="fa-solid fa-ban"></i> 無効化する
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                confirmArea.innerHTML = "";
+                return;
+            }
+
+            // キャンセルボタン
+            confirmArea.querySelector("#confirmCancel").addEventListener("click", () => {
+                // トグルを元に戻す
+                $("statusToggle").checked = !user.disabled;
+                confirmArea.innerHTML = "";
+            });
+
+            // 実行ボタン
+            confirmArea.querySelector("#confirmExecute").addEventListener("click", async () => {
+                const newDisabled = !willEnable;
+                const executeBtn = confirmArea.querySelector("#confirmExecute");
+                const cancelBtn = confirmArea.querySelector("#confirmCancel");
+
+                executeBtn.disabled = true;
+                cancelBtn.disabled = true;
+                $("statusToggle").disabled = true;
+                executeBtn.innerHTML = `<i class="fa-solid fa-spinner" style="animation:spin 1s linear infinite;"></i> 処理中...`;
+
+                try {
+                    await request(`/admin-users/${user.uid}/status`, {
+                        method: "PATCH",
+                        body: { disabled: newDisabled }
+                    });
+
+                    // ローカル状態を更新
+                    user.disabled = newDisabled;
+                    state.selectedUser = user;
+
+                    // メトリクスとテーブルを再描画
+                    renderMetrics(state.users);
+                    renderUsers();
+
+                    // モーダル内の表示を更新
+                    updateStatusToggle(user);
+                } catch (err) {
+                    // 失敗時にトグルを元に戻す
+                    $("statusToggle").checked = !user.disabled;
+                    $("statusToggle").disabled = false;
+                    confirmArea.innerHTML = "";
+                    alert(err.message || "ステータスの変更に失敗しました");
+                }
+            });
+        });
 
         function renderUsers() {
             const keyword = $("searchInput").value.trim().toLowerCase();

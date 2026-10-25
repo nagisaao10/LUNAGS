@@ -136,6 +136,8 @@
 
             switch (err.code) {
 
+                case "auth/user-disabled":
+                    return "このアカウントは無効です。管理者に連絡してアカウントの無効化を解除してもらってください。";
                 case "auth/invalid-credential":
                 case "auth/invalid-login-credentials":
                 case "auth/user-not-found":

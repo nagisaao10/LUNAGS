@@ -2475,6 +2475,84 @@ app.get("/admin-users/:uid", async (req, res) => {
     }
 });
 
+app.patch("/admin-users/:uid/status", async (req, res) => {
+    try {
+        const context = await requireadminAccount(req);
+
+        const uid = String(req.params.uid || "").trim();
+
+        if (!uid) {
+            const error = new Error(
+                "UIDが指定されていません"
+            );
+            error.status = 400;
+            throw error;
+        }
+
+        const { disabled } = req.body;
+
+        if (typeof disabled !== "boolean") {
+            const error = new Error(
+                "disabled は true または false で指定してください"
+            );
+            error.status = 400;
+            throw error;
+        }
+
+        // 自分自身を無効化することを防止
+        if (disabled && uid === context.uid) {
+            const error = new Error(
+                "自分自身のアカウントを無効化することはできません"
+            );
+            error.status = 400;
+            throw error;
+        }
+
+        // Firebase Auth のユーザーが存在するか確認
+        let authUser = null;
+        try {
+            authUser = await admin.auth().getUser(uid);
+        } catch {
+            const error = new Error("対象のユーザーが見つかりません");
+            error.status = 404;
+            throw error;
+        }
+
+        // Firebase Auth の disabled フラグを更新
+        await admin.auth().updateUser(uid, { disabled });
+
+        // 監査ログを記録
+        try {
+            await db.collection("auditLogs").add({
+                type: "USER_STATUS_CHANGE",
+                targetUid: uid,
+                targetEmail: normalizeEmail(authUser.email || ""),
+                disabled,
+                performedBy: context.uid,
+                performedByEmail: normalizeEmail(context.email || ""),
+                occurredAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+        } catch (logErr) {
+            console.warn("Audit log write warning:", logErr?.message);
+        }
+
+        return res.json({
+            ok: true,
+            uid,
+            disabled,
+            message: disabled
+                ? "ユーザーアカウントを無効化しました"
+                : "ユーザーアカウントを有効化しました"
+        });
+    } catch (err) {
+        return sendError(
+            res,
+            err,
+            "ユーザーステータスの変更に失敗しました"
+        );
+    }
+});
+
 app.get("/admin-logs", async (req, res) => {
     try {
         await requireadminAccount(req);
