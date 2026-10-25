@@ -61,11 +61,6 @@
             </nav>
 
             <div class="sidebar__footer">
-                <button class="btn" id="refreshBtn" type="button">
-                    <i class="fa-solid fa-rotate"></i>
-                    <span>再読み込み</span>
-                </button>
-
                 <button class="btn logout-btn" id="logoutBtn" type="button">
                     <i class="fa-solid fa-right-from-bracket"></i>
                     <span>ログアウト</span>
@@ -682,8 +677,6 @@
             $("hamburgerBtn").addEventListener("click", () => {
                 $("sidebar").classList.toggle("open");
             });
-
-            $("refreshBtn").addEventListener("click", () => runAction(loadAll));
 
             $("logoutBtn").addEventListener("click", async () => {
                 if (confirm("ログアウトしますか？")) {

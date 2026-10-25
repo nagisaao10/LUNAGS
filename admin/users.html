@@ -59,10 +59,6 @@
             </nav>
 
             <div class="sidebar__footer">
-                <button class="btn" id="refreshBtn" type="button">
-                    <i class="fa-solid fa-rotate"></i>
-                    <span>再読み込み</span>
-                </button>
                 <button class="btn logout-btn" id="logoutBtn" type="button">
                     <i class="fa-solid fa-right-from-bracket"></i>
                     <span>ログアウト</span>
@@ -209,10 +205,6 @@
                     </label>
                 </div>
                 <div id="statusConfirmArea"></div>
-            </div>
-
-            <div class="modal-actions">
-                <button class="btn btn-secondary" id="modalCloseActionBtn" type="button">閉じる</button>
             </div>
         </div>
     </div>
@@ -486,13 +478,16 @@
         });
 
         $("modalCloseBtn").addEventListener("click", closeUserDetail);
-        $("modalCloseActionBtn").addEventListener("click", closeUserDetail);
         $("detailModal").addEventListener("click", (e) => {
             if (e.target === $("detailModal")) {
                 closeUserDetail();
             }
         });
-
+        window.addEventListener("keydown", (e) => {
+            if (e.key === "Escape" && !$("detailModal").classList.contains("hidden")) {
+                closeUserDetail();
+            }
+        });
         $("copyUidBtn").addEventListener("click", async () => {
             const uid = $("detailUid").textContent;
             if (!uid || uid === "-") return;
@@ -511,8 +506,6 @@
         $("hamburgerBtn").addEventListener("click", () => {
             $("sidebar").classList.toggle("open");
         });
-
-        $("refreshBtn").addEventListener("click", () => loadUsers().catch(handleError));
 
         $("logoutBtn").addEventListener("click", async () => {
             if (confirm("ログアウトしますか？")) {

@@ -133,24 +133,46 @@
         // ========================================
 
         function getLoginErrorMessage(err) {
+            const code = String(err?.code || "");
+            const msg = String(err?.message || "");
 
-            switch (err.code) {
-
-                case "auth/user-disabled":
-                    return "このアカウントは無効です。管理者に連絡してアカウントの無効化を解除してもらってください。";
-                case "auth/invalid-credential":
-                case "auth/invalid-login-credentials":
-                case "auth/user-not-found":
-                case "auth/wrong-password":
-                    return "メールアドレスまたはパスワードが正しくありません。";
-                case "auth/too-many-requests":
-                    return "ログイン試行が多すぎます。しばらく待ってから再試行してください。";
-                case "auth/network-request-failed":
-                    return "ネットワークエラーが発生しました。";
-                default:
-                    return err.message ||
-                        "ログインに失敗しました。";
+            // アカウント無効化
+            if (code === "auth/user-disabled" || msg.includes("auth/user-disabled")) {
+                return "このアカウントは無効です。管理者に連絡してアカウントの無効化を解除してもらってください。";
             }
+
+            // 認証情報不一致・ユーザー見つからない・パスワード誤り
+            if (
+                code === "auth/invalid-credential" ||
+                code === "auth/invalid-login-credentials" ||
+                code === "auth/user-not-found" ||
+                code === "auth/wrong-password" ||
+                code === "auth/invalid-email" ||
+                msg.includes("auth/invalid-credential") ||
+                msg.includes("auth/invalid-login-credentials") ||
+                msg.includes("auth/user-not-found") ||
+                msg.includes("auth/wrong-password") ||
+                msg.includes("auth/invalid-email")
+            ) {
+                return "メールアドレスまたはパスワードが正しくありません。";
+            }
+
+            // リクエスト過多
+            if (code === "auth/too-many-requests" || msg.includes("auth/too-many-requests")) {
+                return "ログイン試行が多すぎます。しばらく待ってから再試行してください。";
+            }
+
+            // ネットワークエラー
+            if (code === "auth/network-request-failed" || msg.includes("auth/network-request-failed")) {
+                return "ネットワークエラーが発生しました。通信環境をご確認ください。";
+            }
+
+            // ポップアップキャンセル
+            if (code === "auth/popup-closed-by-user" || msg.includes("auth/popup-closed-by-user")) {
+                return "ログインがキャンセルされました。";
+            }
+
+            return "ログインに失敗しました。メールアドレスとパスワードをお確かめください。";
         }
 
         // ========================================
