@@ -10,67 +10,31 @@
   <script src="/portal/script.js" defer></script>
 </head>
 
-<body>
+<body class="top-page" translate="no">
 
   <!-- Header -->
-  <header class="portal-header">
-    <div class="container header-inner">
-      <a href="/portal/" class="header-brand">
-        <img src="/images/logo_LUNAGS.png" alt="LUNAGS Logo" class="header-logo">
-        <span class="header-title">LUNAGS</span>
-      </a>
-
-      <!-- Desktop Navigation -->
-      <nav class="nav-desktop" aria-label="メインナビゲーション">
-        <a href="/portal/" class="nav-link active">TOP</a>
-        <a href="/portal/about" class="nav-link">ABOUT</a>
-        <a href="/portal/news/" class="nav-link">NEWS</a>
-        <a href="/portal/members/" class="nav-link">MEMBERS</a>
-        <a href="/portal/events/" class="nav-link">EVENTS</a>
-        <a href="/portal/schedule" class="nav-link">SCHEDULE</a>
-        <a href="/account/login/login.html" class="nav-link nav-link-external" target="_blank"
-          rel="noopener noreferrer">
-          LOGIN
-          <svg viewBox="0 0 24 24">
-            <path
-              d="M19 19H5V5h7V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z" />
-          </svg>
-        </a>
-        <a href="/shop/shop.html" class="nav-link nav-link-external" target="_blank" rel="noopener noreferrer">
-          OFFICIAL SHOP
-          <svg viewBox="0 0 24 24">
-            <path
-              d="M19 19H5V5h7V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z" />
-          </svg>
-        </a>
-      </nav>
-
-      <!-- Mobile Hamburger Button -->
-      <button type="button" class="hamburger-btn" id="hamburgerBtn" aria-label="メニューを開閉する" aria-expanded="false"
-        aria-controls="mobileNav">
-        <span></span>
-        <span></span>
-        <span></span>
-      </button>
-    </div>
+  <header class="header" id="main-header">
+    <a href="/portal/" class="logo">
+      <h1>Mixstgirls Fan Site</h1>
+    </a>
+    <nav>
+      <ul>
+        <li><a href="/portal/" class="active">TOP</a></li>
+        <li><a href="/portal/news/">NEWS</a></li>
+        <li><a href="/portal/members/">MEMBERS</a></li>
+        <li><a href="/portal/events/">EVENTS</a></li>
+        <li><a href="/portal/schedule">SCHEDULE</a></li>
+        <li>
+          <a href="/shop/shop.html"
+            target="_blank"
+            rel="noopener noreferrer">
+            OFFICIAL SHOP
+            <span class="external-icon">↗</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
   </header>
-
-  <!-- Mobile Navigation Drawer -->
-  <div class="mobile-nav-overlay" id="mobileNavOverlay"></div>
-  <nav class="nav-mobile" id="mobileNav" aria-label="モバイル用ナビゲーション">
-    <a href="/portal/" class="nav-link active">TOP</a>
-    <a href="/portal/about" class="nav-link">ABOUT</a>
-    <a href="/portal/news/" class="nav-link">NEWS</a>
-    <a href="/portal/members/" class="nav-link">MEMBERS</a>
-    <a href="/portal/events/" class="nav-link">EVENTS</a>
-    <a href="/portal/schedule" class="nav-link">SCHEDULE</a>
-    <a href="/account/login/login.html" class="nav-link nav-link-external" target="_blank" rel="noopener noreferrer">
-      LOGIN ↗
-    </a>
-    <a href="/shop/shop.html" class="nav-link nav-link-external" target="_blank" rel="noopener noreferrer">
-      OFFICIAL SHOP ↗
-    </a>
-  </nav>
 
   <main>
     <!-- HERO -->

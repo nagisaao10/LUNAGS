@@ -8,11 +8,38 @@
 // ==========================================================================
 function initHeaderAndNav() {
   const header = document.querySelector('.portal-header');
+  const mainHeader = document.getElementById('main-header');
   const hamburgerBtn = document.getElementById('hamburgerBtn');
   const mobileNav = document.getElementById('mobileNav');
   const overlay = document.getElementById('mobileNavOverlay');
+  const footer = document.getElementById('main-footer') || document.querySelector('.portal-footer');
 
-  // Scroll color shift
+  // Mixstgirls-style header scroll interaction
+  if (mainHeader) {
+    function handleMainHeaderScroll() {
+      const scrollY = window.scrollY;
+
+      // フッターに近づいたら透過解除
+      let nearFooter = false;
+      if (footer) {
+        const footerRect = footer.getBoundingClientRect();
+        nearFooter = footerRect.top < window.innerHeight - 550;
+      }
+
+      if (nearFooter) {
+        mainHeader.classList.remove('active');
+      } else if (scrollY > 50) {
+        mainHeader.classList.add('active');
+      } else {
+        mainHeader.classList.remove('active');
+      }
+    }
+
+    window.addEventListener('scroll', handleMainHeaderScroll, { passive: true });
+    handleMainHeaderScroll();
+  }
+
+  // Scroll color shift for legacy portal-header
   function handleScroll() {
     if (!header) return;
     if (window.scrollY > 20) {

@@ -1,9 +1,16 @@
+@import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500&family=Barlow+Condensed:wght@400&family=Cabin:wght@600&display=swap');
+
 /* ==========================================================================
    LUNAGS Official Portal - Core Stylesheet
    Corporate, Modern, and Stylish Design System
    ========================================================================== */
 
 :root {
+  /* Mixstgirls Header Colors */
+  --color-grad-start: #48C6F5;
+  --color-grad-end: #99DFFA;
+  --color-bg-light: #fafafa;
+
   /* Brand Color Palette */
   --color-primary: #73B8FD;
   --color-primary-hover: #5aa4f0;
@@ -125,6 +132,110 @@ button {
 main {
   flex: 1 0 auto;
   padding-top: var(--header-height);
+}
+
+/* ==========================================================================
+   Mixstgirls Fan Site - Header Styles (Top Page Header)
+   ========================================================================== */
+
+/* 外部リンクアイコン */
+.external-icon {
+  display: inline-block;
+  font-size: 0.8em;
+  margin-left: 6px;
+}
+
+/* ========== ロゴ ========== */
+.logo {
+  text-decoration: none;
+  color: var(--color-bg-light);
+  display: block;
+  cursor: pointer;
+}
+
+.logo h1 {
+  font-size: 24px;
+  margin: 0.67em 0;
+}
+
+/* ========== ヘッダー ========== */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1px 20px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+  transition: background 0.4s ease;
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9000;
+  background: linear-gradient(to right, var(--color-grad-start), var(--color-grad-end));
+  transition: background 0.3s ease;
+}
+
+.header.active {
+  background: linear-gradient(to right,
+      rgba(72, 198, 245, 0.6),
+      rgba(153, 223, 250, 0.6));
+}
+
+.header nav ul {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.header nav li {
+  margin: 0 15px;
+}
+
+.header nav a {
+  color: var(--color-bg-light);
+  text-decoration: none;
+  font-family: 'Cabin', sans-serif;
+  font-weight: 600;
+  transition: 0.3s;
+  padding: 5px 0;
+  opacity: 1;
+}
+
+.header nav a.active {
+  color: var(--color-bg-light) !important;
+  border-bottom: 2px solid var(--color-bg-light);
+  opacity: 1 !important;
+}
+
+.header nav a:hover {
+  opacity: 0.8;
+}
+
+@media (max-width: 900px) {
+  .header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px 20px 16px;
+  }
+
+  .header nav ul {
+    flex-wrap: wrap;
+    gap: 10px 18px;
+  }
+
+  .header nav li {
+    margin: 0;
+  }
+}
+
+/* sticky な .header 使用時のレイアウト整合（本文の余計な余白を防ぐ） */
+.header + main,
+body:has(.header) main {
+  padding-top: 0;
 }
 
 /* ==========================================================================
