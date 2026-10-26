@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LUNAGS | 公式ポータル</title>
+  <meta name="description" content="LUNAGSの公式ポータルサイトです。最新ニュース、メンバー紹介、イベント情報、月間スケジュールを発信しています。">
+  <link rel="stylesheet" href="/portal/style.css">
+  <script src="/portal/script.js" defer></script>
+</head>
+
+<body>
+
+  <!-- Header -->
+  <header class="portal-header">
+    <div class="container header-inner">
+      <a href="/portal/" class="header-brand">
+        <img src="/images/logo_LUNAGS.png" alt="LUNAGS Logo" class="header-logo">
+        <span class="header-title">LUNAGS</span>
+      </a>
+
+      <!-- Desktop Navigation -->
+      <nav class="nav-desktop" aria-label="メインナビゲーション">
+        <a href="/portal/" class="nav-link active">TOP</a>
+        <a href="/portal/about" class="nav-link">ABOUT</a>
+        <a href="/portal/news/" class="nav-link">NEWS</a>
+        <a href="/portal/members/" class="nav-link">MEMBERS</a>
+        <a href="/portal/events/" class="nav-link">EVENTS</a>
+        <a href="/portal/schedule" class="nav-link">SCHEDULE</a>
+        <a href="/account/login/login.html" class="nav-link nav-link-external" target="_blank"
+          rel="noopener noreferrer">
+          LOGIN
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M19 19H5V5h7V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z" />
+          </svg>
+        </a>
+        <a href="/shop/shop.html" class="nav-link nav-link-external" target="_blank" rel="noopener noreferrer">
+          OFFICIAL SHOP
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M19 19H5V5h7V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z" />
+          </svg>
+        </a>
+      </nav>
+
+      <!-- Mobile Hamburger Button -->
+      <button type="button" class="hamburger-btn" id="hamburgerBtn" aria-label="メニューを開閉する" aria-expanded="false"
+        aria-controls="mobileNav">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Mobile Navigation Drawer -->
+  <div class="mobile-nav-overlay" id="mobileNavOverlay"></div>
+  <nav class="nav-mobile" id="mobileNav" aria-label="モバイル用ナビゲーション">
+    <a href="/portal/" class="nav-link active">TOP</a>
+    <a href="/portal/about" class="nav-link">ABOUT</a>
+    <a href="/portal/news/" class="nav-link">NEWS</a>
+    <a href="/portal/members/" class="nav-link">MEMBERS</a>
+    <a href="/portal/events/" class="nav-link">EVENTS</a>
+    <a href="/portal/schedule" class="nav-link">SCHEDULE</a>
+    <a href="/account/login/login.html" class="nav-link nav-link-external" target="_blank" rel="noopener noreferrer">
+      LOGIN ↗
+    </a>
+    <a href="/shop/shop.html" class="nav-link nav-link-external" target="_blank" rel="noopener noreferrer">
+      OFFICIAL SHOP ↗
+    </a>
+  </nav>
+
+  <main>
+    <!-- HERO -->
+    <section class="hero-section">
+      <div class="container hero-inner">
+        <div class="hero-content">
+          <span class="hero-tagline">OFFICIAL PORTAL</span>
+          <h1 class="hero-heading">次代を創るコミュニティと、<br>洗練されたテクノロジー。</h1>
+          <p class="hero-lead">
+            LUNAGSは、現代的で堅牢なシステム基盤と多彩な活動を融合し、新たな可能性を切り拓くオフィシャルプラットフォームです。最新のお知らせや活動スケジュールを発信しています。
+          </p>
+          <div class="hero-actions">
+            <a href="/portal/about" class="btn btn-primary">ABOUT LUNAGS</a>
+            <a href="/portal/schedule" class="btn btn-outline">SCHEDULEを見る</a>
+          </div>
+        </div>
+        <div class="hero-visual">
+          <div class="hero-card">
+            <img src="/images/logo_LUNAGS.png" alt="LUNAGS" class="hero-card-logo">
+            <div class="hero-card-meta">
+              <div>
+                <span style="font-size: 0.8rem; color: #64748b;">CATEGORY</span>
+                <strong>Portal & System</strong>
+              </div>
+              <div>
+                <span style="font-size: 0.8rem; color: #64748b;">STATUS</span>
+                <strong style="color: #0284c7;">Operational</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ABOUT Summary -->
+    <section class="content-section" style="background-color: #fafbfc;">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">ABOUT</h2>
+          <p class="section-subtitle">LUNAGSについて</p>
+        </div>
+        <div style="max-width: 800px; margin-bottom: 24px;">
+          <p style="font-size: 1.05rem; line-height: 1.8; color: var(--color-text-sub); margin-bottom: 16px;">
+            LUNAGSは、透明性の高い情報共有と先進的なWebテクノロジーを掛け合わせ、組織的かつ持続可能な価値創出を目指しています。
+            メンバー各自の専門性を結集し、快適なシステム運用と活気あるコミュニティ活動を推進しています。
+          </p>
+        </div>
+        <a href="/portal/about" class="btn btn-outline">詳しく知る →</a>
+      </div>
+    </section>
+
+    <!-- NEWS (Top 5) -->
+    <section class="content-section">
+      <div class="container">
+        <div class="section-header"
+          style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 16px;">
+          <div>
+            <h2 class="section-title">NEWS</h2>
+            <p class="section-subtitle">最新のお知らせ</p>
+          </div>
+          <a href="/portal/news/" class="btn btn-outline btn-sm">ニュース一覧を見る →</a>
+        </div>
+        <div class="news-grid" id="topNewsContainer">
+          <!-- Rendered by script.js (Top 5) -->
+        </div>
+      </div>
+    </section>
+
+    <!-- MEMBERS (Top 5) -->
+    <section class="content-section" style="background-color: #fafbfc;">
+      <div class="container">
+        <div class="section-header"
+          style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 16px;">
+          <div>
+            <h2 class="section-title">MEMBERS</h2>
+            <p class="section-subtitle">所属メンバー</p>
+          </div>
+          <a href="/portal/members/" class="btn btn-outline btn-sm">メンバー一覧を見る →</a>
+        </div>
+        <div class="members-grid" id="topMembersContainer">
+          <!-- Rendered by script.js (Top 5) -->
+        </div>
+      </div>
+    </section>
+
+    <!-- EVENTS (Top 5) -->
+    <section class="content-section">
+      <div class="container">
+        <div class="section-header"
+          style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 16px;">
+          <div>
+            <h2 class="section-title">EVENTS</h2>
+            <p class="section-subtitle">イベント・カンファレンス情報</p>
+          </div>
+          <a href="/portal/events/" class="btn btn-outline btn-sm">イベント一覧を見る →</a>
+        </div>
+        <div class="events-grid" id="topEventsContainer">
+          <!-- Rendered by script.js (Top 5) -->
+        </div>
+      </div>
+    </section>
+
+    <!-- SCHEDULE Gateway -->
+    <section class="content-section"
+      style="background: linear-gradient(180deg, #ffffff 0%, var(--color-sub-2-light) 100%);">
+      <div class="container" style="text-align: center; max-width: 680px;">
+        <div class="section-header">
+          <h2 class="section-title" style="justify-content: center;">SCHEDULE</h2>
+          <p class="section-subtitle">月間スケジュール・予定一覧</p>
+        </div>
+        <p style="font-size: 1.05rem; color: var(--color-text-sub); line-height: 1.8; margin-bottom: 28px;">
+          日々の定例ミーティング、イベント、リリーススケジュールなどを月間リスト形式でご確認いただけます。
+        </p>
+        <a href="/portal/schedule" class="btn btn-primary" style="padding: 12px 32px; font-size: 1.05rem;">
+          月間スケジュールを見る →
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="portal-footer">
+    <div class="container">
+      <div class="footer-top">
+        <div>
+          <a href="/portal/" class="header-brand" style="color: #ffffff;">
+            <img src="/images/logo_LUNAGS.png" alt="LUNAGS Logo" class="header-logo">
+            <span class="header-title">LUNAGS</span>
+          </a>
+          <p class="footer-brand-desc">
+            次代を創るコミュニティと洗練されたテクノロジー。公式ポータルにて最新情報を提供しています。
+          </p>
+        </div>
+        <div class="footer-nav-grid">
+          <div class="footer-nav-col">
+            <h4>コンテンツ</h4>
+            <ul class="footer-nav-list">
+              <li><a href="/portal/">TOP</a></li>
+              <li><a href="/portal/about">ABOUT</a></li>
+              <li><a href="/portal/schedule">SCHEDULE</a></li>
+            </ul>
+          </div>
+          <div class="footer-nav-col">
+            <h4>最新情報</h4>
+            <ul class="footer-nav-list">
+              <li><a href="/portal/news/">NEWS</a></li>
+              <li><a href="/portal/events/">EVENTS</a></li>
+              <li><a href="/portal/members/">MEMBERS</a></li>
+            </ul>
+          </div>
+          <div class="footer-nav-col">
+            <h4>関連リンク</h4>
+            <ul class="footer-nav-list">
+              <li><a href="/account/login/login.html" target="_blank" rel="noopener noreferrer">LOGIN ↗</a></li>
+              <li><a href="/shop/shop.html" target="_blank" rel="noopener noreferrer">OFFICIAL SHOP ↗</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 LUNAGS. All rights reserved.</p>
+        <div class="footer-legal-links">
+          <a href="/legal/policy.html">Privacy Policy</a>
+          <a href="/legal/terms.html">Terms of Service</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+</body>
+
+</html>

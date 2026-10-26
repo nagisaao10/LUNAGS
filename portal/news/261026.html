@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NEWS 一覧 | LUNAGS 公式ポータル</title>
+  <meta name="description" content="企業的かつスタイリッシュなデザインを導入し、最新ニュース・スケジュール・メンバー情報を一元的に確認できる公式ポータルを正式にオープンいたしました。">
+  <link rel="stylesheet" href="/portal/style.css">
+  <script src="/portal/script.js" defer></script>
+</head>
+
+<body>
+
+  <!-- Header -->
+  <header class="portal-header">
+    <div class="container header-inner">
+      <a href="/portal/" class="header-brand">
+        <img src="/images/logo_LUNAGS.png" alt="LUNAGS Logo" class="header-logo">
+        <span class="header-title">LUNAGS</span>
+      </a>
+
+      <nav class="nav-desktop" aria-label="メインナビゲーション">
+        <a href="/portal/" class="nav-link">TOP</a>
+        <a href="/portal/about" class="nav-link">ABOUT</a>
+        <a href="/portal/news/" class="nav-link active">NEWS</a>
+        <a href="/portal/members/" class="nav-link">MEMBERS</a>
+        <a href="/portal/events/" class="nav-link">EVENTS</a>
+        <a href="/portal/schedule" class="nav-link">SCHEDULE</a>
+        <a href="/account/login/login.html" class="nav-link nav-link-external" target="_blank"
+          rel="noopener noreferrer">
+          LOGIN
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M19 19H5V5h7V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z" />
+          </svg>
+        </a>
+        <a href="/shop/shop.html" class="nav-link nav-link-external" target="_blank" rel="noopener noreferrer">
+          OFFICIAL SHOP
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M19 19H5V5h7V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z" />
+          </svg>
+        </a>
+      </nav>
+
+      <button type="button" class="hamburger-btn" id="hamburgerBtn" aria-label="メニューを開閉する" aria-expanded="false"
+        aria-controls="mobileNav">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Mobile Navigation Drawer -->
+  <div class="mobile-nav-overlay" id="mobileNavOverlay"></div>
+  <nav class="nav-mobile" id="mobileNav" aria-label="モバイル用ナビゲーション">
+    <a href="/portal/" class="nav-link">TOP</a>
+    <a href="/portal/about" class="nav-link">ABOUT</a>
+    <a href="/portal/news/" class="nav-link active">NEWS</a>
+    <a href="/portal/members/" class="nav-link">MEMBERS</a>
+    <a href="/portal/events/" class="nav-link">EVENTS</a>
+    <a href="/portal/schedule" class="nav-link">SCHEDULE</a>
+    <a href="/account/login/login.html" class="nav-link nav-link-external" target="_blank" rel="noopener noreferrer">
+      LOGIN ↗
+    </a>
+    <a href="/shop/shop.html" class="nav-link nav-link-external" target="_blank" rel="noopener noreferrer">
+      OFFICIAL SHOP ↗
+    </a>
+  </nav>
+
+  <main>
+    <article class="article-container">
+      <header class="article-header">
+        <div class="article-meta">
+          <time datetime="2026-10-26">2026/10/26</time>
+          <span class="badge badge-primary">お知らせ</span>
+        </div>
+        <h1 class="article-title">LUNAGS 公式ポータルを公開いたしました</h1>
+      </header>
+
+      <div class="article-eyecatch">
+        <img src="/images/news-sample.svg" alt="LUNAGS 公式ポータル公開">
+      </div>
+
+      <div class="article-body">
+        <p>
+          平素よりLUNAGSの活動にご関心をお寄せいただき、誠にありがとうございます。
+        </p>
+        <p>
+          このたび、LUNAGSの各種情報発信およびコミュニティ活動のハブとなる<strong>「LUNAGS公式ポータル」</strong>を正式にオープンいたしました。
+        </p>
+
+        <h2>ポータル開設の背景と特徴</h2>
+        <p>
+          これまで分散していた公式アナウンス、イベント予定、月間スケジュール、所属メンバー紹介などを一箇所に集約し、より見やすく、わかりやすい形でご案内できるよう設計いたしました。
+        </p>
+        <ul>
+          <li><strong>一貫したデザインシステム：</strong> ブランド公式カラー（#73B8FD）を基調とした、企業的かつスタイリッシュな統一UIを採用。</li>
+          <li><strong>月間縦型スケジュール：</strong> 日ごとの予定が一目で把握でき、前月・翌月への切り替えもスムーズに行えるカレンダー機能を実装。</li>
+          <li><strong>スマートフォン最適化：</strong> すべての画面サイズにおいて快適に閲覧できるレスポンシブデザインと、アクセシビリティへの配慮。</li>
+        </ul>
+
+        <h2>今後の展望</h2>
+        <p>
+          今後は定期的なお知らせやイベント告知に加え、会員向け機能やオフィシャルショップとの連携をさらに強化してまいります。
+          引き続きLUNAGSをよろしくお願い申し上げます。
+        </p>
+
+        <div class="article-back-link">
+          <a href="/portal/news/" class="btn btn-outline">← NEWS一覧へ戻る</a>
+        </div>
+      </div>
+    </article>
+  </main>
+
+  <!-- Footer -->
+  <footer class="portal-footer">
+    <div class="container">
+      <div class="footer-top">
+        <div>
+          <a href="/portal/" class="header-brand" style="color: #ffffff;">
+            <img src="/images/logo_LUNAGS.png" alt="LUNAGS Logo" class="header-logo">
+            <span class="header-title">LUNAGS</span>
+          </a>
+          <p class="footer-brand-desc">
+            次代を創るコミュニティと洗練されたテクノロジー。公式ポータルにて最新情報を提供しています。
+          </p>
+        </div>
+        <div class="footer-nav-grid">
+          <div class="footer-nav-col">
+            <h4>コンテンツ</h4>
+            <ul class="footer-nav-list">
+              <li><a href="/portal/">TOP</a></li>
+              <li><a href="/portal/about">ABOUT</a></li>
+              <li><a href="/portal/schedule">SCHEDULE</a></li>
+            </ul>
+          </div>
+          <div class="footer-nav-col">
+            <h4>最新情報</h4>
+            <ul class="footer-nav-list">
+              <li><a href="/portal/news/">NEWS</a></li>
+              <li><a href="/portal/events/">EVENTS</a></li>
+              <li><a href="/portal/members/">MEMBERS</a></li>
+            </ul>
+          </div>
+          <div class="footer-nav-col">
+            <h4>関連リンク</h4>
+            <ul class="footer-nav-list">
+              <li><a href="/account/login/login.html" target="_blank" rel="noopener noreferrer">LOGIN ↗</a></li>
+              <li><a href="/shop/shop.html" target="_blank" rel="noopener noreferrer">OFFICIAL SHOP ↗</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 LUNAGS. All rights reserved.</p>
+        <div class="footer-legal-links">
+          <a href="/legal/policy.html">Privacy Policy</a>
+          <a href="/legal/terms.html">Terms of Service</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+</body>
+
+</html>
