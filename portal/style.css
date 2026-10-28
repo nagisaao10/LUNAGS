@@ -154,7 +154,7 @@ main {
 }
 
 .logo h1 {
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: "Barlow Condensed", "中ゴシックBBB JIS2004";
   font-size: 24px;
   font-weight: 400;
   margin: 0.67em 0;
@@ -199,7 +199,7 @@ main {
 .header nav a {
   color: var(--color-bg-light);
   text-decoration: none;
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: "Barlow Condensed", "中ゴシックBBB JIS2004";
   font-size: 16px;
   font-weight: 400;
   line-height: 22px;
@@ -1404,7 +1404,7 @@ body:has(.header) main {
 
 .footer-left nav a {
   color: var(--color-bg-light);
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: "Barlow Condensed", "中ゴシックBBB JIS2004";
   font-size: 32px;
   font-weight: 500;
   letter-spacing: 0.06em;
@@ -1416,7 +1416,7 @@ body:has(.header) main {
 }
 
 .copyright-text {
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: "Barlow Condensed", "中ゴシックBBB JIS2004";
   font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.08em;
