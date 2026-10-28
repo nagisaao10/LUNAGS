@@ -58,7 +58,10 @@
 
 /* Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
@@ -70,7 +73,9 @@
    Reset & Base Elements
    ========================================================================== */
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -200,6 +205,7 @@ main {
   color: var(--color-bg-light);
   text-decoration: none;
   font-family: "Barlow Condensed", "中ゴシックBBB JIS2004";
+  -webkit-font-smoothing: antialiased;
   font-size: 16px;
   font-weight: 400;
   line-height: 22px;
@@ -238,7 +244,7 @@ main {
 }
 
 /* sticky な .header 使用時のレイアウト整合（本文の余計な余白を防ぐ） */
-.header + main,
+.header+main,
 body:has(.header) main {
   padding-top: 0;
 }
@@ -425,6 +431,7 @@ body:has(.header) main {
   .nav-desktop {
     display: none;
   }
+
   .hamburger-btn {
     display: flex;
   }
@@ -690,12 +697,15 @@ body:has(.header) main {
     text-align: center;
     gap: 36px;
   }
+
   .hero-heading {
     font-size: 2.15rem;
   }
+
   .hero-actions {
     justify-content: center;
   }
+
   .hero-card {
     margin: 0 auto;
   }
@@ -1190,15 +1200,18 @@ body:has(.header) main {
   .schedule-row {
     grid-template-columns: 100px 1fr;
   }
+
   .schedule-date-col {
     padding: 10px 12px;
     flex-direction: column;
     align-items: flex-start;
     gap: 4px;
   }
+
   .schedule-day-number {
     font-size: 1.2rem;
   }
+
   .schedule-item {
     flex-direction: column;
     align-items: flex-start;
@@ -1271,7 +1284,8 @@ body:has(.header) main {
   margin: 32px 0 12px;
 }
 
-.article-body ul, .article-body ol {
+.article-body ul,
+.article-body ol {
   margin: 0 0 24px 24px;
 }
 
@@ -1369,10 +1383,12 @@ body:has(.header) main {
     grid-template-columns: 1fr;
     gap: 32px;
   }
+
   .portal-footer:not(.footer) .footer-nav-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 24px;
   }
+
   .portal-footer:not(.footer) .footer-bottom {
     flex-direction: column;
     align-items: flex-start;
