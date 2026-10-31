@@ -55,17 +55,20 @@ button {
 ======================================== */
 
 .error-rail {
+    position: sticky;
+    top: 0;
+    width: auto;
+    height: 100vh;
+    height: 100dvh;
     padding: 22px 16px;
-
     color: #eef5ff;
-    background: linear-gradient(180deg,
-            var(--blue-900),
-            var(--blue-950));
-
+    background: linear-gradient(180deg, var(--blue-900), var(--blue-950));
     border-right: 1px solid rgba(255, 255, 255, 0.18);
-
     display: flex;
     flex-direction: column;
+    gap: 22px;
+    z-index: 10;
+    overflow-y: auto;
 }
 
 
@@ -138,9 +141,8 @@ button {
 
 .error-nav {
     display: grid;
-
     gap: 6px;
-    margin-top: 24px;
+    margin: 0;
 }
 
 .error-nav__link {
