@@ -1,9 +1,5 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Noto+Sans+JP:wght@400;500;700;800&display=swap");
 
-/* ========================================
-   Base
-======================================== */
-
 *,
 *::before,
 *::after {
@@ -35,24 +31,12 @@ button {
     font: inherit;
 }
 
-
-/* ========================================
-   Page Layout
-   404.css と共通
-======================================== */
-
 .error-layout {
     display: grid;
     grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
     min-height: 100vh;
     min-height: 100dvh;
 }
-
-
-/* ========================================
-   Sidebar
-   404.css と共通
-======================================== */
 
 .error-rail {
     position: sticky;
@@ -70,12 +54,6 @@ button {
     z-index: 10;
     overflow-y: auto;
 }
-
-
-/* ========================================
-   Sidebar Logo
-   404.css と共通
-======================================== */
 
 .error-brand {
     display: grid;
@@ -133,12 +111,6 @@ button {
     text-align: center;
 }
 
-
-/* ========================================
-   Sidebar Navigation
-   404.css と共通
-======================================== */
-
 .error-nav {
     display: grid;
     gap: 6px;
@@ -189,22 +161,11 @@ button {
     outline-offset: 3px;
 }
 
-
-/* ========================================
-   Main Content
-   404.css と共通
-======================================== */
-
 .error-main {
-    width: min(960px, 100%);
-    padding: 28px 34px 56px;
+    width: min(1320px, 100%);
+    max-width: none;
+    margin: 0;
 }
-
-
-/* ========================================
-   Page Header
-   404.css と共通
-======================================== */
 
 .error-topbar {
     margin-bottom: 24px;
@@ -229,15 +190,10 @@ button {
     font-weight: 600;
 }
 
-
-/* ========================================
-   Maintenance Card
-   404.css と共通
-======================================== */
-
 .error-card {
+    width: 100%;
     min-height: 390px;
-    padding: 42px;
+    padding: 20px;
 
     background: rgba(255, 255, 255, 0.92);
 
@@ -253,15 +209,9 @@ button {
     text-align: center;
 }
 
-
-/* ========================================
-   Maintenance Icon
-   404.css と共通
-======================================== */
-
 .error-icon {
-    width: 58px;
-    height: 58px;
+    width: 64px;
+    height: 64px;
 
     margin-bottom: 18px;
 
@@ -274,14 +224,8 @@ button {
     display: grid;
     place-items: center;
 
-    font-size: 24px;
+    font-size: 28px;
 }
-
-
-/* ========================================
-   Maintenance Status
-   メンテナンス専用
-======================================== */
 
 .maintenance-status {
     display: inline-flex;
@@ -291,7 +235,7 @@ button {
     gap: 9px;
 
     margin: 0 0 8px;
-    padding: 7px 12px;
+    padding: 9px 16px;
 
     border: 1px solid var(--blue-200);
     border-radius: var(--radius);
@@ -299,7 +243,7 @@ button {
     color: var(--blue-800);
     background: var(--surface-blue);
 
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 800;
     letter-spacing: 0.06em;
     line-height: 1.5;
@@ -309,53 +253,35 @@ button {
     font-size: 13px;
 }
 
-
-/* ========================================
-   Main Heading
-   404.css と共通
-======================================== */
-
 .error-title {
     margin: 20px 0 8px;
 
     color: var(--blue-950);
 
-    font-size: 22px;
+    font-size: 26px;
     font-weight: 800;
     line-height: 1.5;
 }
 
-
-/* ========================================
-   Description
-   404.css と共通
-======================================== */
-
 .error-message {
-    max-width: 34em;
+    max-width: 46em;
     margin: 0;
 
     color: var(--muted);
 
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 600;
-    line-height: 1.8;
+    line-height: 1.9;
 
     text-align: center;
 }
 
-
-/* ========================================
-   Maintenance Notice
-   メンテナンス専用
-======================================== */
-
 .maintenance-notice {
     width: 100%;
-    max-width: 680px;
+    max-width: 760px;
 
     margin-top: 22px;
-    padding: 14px 16px;
+    padding: 16px 20px;
 
     border: 1px solid var(--line);
     border-radius: var(--radius);
@@ -363,24 +289,18 @@ button {
     color: var(--muted);
     background: var(--surface-soft);
 
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 600;
-    line-height: 1.8;
+    line-height: 1.9;
 
     text-align: center;
 }
 
-
-/* ========================================
-   Reload Button
-   404.css の error-link に合わせる
-======================================== */
-
 .error-link {
-    min-height: 42px;
+    min-height: 48px;
 
     margin-top: 28px;
-    padding: 10px 16px;
+    padding: 12px 22px;
 
     border: 1px solid var(--blue-700);
     border-radius: var(--radius);
@@ -394,7 +314,7 @@ button {
 
     gap: 9px;
 
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 800;
 
     cursor: pointer;
@@ -422,23 +342,11 @@ button {
     font-family: inherit;
 }
 
-
-/* ========================================
-   Keyboard Focus
-   404.css と共通
-======================================== */
-
 a:focus-visible,
 button:focus-visible {
     outline: 3px solid var(--blue-300);
     outline-offset: 3px;
 }
-
-
-/* ========================================
-   Responsive: Mobile
-   404.css と共通
-======================================== */
 
 @media (max-width: 760px) {
     .error-layout {
@@ -474,17 +382,22 @@ button:focus-visible {
         padding: 32px 22px;
     }
 
+    .error-title {
+        font-size: 22px;
+    }
+
     .maintenance-status {
         max-width: 100%;
     }
 
     .error-message {
         width: 100%;
+        font-size: 15px;
     }
 
     .maintenance-notice {
         padding: 14px 12px;
-        font-size: 12px;
+        font-size: 13px;
     }
 }
 
