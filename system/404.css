@@ -123,9 +123,8 @@ a {
 }
 
 .error-main {
-  width: min(1320px, 100%);
-  max-width: none;
-  margin: 0;
+  width: min(960px, 100%);
+  padding: 28px 34px 56px;
 }
 
 .error-topbar {
@@ -148,9 +147,8 @@ a {
 }
 
 .error-card {
-  width: 100%;
   min-height: 390px;
-  padding: 20px;
+  padding: 42px;
   background: rgba(255, 255, 255, 0.92);
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -162,8 +160,8 @@ a {
 }
 
 .error-icon {
-  width: 64px;
-  height: 64px;
+  width: 58px;
+  height: 58px;
   margin-bottom: 18px;
   border: 1px solid var(--blue-200);
   border-radius: var(--radius);
@@ -171,7 +169,7 @@ a {
   background: var(--surface-blue);
   display: grid;
   place-items: center;
-  font-size: 28px;
+  font-size: 24px;
 }
 
 .error-code {
@@ -185,24 +183,23 @@ a {
 .error-title {
   margin: 20px 0 8px;
   color: var(--blue-950);
-  font-size: 26px;
-  line-height: 1.5;
+  font-size: 22px;
   font-weight: 800;
 }
 
 .error-message {
-  max-width: 42em;
+  max-width: 34em;
   margin: 0;
   color: var(--muted);
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
-  line-height: 1.9;
+  line-height: 1.8;
 }
 
 .error-link {
-  min-height: 48px;
+  min-height: 42px;
   margin-top: 28px;
-  padding: 12px 22px;
+  padding: 10px 16px;
   border: 1px solid var(--blue-700);
   border-radius: var(--radius);
   color: #ffffff;
@@ -210,7 +207,7 @@ a {
   display: inline-flex;
   align-items: center;
   gap: 9px;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 800;
   transition: background 0.14s ease, border-color 0.14s ease, transform 0.14s ease;
 }
@@ -257,13 +254,5 @@ a:focus-visible {
   .error-card {
     min-height: 360px;
     padding: 32px 22px;
-  }
-
-  .error-title {
-    font-size: 22px;
-  }
-
-  .error-message {
-    font-size: 15px;
   }
 }
